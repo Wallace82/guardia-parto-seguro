@@ -1,6 +1,7 @@
 # TEAM_PLAN.md — GuardIA Parto Seguro
 
-> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.0
+> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.3  
+> **Última atualização:** 2026-06-18 | **Atualizado por:** Desenvolvedor 1
 
 ---
 
@@ -8,29 +9,35 @@
 
 ### 👨‍💻 Desenvolvedor 1 — Core Platform & DevOps Lead
 
-**Foco:** `backend/` + `devops/`
+**Foco:** `backend/` + `devops/`  
+**Status:** 🟡 Em progresso
 
 #### Tarefas
-- [ ] Configurar repositório Git com branch strategy e proteções
-- [ ] Configurar Docker Compose completo com todos os serviços
-- [ ] Implementar API Gateway (FastAPI): auth JWT, RBAC, sessões, alertas
-- [ ] Implementar módulo de orquestração multimodal
-- [ ] Configurar banco `core_db` com Alembic migrations
+- [x] Configurar repositório Git com branch strategy e proteções
+- [x] Criar `.env.example` e documentação de setup
+- [x] Criar `.gitignore` completo para projeto Python
+- [x] Implementar GitHub Actions: CI pipeline (`ci.yml`) com lint, testes e build
+- [x] Implementar GitHub Actions: deploy pipeline (`deploy.yml`)
+- [x] Criar `CODEOWNERS` para ownership por domínio
+- [x] Criar template de Pull Request (`.github/pull_request_template.md`)
+- [x] Configurar estrutura base do API Gateway (FastAPI): `main.py` + `config.py`
+- [x] Configurar Docker Compose completo com todos os serviços (9 containers: core-api, video, audio, document, risk, report, frontend, postgres ×2, redis)
+- [x] Implementar auth JWT, RBAC e gerenciamento de sessões (User, RefreshToken, Session, MediaFile, Alert — 4 papéis: admin/gestor/profissional/auditor)
+- [x] Implementar módulo de orquestração multimodal
+- [x] Configurar banco `core_db` com Alembic migrations
 - [ ] Configurar Azure Key Vault e Azure Monitor
-- [ ] Implementar GitHub Actions: lint, testes, segurança, build
-- [ ] Criar `.env.example` e documentação de setup
-- [ ] Implementar engine de alertas e notificações por e-mail
+- [x] Implementar engine de alertas e notificações por e-mail
 - [ ] Criar healthchecks e endpoints de observabilidade
 
 #### Entregáveis
-| Entregável | Prazo |
-|---|---|
-| Docker Compose funcional | Semana 1 |
-| API Gateway com auth | Semana 2 |
-| Gerenciamento de sessões e mídia | Semana 3 |
-| Motor de alertas | Semana 4 |
-| CI/CD completo | Semana 5 |
-| Documentação DevOps | Semana 6 |
+| Entregável | Prazo | Status |
+|---|---|---|
+| Docker Compose funcional | Semana 1 | ✅ Concluído |
+| API Gateway com auth | Semana 2 | ✅ Concluído |
+| Gerenciamento de sessões e mídia | Semana 3 | ✅ Concluído |
+| Motor de alertas | Semana 4 | ✅ Concluído |
+| CI/CD completo | Semana 5 | 🟡 Em progresso |
+| Documentação DevOps | Semana 6 | 🔴 Pendente |
 
 #### Métricas de Sucesso
 - 100% dos serviços sobem com `docker-compose up`

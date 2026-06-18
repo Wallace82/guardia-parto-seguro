@@ -4,28 +4,44 @@ FastAPI Application Entry Point
 """
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth.router import router as auth_router
-from app.sessions.router import router as sessions_router
 from app.alerts.router import router as alerts_router
+from app.auth.router import router as auth_router
 from app.config import settings
+from app.sessions.router import router as sessions_router
+
+log = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
-    # Startup
-    print(f"🚀 GuardIA Core Platform starting — Environment: {settings.ENVIRONMENT}")
+    log.info("startup", environment=settings.ENVIRONMENT, version="1.0.0")
+
+    # Tabelas do banco de dados agora são criadas e controladas via migrações do Alembic.
     yield
-    # Shutdown
-    print("🛑 GuardIA Core Platform shutting down...")
+
+    log.info("shutdown")
 
 
 app = FastAPI(
     title="GuardIA Parto Seguro — Core API",
-    description="Plataforma multimodal de IA para vigilância obstétrica",
+    description="""
+Plataforma multimodal de IA para vigilância obstétrica e detecção de violência no parto.
+
+## Autenticação
+Use `POST /api/v1/auth/login` para obter um Bearer token e inclua-o no header:
+`Authorization: Bearer <seu_token>`
+
+## Papéis RBAC
+- **admin** — acesso total
+- **gestor** — gerencia profissionais, vê todos os alertas
+- **profissional** — cria sessões e vê as próprias
+- **auditor** — leitura de relatórios
+    """,
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -49,5 +65,10 @@ app.include_router(alerts_router, prefix="/api/v1/alerts", tags=["Alerts"])
 
 @app.get("/api/v1/health", tags=["Health"])
 async def health_check():
-    """Healthcheck endpoint."""
-    return {"status": "healthy", "service": "core-platform", "version": "1.0.0"}
+    """Healthcheck endpoint — utilizado pelo Docker e pelo CI."""
+    return {
+        "status": "healthy",
+        "service": "core-platform",
+        "version": "1.0.0",
+        "environment": settings.ENVIRONMENT,
+    }
