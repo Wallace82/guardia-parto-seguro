@@ -11,5 +11,4 @@ openpyxl==3.1.2
 Jinja2==3.1.4
 azure-storage-blob==12.19.1
 azure-identity==1.16.0
-hashlib2==1.0.0
 structlog==24.1.0

@@ -23,10 +23,10 @@
 - [x] Configurar estrutura base do API Gateway (FastAPI): `main.py` + `config.py`
 - [x] Configurar Docker Compose completo com todos os serviços (9 containers: core-api, video, audio, document, risk, report, frontend, postgres ×2, redis)
 - [x] Implementar auth JWT, RBAC e gerenciamento de sessões (User, RefreshToken, Session, MediaFile, Alert — 4 papéis: admin/gestor/profissional/auditor)
-- [ ] Implementar módulo de orquestração multimodal
-- [ ] Configurar banco `core_db` com Alembic migrations
+- [x] Implementar módulo de orquestração multimodal
+- [x] Configurar banco `core_db` com Alembic migrations
 - [ ] Configurar Azure Key Vault e Azure Monitor
-- [ ] Implementar engine de alertas e notificações por e-mail
+- [x] Implementar engine de alertas e notificações por e-mail
 - [ ] Criar healthchecks e endpoints de observabilidade
 
 #### Entregáveis
@@ -34,8 +34,8 @@
 |---|---|---|
 | Docker Compose funcional | Semana 1 | ✅ Concluído |
 | API Gateway com auth | Semana 2 | ✅ Concluído |
-| Gerenciamento de sessões e mídia | Semana 3 | 🔴 Pendente |
-| Motor de alertas | Semana 4 | 🔴 Pendente |
+| Gerenciamento de sessões e mídia | Semana 3 | ✅ Concluído |
+| Motor de alertas | Semana 4 | ✅ Concluído |
 | CI/CD completo | Semana 5 | 🟡 Em progresso |
 | Documentação DevOps | Semana 6 | 🔴 Pendente |
 

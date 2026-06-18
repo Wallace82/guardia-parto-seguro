@@ -4,7 +4,7 @@ CRUD de sessões de monitoramento
 """
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, UploadFile, File, Form, BackgroundTasks, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -15,6 +15,7 @@ from app.sessions.schemas import (
     SessionListOut,
     SessionOut,
     SessionUpdateRequest,
+    MediaFileOut,
 )
 from app.sessions.service import SessionService
 
@@ -115,3 +116,46 @@ async def delete_session(
 ):
     """Remove a sessão e todos os seus arquivos de mídia associados."""
     await SessionService(db).delete(session_id, current_user.id, current_user.role)
+
+
+@router.post(
+    "/{session_id}/media",
+    response_model=MediaFileOut,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Faz upload de uma mídia para a sessão",
+)
+async def upload_media(
+    session_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
+    db: DB,
+    file: UploadFile = File(...),
+    media_type: str = Form(...),
+):
+    """
+    Faz upload de um arquivo de vídeo, áudio ou documento para a sessão.
+    Após o upload, inicia o processamento assíncrono em background pelo orquestrador.
+    """
+    if media_type not in ("video", "audio", "document"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tipo de mídia inválido. Escolha entre: video, audio, document",
+        )
+
+    file_content = await file.read()
+
+    media_file = await SessionService(db).add_media_file(
+        session_id=session_id,
+        filename=file.filename,
+        content_type=file.content_type,
+        media_type=media_type,
+        file_content=file_content,
+        user_id=current_user.id,
+        user_role=current_user.role,
+    )
+
+    # Dispara o orquestrador em background
+    from app.orchestrator.orchestrator import orchestrate_session_analysis
+    background_tasks.add_task(orchestrate_session_analysis, session_id)
+
+    return media_file

@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.alerts.router import router as alerts_router
 from app.auth.router import router as auth_router
 from app.config import settings
-from app.database import create_tables
 from app.sessions.router import router as sessions_router
 
 log = structlog.get_logger(__name__)
@@ -22,11 +21,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     log.info("startup", environment=settings.ENVIRONMENT, version="1.0.0")
 
-    # Em dev, cria tabelas automaticamente (em prod usar Alembic)
-    if settings.ENVIRONMENT == "development":
-        await create_tables()
-        log.info("database_tables_created")
-
+    # Tabelas do banco de dados agora são criadas e controladas via migrações do Alembic.
     yield
 
     log.info("shutdown")

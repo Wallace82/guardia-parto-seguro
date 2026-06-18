@@ -70,8 +70,8 @@ gantt
 | **Dev 4** | Scaffold do `report-domain/` com FastAPI básico | `GET /api/v1/reports/health` retorna 200 |
 
 ### Critérios de Aceite da Semana
-- [ ] `docker-compose up` funciona sem erros
-- [ ] Todos os 6 serviços respondem no healthcheck
+- [x] `docker-compose up` funciona sem erros
+- [x] Todos os 6 serviços respondem no healthcheck
 - [ ] GitHub Actions roda lint básico (mesmo que vazio)
 - [ ] README com instruções de setup testadas por todos
 
