@@ -89,7 +89,7 @@ services:
       retries: 5
 
   # =====================================================
-  # CORE PLATFORM (Dev 1) — backend/
+  # CORE PLATFORM (Wallace Gomes - Dev 1) — backend/
   # =====================================================
   core-api:
     build:
@@ -126,7 +126,7 @@ services:
       start_period: 30s
 
   # =====================================================
-  # VIDEO DOMAIN (Dev 2) — video-domain/
+  # VIDEO DOMAIN (Paulo Roberto Gonçalves - Dev 2) — video-domain/
   # =====================================================
   video-service:
     build:
@@ -159,7 +159,7 @@ services:
       start_period: 60s
 
   # =====================================================
-  # AUDIO DOMAIN (Dev 2) — audio-domain/
+  # AUDIO DOMAIN (Paulo Roberto Gonçalves - Dev 2) — audio-domain/
   # =====================================================
   audio-service:
     build:
@@ -194,7 +194,7 @@ services:
       start_period: 30s
 
   # =====================================================
-  # DOCUMENT DOMAIN (Dev 3) — document-domain/
+  # DOCUMENT DOMAIN (Evandro Rosa Sampaio - Dev 3) — document-domain/
   # =====================================================
   document-service:
     build:
@@ -226,7 +226,7 @@ services:
       start_period: 30s
 
   # =====================================================
-  # RISK DOMAIN (Dev 3) — risk-domain/
+  # RISK DOMAIN (Evandro Rosa Sampaio - Dev 3) — risk-domain/
   # =====================================================
   risk-service:
     build:
@@ -261,7 +261,7 @@ services:
       start_period: 30s
 
   # =====================================================
-  # REPORT DOMAIN (Dev 4) — report-domain/
+  # REPORT DOMAIN (Gustavo Octaviano - Dev 4) — report-domain/
   # =====================================================
   report-service:
     build:
@@ -293,7 +293,7 @@ services:
       start_period: 30s
 
   # =====================================================
-  # FRONTEND — Streamlit Dashboard (Dev 4) — frontend/
+  # FRONTEND — Streamlit Dashboard (Gustavo Octaviano - Dev 4) — frontend/
   # =====================================================
   frontend:
     build:
