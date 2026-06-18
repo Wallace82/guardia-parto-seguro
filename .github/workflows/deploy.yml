@@ -1,0 +1,100 @@
+name: Deploy to Azure — GuardIA Parto Seguro
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  deploy:
+    name: "🚀 Deploy (${{ github.event.inputs.environment || 'production' }})"
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version tag
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG=latest-${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build and push all service images
+        run: |
+          TAG=${{ steps.version.outputs.TAG }}
+          ACR=${{ secrets.ACR_NAME }}.azurecr.io
+
+          for service in backend video-domain audio-domain document-domain risk-domain report-domain frontend; do
+            echo "🔨 Building $service:$TAG..."
+            docker build \
+              --tag $ACR/guardia/$service:$TAG \
+              --tag $ACR/guardia/$service:latest \
+              --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+              --build-arg VCS_REF=${{ github.sha }} \
+              ./$service/
+
+            echo "📤 Pushing $service:$TAG..."
+            docker push $ACR/guardia/$service:$TAG
+            docker push $ACR/guardia/$service:latest
+          done
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          TAG=${{ steps.version.outputs.TAG }}
+          ACR=${{ secrets.ACR_NAME }}.azurecr.io
+          RG=${{ secrets.AZURE_RG }}
+
+          declare -A SERVICES=(
+            ["guardia-backend"]="backend"
+            ["guardia-video"]="video-domain"
+            ["guardia-audio"]="audio-domain"
+            ["guardia-document"]="document-domain"
+            ["guardia-risk"]="risk-domain"
+            ["guardia-report"]="report-domain"
+            ["guardia-frontend"]="frontend"
+          )
+
+          for app_name in "${!SERVICES[@]}"; do
+            service="${SERVICES[$app_name]}"
+            echo "🚀 Deploying $app_name..."
+            az containerapp update \
+              --name $app_name \
+              --resource-group $RG \
+              --image $ACR/guardia/$service:$TAG
+          done
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Deployment ${{ steps.version.outputs.TAG }} completed successfully!"
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+
+      - name: Azure Logout
+        if: always()
+        run: az logout

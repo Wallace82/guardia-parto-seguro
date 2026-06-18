@@ -1,0 +1,26 @@
+# CODEOWNERS — GuardIA Parto Seguro
+# Cada domínio tem um owner definido que deve revisar PRs naquele path
+# Formato: <path> <@github-username>
+
+# ============ CORE PLATFORM & DEVOPS (Dev 1) ============
+/backend/              @dev1
+/devops/               @dev1
+/.github/              @dev1
+/.env.example          @dev1
+/docker-compose.yml    @dev1
+
+# ============ VIDEO & AUDIO AI (Dev 2) ============
+/video-domain/         @dev2
+/audio-domain/         @dev2
+
+# ============ DOCUMENT AI & RISK (Dev 3) ============
+/document-domain/      @dev3
+/risk-domain/          @dev3
+
+# ============ FRONTEND & REPORTS (Dev 4) ============
+/frontend/             @dev4
+/report-domain/        @dev4
+
+# ============ DOCUMENTAÇÃO (todos revisam) ============
+/docs/                 @dev1 @dev2 @dev3 @dev4
+/README.md             @dev1 @dev2 @dev3 @dev4

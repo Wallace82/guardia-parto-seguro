@@ -1,0 +1,134 @@
+# ============================================
+# GUARDIA PARTO SEGURO — .gitignore
+# ============================================
+
+# ============ AMBIENTE E SEGREDOS ============
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+secrets/
+
+# ============ PYTHON ============
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============ VIRTUAL ENVIRONMENTS ============
+.venv/
+venv/
+ENV/
+env/
+.env/
+
+# ============ TESTES E COVERAGE ============
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# ============ IDEs ============
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============ DOCKER ============
+# (manter docker-compose.yml commitado)
+docker-compose.override.yml
+
+# ============ BANCO DE DADOS ============
+*.sqlite3
+*.db
+postgres_data/
+
+# ============ LOGS ============
+*.log
+logs/
+log/
+
+# ============ VÍDEOS E MÍDIAS DE TESTE ============
+# IMPORTANTE: nunca commitar vídeos/áudios de pacientes
+*.mp4
+*.avi
+*.mov
+*.wav
+*.mp3
+*.ogg
+# Manter apenas arquivos de demo na pasta /demo_data/ se necessário
+!demo_data/*.mp4
+!demo_data/*.wav
+
+# ============ MODELOS DE IA (grandes) ============
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.h5
+# Exceção: modelo YOLO pequeno se necessário
+!video-domain/models/yolov8n.pt
+
+# ============ AZURE ============
+.azure/
+azureauth.json
+
+# ============ RELATÓRIOS GERADOS ============
+reports/generated/
+*.pdf
+# Manter templates
+!report-domain/app/templates/*.html
+
+# ============ NOTEBOOKS ============
+.ipynb_checkpoints/
+# Manter notebooks de pesquisa se explicitamente necessário
+
+# ============ CACHE ============
+.mypy_cache/
+.ruff_cache/
+.black_cache/
+.cache/
+
+# ============ NODE (para eventuais ferramentas JS) ============
+node_modules/
+npm-debug.log*
+
+# ============ OS ============
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
