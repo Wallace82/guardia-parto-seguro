@@ -1,6 +1,6 @@
 # TEAM_PLAN.md — GuardIA Parto Seguro
 
-> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.1  
+> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.2  
 > **Última atualização:** 2026-06-18 | **Atualizado por:** Desenvolvedor 1
 
 ---
@@ -21,7 +21,7 @@
 - [x] Criar `CODEOWNERS` para ownership por domínio
 - [x] Criar template de Pull Request (`.github/pull_request_template.md`)
 - [x] Configurar estrutura base do API Gateway (FastAPI): `main.py` + `config.py`
-- [ ] Configurar Docker Compose completo com todos os serviços
+- [x] Configurar Docker Compose completo com todos os serviços (9 containers: core-api, video, audio, document, risk, report, frontend, postgres ×2, redis)
 - [ ] Implementar auth JWT, RBAC e gerenciamento de sessões
 - [ ] Implementar módulo de orquestração multimodal
 - [ ] Configurar banco `core_db` com Alembic migrations
@@ -32,7 +32,7 @@
 #### Entregáveis
 | Entregável | Prazo | Status |
 |---|---|---|
-| Docker Compose funcional | Semana 1 | 🔴 Pendente |
+| Docker Compose funcional | Semana 1 | ✅ Concluído |
 | API Gateway com auth | Semana 2 | 🟡 Em progresso |
 | Gerenciamento de sessões e mídia | Semana 3 | 🔴 Pendente |
 | Motor de alertas | Semana 4 | 🔴 Pendente |
