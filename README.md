@@ -141,10 +141,10 @@ docker exec -it guardia-postgres-core psql -U guardia -d core_db
 
 | Dev | Papel | Domínios |
 |---|---|---|
-| **Dev 1** | Core Platform & DevOps | `backend/`, `infra/` |
-| **Dev 2** | Video & Audio AI | `video-domain/`, `audio-domain/` |
-| **Dev 3** | Document AI & Risk | `document-domain/`, `risk-domain/` |
-| **Dev 4** | Frontend & Reports | `frontend/`, `report-domain/` |
+| **Wallace Gomes (Dev 1)** | Core Platform & DevOps | `backend/`, `infra/` |
+| **Paulo Roberto Gonçalves (Dev 2)** | Video & Audio AI | `video-domain/`, `audio-domain/` |
+| **Evandro Rosa Sampaio (Dev 3)** | Document AI & Risk | `document-domain/`, `risk-domain/` |
+| **Gustavo Octaviano (Dev 4)** | Frontend & Reports | `frontend/`, `report-domain/` |
 
 ---
 

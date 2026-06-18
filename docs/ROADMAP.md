@@ -10,38 +10,55 @@
 gantt
     title GuardIA Parto Seguro — Roadmap 8 Semanas
     dateFormat  YYYY-MM-DD
-    section Dev 1 (Core + DevOps)
-    Repositório e Infraestrutura     :a1, 2024-01-15, 7d
-    API Gateway + Auth               :a2, after a1, 7d
-    Sessões + Orquestração           :a3, after a2, 7d
-    Motor de Alertas                 :a4, after a3, 7d
-    CI/CD Completo                   :a5, after a4, 7d
+    section Wallace Gomes (Dev 1)
+    Repositório e Infraestrutura     :done, a1, 2024-01-15, 7d
+    API Gateway + Auth               :done, a2, after a1, 7d
+    Sessões + Orquestração           :done, a3, after a2, 7d
+    Motor de Alertas                 :done, a4, after a3, 7d
+    CI/CD Completo                   :active, a5, after a4, 7d
     Integração Final                 :a6, after a5, 14d
 
-    section Dev 2 (Video + Audio)
-    Video Service Base               :b1, 2024-01-15, 7d
-    DeepFace + MediaPipe             :b2, after b1, 7d
+    section Paulo Roberto Gonçalves (Dev 2)
+    Video Service Base               :done, b1, 2024-01-15, 7d
+    DeepFace + MediaPipe             :active, b2, after b1, 7d
     YOLOv8 + Sangramento             :b3, after b2, 7d
     Audio Service + Azure Speech     :b4, 2024-01-22, 7d
     Azure Language + NER             :b5, after b4, 7d
     Scorers IRA                      :b6, 2024-02-12, 7d
 
-    section Dev 3 (Document + Risk)
-    Document Service Base            :c1, 2024-01-15, 7d
-    Azure Doc Intelligence           :c2, after c1, 7d
+    section Evandro Rosa Sampaio (Dev 3)
+    Document Service Base            :done, c1, 2024-01-15, 7d
+    Azure Doc Intelligence           :active, c2, after c1, 7d
     Validações e Consistência        :c3, after c2, 7d
     Risk Service + IRA Básico        :c4, 2024-01-22, 7d
     IRA Composto + Tendências        :c5, after c4, 14d
     Justificativas Textuais          :c6, 2024-02-12, 7d
 
-    section Dev 4 (Frontend + Reports)
-    Dashboard Base + Login           :d1, 2024-01-15, 7d
-    Upload + Status de Sessão        :d2, after d1, 7d
+    section Gustavo Octaviano (Dev 4)
+    Dashboard Base + Login           :done, d1, 2024-01-15, 7d
+    Upload + Status de Sessão        :active, d2, after d1, 7d
     IRA Gauge + Alertas              :d3, after d2, 7d
     Report Service + PDF             :d4, 2024-01-29, 7d
     Excel + Auditoria                :d5, after d4, 7d
     Dashboard Histórico Completo     :d6, 2024-02-12, 14d
 ```
+
+<style>
+.taskDone {
+    fill: #2ecc71 !important;
+    stroke: #27ae60 !important;
+}
+.taskDoneText {
+    fill: #ffffff !important;
+}
+.taskActive {
+    fill: #f1c40f !important;
+    stroke: #f39c12 !important;
+}
+.taskActiveText {
+    fill: #333333 !important;
+}
+</style>
 
 ---
 

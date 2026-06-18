@@ -1,13 +1,13 @@
 # TEAM_PLAN.md — GuardIA Parto Seguro
 
 > Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.3  
-> **Última atualização:** 2026-06-18 | **Atualizado por:** Desenvolvedor 1
+> **Última atualização:** 2026-06-18 | **Atualizado por:** Wallace Gomes (Dev 1)
 
 ---
 
 ## 1. Organização da Equipe
 
-### 👨‍💻 Desenvolvedor 1 — Core Platform & DevOps Lead
+### 👨‍💻 Wallace Gomes (Dev 1) — Core Platform & DevOps Lead
 
 **Foco:** `backend/` + `devops/`  
 **Status:** 🟡 Em progresso
@@ -47,7 +47,7 @@
 
 ---
 
-### 👩‍💻 Desenvolvedor 2 — Video AI & Audio AI
+### 👩‍💻 Paulo Roberto Gonçalves (Dev 2) — Video AI & Audio AI
 
 **Foco:** `video-domain/` + `audio-domain/`
 
@@ -89,7 +89,7 @@
 
 ---
 
-### 👨‍💻 Desenvolvedor 3 — Document AI & Risk Domain
+### 👨‍💻 Evandro Rosa Sampaio (Dev 3) — Document AI & Risk Domain
 
 **Foco:** `document-domain/` + `risk-domain/`
 
@@ -131,7 +131,7 @@
 
 ---
 
-### 👩‍💻 Desenvolvedor 4 — Frontend & Reports
+### 👩‍💻 Gustavo Octaviano (Dev 4) — Frontend & Reports
 
 **Foco:** `frontend/` + `report-domain/`
 
