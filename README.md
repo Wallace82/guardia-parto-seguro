@@ -31,15 +31,21 @@ A solução processa simultaneamente **vídeos clínicos**, **áudios de consult
 
 ```
 guardia-parto-seguro/
-├── docs/                    # Documentação completa do projeto
-├── backend/                 # Core Platform + API Gateway (FastAPI)
-├── frontend/                # Dashboard Multimodal (Streamlit)
-├── video-domain/            # Domínio de Análise de Vídeo
-├── audio-domain/            # Domínio de Análise de Áudio
-├── document-domain/         # Domínio de Análise de Documentos
-├── risk-domain/             # Domínio de Correlação de Risco (IRA)
-├── report-domain/           # Domínio de Relatórios
-└── devops/                  # CI/CD, Docker, Infraestrutura
+├── infra/                   # ⚙️  Toda a infraestrutura (Docker, DB, scripts)
+│   ├── docker-compose.yml   #     Orquestração de todos os containers
+│   ├── postgres/            #     Scripts de inicialização do banco
+│   ├── scripts/             #     Scripts utilitários de infra
+│   └── nginx/               #     Configuração de reverse proxy (futuro)
+├── docs/                    # 📚 Documentação completa do projeto
+├── backend/                 # 🔐 Core Platform + API Gateway (FastAPI)
+├── frontend/                # 🖥️  Dashboard Multimodal (Streamlit)
+├── video-domain/            # 🎥 Domínio de Análise de Vídeo
+├── audio-domain/            # 🎙️  Domínio de Análise de Áudio
+├── document-domain/         # 📄 Domínio de Análise de Documentos
+├── risk-domain/             # 📊 Domínio de Correlação de Risco (IRA)
+├── report-domain/           # 📋 Domínio de Relatórios
+├── start.ps1                # ▶️  Script de startup (Windows)
+└── start.sh                 # ▶️  Script de startup (Linux/macOS)
 ```
 
 Veja a documentação completa em [ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -50,11 +56,9 @@ Veja a documentação completa em [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ### Pré-requisitos
 
-- Python 3.11+
-- Docker & Docker Compose
-- PostgreSQL 16+
-- Conta Azure (com os serviços habilitados)
+- Docker Desktop (inclui Docker Compose)
 - Git
+- Conta Azure (para serviços de IA — opcional em desenvolvimento)
 
 ### 1. Clone o repositório
 
@@ -63,31 +67,73 @@ git clone https://github.com/seu-org/guardia-parto-seguro.git
 cd guardia-parto-seguro
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Inicie o projeto
 
-```bash
-cp .env.example .env
-# Edite o .env com suas credenciais Azure e PostgreSQL
+> O script de startup configura o `.env`, aguarda os bancos ficarem saudáveis e sobe todos os containers automaticamente.
+
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
 ```
 
-### 3. Suba os serviços com Docker Compose
-
+**Linux / macOS:**
 ```bash
-docker-compose -f devops/docker-compose.yml up -d
+chmod +x start.sh
+./start.sh
 ```
 
-### 4. Acesse os serviços
+### 3. Acesse os serviços
 
 | Serviço | URL | Descrição |
 |---|---|---|
-| API Gateway | http://localhost:8000 | FastAPI backend principal |
-| API Docs | http://localhost:8000/docs | Swagger UI |
-| Dashboard | http://localhost:8501 | Streamlit frontend |
-| Video API | http://localhost:8001 | Serviço de análise de vídeo |
-| Audio API | http://localhost:8002 | Serviço de análise de áudio |
-| Document API | http://localhost:8003 | Serviço de análise documental |
-| Risk API | http://localhost:8004 | Cálculo do IRA |
-| Report API | http://localhost:8005 | Geração de relatórios |
+| **Dashboard** | http://localhost:8501 | Streamlit frontend |
+| **API Gateway** | http://localhost:8000 | FastAPI backend principal |
+| **Swagger UI** | http://localhost:8000/docs | Documentação interativa da API |
+| Video Service | http://localhost:8001 | Análise de vídeo (OpenCV/DeepFace) |
+| Audio Service | http://localhost:8002 | Análise de áudio (Azure Speech) |
+| Document Service | http://localhost:8003 | OCR e análise documental |
+| Risk Service | http://localhost:8004 | Cálculo do IRA |
+| Report Service | http://localhost:8005 | Geração de PDF/Excel |
+
+---
+
+## ⚙️ Comandos do Script de Startup
+
+| Comando | Descrição |
+|---|---|
+| `.\start.ps1` | Sobe todos os containers (cria `.env` se não existir) |
+| `.\start.ps1 -Build` | Força rebuild de todas as imagens Docker |
+| `.\start.ps1 -Down` | Para e remove todos os containers |
+| `.\start.ps1 -Status` | Exibe status atual dos containers |
+| `.\start.ps1 -Logs` | Sobe os containers e exibe logs ao vivo |
+| `.\start.ps1 -Reset` | **⚠️ Remove volumes** e reinicia do zero |
+
+> Substitua `.\start.ps1` por `./start.sh` no Linux/macOS com as mesmas flags (`--build`, `--down`, etc.).
+
+---
+
+## 🗂️ Infraestrutura (`infra/`)
+
+Toda a configuração de infraestrutura está centralizada em [`infra/`](infra/):
+
+| Arquivo | Descrição |
+|---|---|
+| [`infra/docker-compose.yml`](infra/docker-compose.yml) | Orquestração de 9 containers (2 PostgreSQL, Redis, 6 serviços + frontend) |
+| [`infra/postgres/init-domains.sql`](infra/postgres/init-domains.sql) | Inicializa os 5 bancos de domínio na primeira execução |
+| [`infra/scripts/`](infra/scripts/) | Scripts utilitários (backup, migração, seed) |
+
+Para executar comandos Docker manualmente:
+
+```bash
+# Rodar diretamente com o compose
+docker compose -f infra/docker-compose.yml up -d
+
+# Ver logs de um serviço específico
+docker compose -f infra/docker-compose.yml logs -f core-api
+
+# Acessar o banco core_db
+docker exec -it guardia-postgres-core psql -U guardia -d core_db
+```
 
 ---
 
@@ -95,7 +141,7 @@ docker-compose -f devops/docker-compose.yml up -d
 
 | Dev | Papel | Domínios |
 |---|---|---|
-| **Dev 1** | Core Platform & DevOps | `backend/`, `devops/` |
+| **Dev 1** | Core Platform & DevOps | `backend/`, `infra/` |
 | **Dev 2** | Video & Audio AI | `video-domain/`, `audio-domain/` |
 | **Dev 3** | Document AI & Risk | `document-domain/`, `risk-domain/` |
 | **Dev 4** | Frontend & Reports | `frontend/`, `report-domain/` |
@@ -126,15 +172,17 @@ docker-compose -f devops/docker-compose.yml up -d
 - **Azure Speech + Azure AI Language** — Processamento de áudio e linguagem
 - **Azure Document Intelligence** — Análise de documentos
 
-### Infraestrutura Azure
+### Infraestrutura
+- **Docker + Docker Compose** — Containerização (`infra/`)
+- **PostgreSQL 16** — 2 instâncias: `core_db` + bancos de domínio
+- **Redis 7** — Cache e filas de sessão
 - **Azure Blob Storage** — Armazenamento de mídias
 - **Azure Key Vault** — Gerenciamento de segredos
 - **Azure Monitor** — Observabilidade e alertas
 
 ### Frontend & Dados
 - **Streamlit** — Dashboard interativo
-- **PostgreSQL 16** — Banco de dados relacional
-- **Docker** — Containerização
+- **SQLAlchemy 2.0 + Alembic** — ORM assíncrono e migrations
 
 ---
 

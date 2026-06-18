@@ -1,11 +1,8 @@
 # =============================================================
 # GuardIA Parto Seguro — Docker Compose
-# Todos os serviços da plataforma multimodal de IA obstétrica
-# =============================================================
-# Uso:
-#   cp .env.example .env   # preencha os valores
-#   docker-compose up -d   # sobe tudo em background
-#   docker-compose logs -f # acompanhar logs
+# Localizado em: infra/docker-compose.yml
+# Executar a partir da raiz com: docker-compose -f infra/docker-compose.yml up -d
+# Ou usar o script: ./start.sh  |  .\start.ps1
 # =============================================================
 
 version: "3.9"
@@ -13,11 +10,7 @@ version: "3.9"
 # --------------- VOLUMES PERSISTENTES ----------------
 volumes:
   postgres_core_data:
-  postgres_video_data:
-  postgres_audio_data:
-  postgres_document_data:
-  postgres_risk_data:
-  postgres_report_data:
+  postgres_domains_data:
   redis_data:
 
 # --------------- REDES INTERNAS ----------------------
@@ -54,7 +47,7 @@ services:
       retries: 5
       start_period: 20s
 
-  # --- PostgreSQL: domínios especializados (um DB por serviço) ---
+  # --- PostgreSQL: bancos de domínio (video, audio, document, risk, report) ---
   postgres-domains:
     image: postgres:16-alpine
     container_name: guardia-postgres-domains
@@ -64,8 +57,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-guardia_dev_pass}
       POSTGRES_DB: video_db
     volumes:
-      - postgres_video_data:/var/lib/postgresql/data
-      - ./devops/postgres/init-domains.sql:/docker-entrypoint-initdb.d/init-domains.sql:ro
+      - postgres_domains_data:/var/lib/postgresql/data
+      - ./postgres/init-domains.sql:/docker-entrypoint-initdb.d/init-domains.sql:ro
     networks:
       - guardia_net
     ports:
@@ -96,16 +89,16 @@ services:
       retries: 5
 
   # =====================================================
-  # CORE PLATFORM (Dev 1)
+  # CORE PLATFORM (Dev 1) — backend/
   # =====================================================
   core-api:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
       target: development
     container_name: guardia-core-api
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       REDIS_URL: redis://:${REDIS_PASSWORD:-guardia_redis_pass}@redis:6379/0
@@ -115,7 +108,7 @@ services:
       RISK_SERVICE_URL: http://risk-service:8004
       REPORT_SERVICE_URL: http://report-service:8005
     volumes:
-      - ./backend:/app
+      - ../backend:/app
     ports:
       - "8000:8000"
     networks:
@@ -133,16 +126,16 @@ services:
       start_period: 30s
 
   # =====================================================
-  # VIDEO DOMAIN (Dev 2)
+  # VIDEO DOMAIN (Dev 2) — video-domain/
   # =====================================================
   video-service:
     build:
-      context: ./video-domain
+      context: ../video-domain
       dockerfile: Dockerfile
       target: development
     container_name: guardia-video-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/video_db
       SERVICE_PORT: "8001"
@@ -150,7 +143,7 @@ services:
       DEEPFACE_BACKEND: ${DEEPFACE_BACKEND:-retinaface}
       YOLO_CONFIDENCE_THRESHOLD: ${YOLO_CONFIDENCE_THRESHOLD:-0.70}
     volumes:
-      - ./video-domain:/app
+      - ../video-domain:/app
     ports:
       - "8001:8001"
     networks:
@@ -163,19 +156,19 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s  # modelos de visão computacional demoram para carregar
+      start_period: 60s
 
   # =====================================================
-  # AUDIO DOMAIN (Dev 2)
+  # AUDIO DOMAIN (Dev 2) — audio-domain/
   # =====================================================
   audio-service:
     build:
-      context: ./audio-domain
+      context: ../audio-domain
       dockerfile: Dockerfile
       target: development
     container_name: guardia-audio-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/audio_db
       SERVICE_PORT: "8002"
@@ -185,7 +178,7 @@ services:
       AZURE_LANGUAGE_ENDPOINT: ${AZURE_LANGUAGE_ENDPOINT:-}
       AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY:-}
     volumes:
-      - ./audio-domain:/app
+      - ../audio-domain:/app
     ports:
       - "8002:8002"
     networks:
@@ -201,23 +194,23 @@ services:
       start_period: 30s
 
   # =====================================================
-  # DOCUMENT DOMAIN (Dev 3)
+  # DOCUMENT DOMAIN (Dev 3) — document-domain/
   # =====================================================
   document-service:
     build:
-      context: ./document-domain
+      context: ../document-domain
       dockerfile: Dockerfile
       target: development
     container_name: guardia-document-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/document_db
       SERVICE_PORT: "8003"
       AZURE_DOC_INTELLIGENCE_ENDPOINT: ${AZURE_DOC_INTELLIGENCE_ENDPOINT:-}
       AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY:-}
     volumes:
-      - ./document-domain:/app
+      - ../document-domain:/app
     ports:
       - "8003:8003"
     networks:
@@ -233,16 +226,16 @@ services:
       start_period: 30s
 
   # =====================================================
-  # RISK DOMAIN (Dev 3)
+  # RISK DOMAIN (Dev 3) — risk-domain/
   # =====================================================
   risk-service:
     build:
-      context: ./risk-domain
+      context: ../risk-domain
       dockerfile: Dockerfile
       target: development
     container_name: guardia-risk-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/risk_db
       SERVICE_PORT: "8004"
@@ -252,7 +245,7 @@ services:
       IRA_THRESHOLD_MODERATE: ${IRA_THRESHOLD_MODERATE:-40.0}
       IRA_THRESHOLD_CRITICAL: ${IRA_THRESHOLD_CRITICAL:-70.0}
     volumes:
-      - ./risk-domain:/app
+      - ../risk-domain:/app
     ports:
       - "8004:8004"
     networks:
@@ -268,23 +261,23 @@ services:
       start_period: 30s
 
   # =====================================================
-  # REPORT DOMAIN (Dev 4)
+  # REPORT DOMAIN (Dev 4) — report-domain/
   # =====================================================
   report-service:
     build:
-      context: ./report-domain
+      context: ../report-domain
       dockerfile: Dockerfile
       target: development
     container_name: guardia-report-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/report_db
       SERVICE_PORT: "8005"
       AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING:-}
       AZURE_BLOB_CONTAINER_REPORTS: ${AZURE_BLOB_CONTAINER_REPORTS:-guardia-reports}
     volumes:
-      - ./report-domain:/app
+      - ../report-domain:/app
     ports:
       - "8005:8005"
     networks:
@@ -300,23 +293,23 @@ services:
       start_period: 30s
 
   # =====================================================
-  # FRONTEND — Streamlit Dashboard (Dev 4)
+  # FRONTEND — Streamlit Dashboard (Dev 4) — frontend/
   # =====================================================
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
       target: development
     container_name: guardia-frontend
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       API_BASE_URL: http://core-api:8000
       STREAMLIT_SERVER_PORT: "8501"
       STREAMLIT_SERVER_ADDRESS: "0.0.0.0"
       STREAMLIT_THEME: ${STREAMLIT_THEME:-dark}
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
     ports:
       - "8501:8501"
     networks:
