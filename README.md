@@ -23,7 +23,7 @@ O **GuardIA Parto Seguro** é uma plataforma acadêmica de inteligência artific
 - ⚠️ Desvios em procedimentos obstétricos
 - 📊 Indicadores de Risco Assistencial (IRA)
 
-A solução processa simultaneamente **vídeos clínicos**, **áudios de consultas**, **documentos médicos** e **histórico do paciente**, gerando alertas automáticos e relatórios especializados.
+A solução utiliza uma **Arquitetura Híbrida** combinando processamento local e serviços em nuvem, processando simultaneamente **vídeos clínicos**, **áudios de consultas**, **documentos médicos** e **histórico do paciente**, gerando alertas automáticos e relatórios especializados, com rígidos controles de **Segurança e conformidade LGPD**.
 
 ---
 
@@ -31,21 +31,20 @@ A solução processa simultaneamente **vídeos clínicos**, **áudios de consult
 
 ```
 guardia-parto-seguro/
-├── infra/                   # ⚙️  Toda a infraestrutura (Docker, DB, scripts)
-│   ├── docker-compose.yml   #     Orquestração de todos os containers
-│   ├── postgres/            #     Scripts de inicialização do banco
-│   ├── scripts/             #     Scripts utilitários de infra
-│   └── nginx/               #     Configuração de reverse proxy (futuro)
+├── infra/                   # ⚙️ Infraestrutura local (Docker, DB, scripts)
+├── infrastructure/          # ☁️ Scripts e IaC (Infrastructure as Code) para Azure
 ├── docs/                    # 📚 Documentação completa do projeto
 ├── backend/                 # 🔐 Core Platform + API Gateway (FastAPI)
-├── frontend/                # 🖥️  Dashboard Multimodal (Streamlit)
-├── video-domain/            # 🎥 Domínio de Análise de Vídeo
-├── audio-domain/            # 🎙️  Domínio de Análise de Áudio
-├── document-domain/         # 📄 Domínio de Análise de Documentos
+├── frontend/                # 🖥️ Dashboard Multimodal (Streamlit)
+├── video-domain/            # 🎥 Domínio Local de Visão Computacional (OpenCV/YOLOv8/DeepFace)
+├── audio-domain/            # 🎙️ Domínio de Análise de Áudio (delegado ao Azure Speech/Language)
+├── document-domain/         # 📄 Domínio de Análise de Documentos (delegado ao Azure Doc Intel)
 ├── risk-domain/             # 📊 Domínio de Correlação de Risco (IRA)
 ├── report-domain/           # 📋 Domínio de Relatórios
-├── start.ps1                # ▶️  Script de startup (Windows)
-└── start.sh                 # ▶️  Script de startup (Linux/macOS)
+├── cloud-domain/            # 🌩️ Cloud Integration Domain (Storage, Azure AI, Auditoria)
+├── security-domain/         # 🛡️ Security Domain (LGPD, Auth, Anonimização, RBAC)
+├── start.ps1                # ▶️ Script de startup (Windows)
+└── start.sh                 # ▶️ Script de startup (Linux/macOS)
 ```
 
 Veja a documentação completa em [ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -152,15 +151,16 @@ docker exec -it guardia-postgres-core psql -U guardia -d core_db
 
 | Documento | Descrição |
 |---|---|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitetura completa, diagramas C4, fluxos |
-| [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requisitos funcionais, não funcionais e regras de negócio |
-| [DOMAINS.md](docs/DOMAINS.md) | Definição completa de todos os domínios |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitetura híbrida completa, diagramas C4, fluxos |
+| [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requisitos funcionais, não funcionais, regras de negócio e segurança |
+| [DOMAINS.md](docs/DOMAINS.md) | Definição completa de todos os domínios (incluindo Cloud e Security) |
 | [API_SPEC.md](docs/API_SPEC.md) | Especificação OpenAPI de todas as APIs |
 | [DATABASE.md](docs/DATABASE.md) | Modelo de dados, DDL e relacionamentos |
-| [DEVOPS.md](docs/DEVOPS.md) | CI/CD, Docker, estratégia de deploy |
+| [DEVOPS.md](docs/DEVOPS.md) | CI/CD, segurança, Docker, estratégia de deploy |
+| [SECURITY.md](docs/SECURITY.md) | Diretrizes de Criptografia, RBAC, Auditoria, Gestão de Segredos e LGPD |
 | [TEAM_PLAN.md](docs/TEAM_PLAN.md) | Plano da equipe, responsabilidades e agentes IA |
-| [ROADMAP.md](docs/ROADMAP.md) | Roadmap de 8 semanas com critérios de aceite |
-| [RISKS.md](docs/RISKS.md) | Matriz de riscos e mitigações |
+| [ROADMAP.md](docs/ROADMAP.md) | Roadmap de execução com Sprints de Segurança e Nuvem |
+| [RISK_MATRIX.md](docs/RISK_MATRIX.md) | Matriz de riscos (incluindo custos, vazamento e LGPD) e mitigações |
 
 ---
 
@@ -216,19 +216,19 @@ Compreende o núcleo de inteligência analítica multimodal e as capacidades de 
     *   *Problema que resolve:* Extração de textos de documentos digitalizados ou manuscritos (prontuários, termos de consentimento, laudos).
     *   *Solução:* Executa OCR inteligente e mapeamento de chaves, tabelas e valores, estruturando dados antes ilegíveis para correlacionar com o histórico.
 
-#### D. Core Backend & Utilitários
-*   **python-jose (`3.3.0`)**
-    *   *Problema que resolve:* Autenticação segura e stateless de usuários da plataforma.
-    *   *Solução:* Emite, assina digitalmente e verifica tokens JWT de forma segura.
-*   **passlib (`1.7.4`)**
-    *   *Problema que resolve:* Armazenamento inseguro de senhas.
-    *   *Solução:* Criptografa senhas dos usuários utilizando o algoritmo adaptativo Bcrypt.
-*   **aiosmtplib (`3.0.1`)**
-    *   *Problema que resolve:* Disparo de e-mails de alerta e emergência sem bloquear o fluxo principal.
-    *   *Solução:* Cliente SMTP assíncrono compatível com o loop do FastAPI.
-*   **structlog (`24.1.0`)**
-    *   *Problema que resolve:* Falta de rastreabilidade de requisições e diagnósticos complexos de erros.
-    *   *Solução:* Gera logs estruturados em JSON para integração com ferramentas de monitoramento.
+#### D. Integração Cloud & Segurança Híbrida (`cloud-domain`, `security-domain`)
+*   **Azure Identity & Key Vault (`azure-identity`, `azure-keyvault-secrets`)**
+    *   *Problema:* Proteção de segredos e credenciais, garantindo conformidade com arquiteturas Zero Trust.
+    *   *Solução:* Busca dinamicamente senhas, conexões e chaves diretamente do Azure Key Vault. Nenhuma credencial fica em código-fonte ou `.env` de produção.
+*   **Azure Monitor & Auditoria**
+    *   *Problema:* Observabilidade e rastreabilidade (requisito LGPD).
+    *   *Solução:* Centraliza logs estruturados de acessos, uploads e cálculos de risco em tempo real.
+*   **Módulo de Anonimização & LGPD**
+    *   *Problema:* Necessidade de ocultar dados sensíveis de pacientes em logs e bancos de dados (Ex: Maria Silva → PACIENTE_001).
+    *   *Solução:* Módulo de criptografia AES-256 para repouso, mascaramento e hash unidirecional para identificadores, operando no Security Domain.
+*   **python-jose (`3.3.0`) & passlib (`1.7.4`)**
+    *   *Problema:* Autenticação e RBAC (Role-Based Access Control).
+    *   *Solução:* Controla o acesso via JWT com validação forte para os perfis: Admin, Gestor, Médico, Enfermeiro e Auditor.
 
 ### 3. 🖥️ Contexto de Frontend & Geração de Relatórios
 Garante a interface do usuário final de monitoramento e a confecção de arquivos exportáveis para ouvidorias e órgãos fiscalizadores.

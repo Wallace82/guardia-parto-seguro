@@ -14,8 +14,8 @@ O sistema utiliza **PostgreSQL 16** com **schemas isolados por domínio** na mes
 | `video` | Video Analysis | `video-domain/` |
 | `audio` | Audio Analysis | `audio-domain/` |
 | `document` | Document Analysis | `document-domain/` |
-| `risk` | Risk Correlation | `risk-domain/` |
-| `report` | Reporting | `report-domain/` |
+| `cloud` | Cloud Integration | `cloud-domain/` |
+| `security` | Security Domain | `security-domain/` |
 
 ---
 
@@ -28,12 +28,14 @@ erDiagram
     USERS {
         uuid id PK
         varchar email UK
-        varchar password_hash
-        varchar full_name
-        varchar role
+        varchar full_name_hash
         boolean is_active
-        timestamp created_at
-        timestamp updated_at
+    }
+
+    USER_ROLES {
+        uuid id PK
+        uuid user_id FK
+        varchar role_name
     }
 
     SESSIONS {
@@ -44,9 +46,6 @@ erDiagram
         varchar status
         timestamp session_date
         varchar unit_name
-        jsonb metadata
-        timestamp created_at
-        timestamp updated_at
     }
 
     PATIENTS {
@@ -54,39 +53,20 @@ erDiagram
         varchar medical_record_number UK
         varchar full_name_hash
         date date_of_birth
-        varchar consent_status
+    }
+
+    DATA_CONSENT {
+        uuid id PK
+        uuid patient_id FK
+        boolean consent_granted
         timestamp consent_date
-        timestamp created_at
-    }
-
-    SESSION_MEDIA {
-        uuid id PK
-        uuid session_id FK
-        varchar media_type
-        varchar blob_url
-        varchar original_filename
-        bigint file_size_bytes
-        varchar status
-        timestamp uploaded_at
-    }
-
-    ALERTS {
-        uuid id PK
-        uuid session_id FK
-        varchar alert_type
-        varchar severity
-        text description
-        jsonb metadata
-        boolean is_acknowledged
-        uuid acknowledged_by FK
-        text acknowledgment_note
-        timestamp triggered_at
-        timestamp acknowledged_at
+        varchar consent_type
     }
 
     AUDIT_LOGS {
         uuid id PK
-        uuid user_id FK
+        uuid actor_id FK
+        varchar role
         varchar action
         varchar resource_type
         uuid resource_id
@@ -95,12 +75,27 @@ erDiagram
         timestamp created_at
     }
 
+    ACCESS_HISTORY {
+        uuid id PK
+        uuid user_id FK
+        timestamp login_time
+        varchar ip_address
+    }
+
+    CLOUD_PROCESSING_HISTORY {
+        uuid id PK
+        varchar service_name
+        timestamp call_time
+        numeric duration_ms
+        numeric cost_estimate
+    }
+
+    USERS ||--o{ USER_ROLES : "user_id"
     USERS ||--o{ SESSIONS : "professional_id"
     PATIENTS ||--o{ SESSIONS : "patient_id"
-    SESSIONS ||--o{ SESSION_MEDIA : "session_id"
-    SESSIONS ||--o{ ALERTS : "session_id"
-    USERS ||--o{ ALERTS : "acknowledged_by"
-    USERS ||--o{ AUDIT_LOGS : "user_id"
+    PATIENTS ||--o{ DATA_CONSENT : "patient_id"
+    USERS ||--o{ AUDIT_LOGS : "actor_id"
+    USERS ||--o{ ACCESS_HISTORY : "user_id"
 ```
 
 ### DDL — Schema Core
@@ -205,6 +200,16 @@ CREATE TABLE core.audit_logs (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Tabela de Consentimentos de Dados (LGPD)
+CREATE TABLE core.data_consents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES core.patients(id),
+    consent_granted BOOLEAN NOT NULL DEFAULT FALSE,
+    consent_type VARCHAR(50) NOT NULL, -- video, audio, research
+    consent_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    revoked_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Índices
 CREATE INDEX idx_sessions_patient ON core.sessions(patient_id);
 CREATE INDEX idx_sessions_professional ON core.sessions(professional_id);
@@ -213,6 +218,41 @@ CREATE INDEX idx_alerts_session ON core.alerts(session_id);
 CREATE INDEX idx_alerts_severity ON core.alerts(severity);
 CREATE INDEX idx_audit_user ON core.audit_logs(user_id);
 CREATE INDEX idx_audit_created ON core.audit_logs(created_at DESC);
+
+-- ============================================
+-- SCHEMA SECURITY
+-- ============================================
+CREATE SCHEMA IF NOT EXISTS security;
+
+CREATE TABLE security.user_roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES core.users(id),
+    role_name VARCHAR(50) NOT NULL, -- admin, medico, enfermeiro, auditor
+    granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE security.access_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES core.users(id),
+    login_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    ip_address INET,
+    user_agent VARCHAR(500)
+);
+
+-- ============================================
+-- SCHEMA CLOUD
+-- ============================================
+CREATE SCHEMA IF NOT EXISTS cloud;
+
+CREATE TABLE cloud.cloud_processing_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    service_name VARCHAR(100) NOT NULL, -- Azure Speech, Azure Doc Intel
+    session_id UUID NOT NULL,
+    call_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    duration_ms NUMERIC(10, 2),
+    cost_estimate NUMERIC(10, 4) DEFAULT 0.0,
+    status VARCHAR(20) NOT NULL
+);
 ```
 
 ---

@@ -16,7 +16,8 @@ gantt
     Sessões + Orquestração           :done, a3, after a2, 7d
     Motor de Alertas                 :done, a4, after a3, 7d
     CI/CD Completo                   :active, a5, after a4, 7d
-    Integração Final                 :a6, after a5, 14d
+    Security Domain (LGPD/Audit)     :a6, after a5, 7d
+    Cloud Domain (Azure Gateway)     :a7, after a6, 7d
 
     section Paulo Roberto Gonçalves (Dev 2)
     Video Service Base               :done, b1, 2024-01-15, 7d
@@ -153,6 +154,7 @@ gantt
 |---|---|---|
 | **Dev 1** | Motor de alertas funcionando | Alerta disparado automaticamente quando IRA ≥ 40 |
 | **Dev 1** | Endpoint de reconhecimento de alertas | PATCH /alerts/{id}/acknowledge atualiza status |
+| **Dev 1** | Security Domain funcional | Rotas de auditoria e validação JWT RBAC funcionais |
 | **Dev 2** | Detecção de sangramento (OpenCV HSV) | Sangramento detectado em frame de teste com cor vermelha |
 | **Dev 2** | IRA Scorer de vídeo | Score de vídeo normalizado (0-100) retornado pela API |
 | **Dev 2** | Azure AI Language (sentimento + NER) | Sentimento e entidades clínicas extraídos da transcrição |
@@ -174,6 +176,7 @@ gantt
 |---|---|---|
 | **Dev 1** | GitHub Actions completo (lint+test+security+build) | Pipeline roda em ≤ 5 min e bloqueia merge se falhar |
 | **Dev 1** | Cobertura de testes ≥ 80% no backend | `pytest --cov` reporta ≥ 80% |
+| **Dev 1** | Cloud Integration Domain finalizado | Proxy para Azure Speech e Blob operando |
 | **Dev 2** | IRA Scorer de áudio completo | Score inclui sentimento + keywords + prosódia |
 | **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | Verificado no CI |
 | **Dev 3** | IRA Scorer documental completo | Score inclui completude + inconsistências + consentimento |

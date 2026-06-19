@@ -4,6 +4,26 @@
 
 ---
 
+## Visão Geral do Sistema
+
+### O que é a proposta do sistema?
+A proposta do GuardIA Parto Seguro é criar um ambiente obstétrico mais seguro, transparente e monitorado através do uso integrado de Inteligência Artificial multimodal. A solução atua como uma ferramenta de vigilância constante, autônoma e preventiva durante consultas, sessões clínicas e procedimentos de parto.
+
+### O que é o sistema?
+Trata-se de uma plataforma tecnológica que processa de forma simultânea múltiplas fontes de dados para monitoramento do ambiente: vídeos (analisando postura, expressões faciais, movimentação e presença de anomalias, como sangramentos), áudio (transcrevendo falas e avaliando sentimentos e tom de voz) e documentos (fazendo leitura de prontuários e termos de consentimento). Com essas informações, o sistema gera de forma automática um Índice de Risco Assistencial (IRA).
+
+### Quais problemas ele resolve?
+O GuardIA resolve a carência de auditoria em tempo real e de mecanismos proativos em saúde materna, detectando e alertando sobre:
+- Violência obstétrica (física, verbal ou de coerção psicológica).
+- Sofrimento e ansiedade gestacional (incluindo riscos de trauma e depressão).
+- Desvios ou negligências procedimentais (ex.: ausência de consentimento prévio, sangramentos anômalos não tratados rapidamente e documentação inconsistente).
+- Falta de respaldo probatório imparcial em eventuais disputas clínicas ou ouvidorias.
+
+### Qual valor ele agrega à sociedade?
+O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar gestantes, famílias e instituições de saúde com dados confiáveis, o sistema promove a humanização do parto, inibe práticas abusivas, e garante a proteção materno-infantil contínua. É uma inovação que assegura dignidade, respeito e ética num dos momentos mais críticos e importantes da vida humana, protegendo pacientes e resguardando os bons profissionais e as instituições transparentes.
+
+---
+
 ## 1. Requisitos Funcionais
 
 ### 1.1 Gerenciamento de Sessões
@@ -99,9 +119,11 @@
 | ID | Requisito |
 |---|---|
 | **RF-049** | O sistema deve suportar login com usuário e senha com autenticação JWT |
-| **RF-050** | O sistema deve implementar controle de acesso baseado em papéis (RBAC): Admin, Gestor, Profissional, Auditor |
-| **RF-051** | O sistema deve registrar log de auditoria de todos os acessos e ações |
+| **RF-050** | O sistema deve implementar controle de acesso baseado em papéis (RBAC): Admin, Médico, Enfermeiro, Auditor |
+| **RF-051** | O sistema deve registrar log de auditoria detalhado (usuário/data/recurso/operação) em todos os acessos e ações |
 | **RF-052** | O sistema deve encerrar sessões inativas após 30 minutos |
+| **RF-053** | O sistema deve mascarar dados sensíveis de pacientes (anonimização: ex. Maria Silva → PACIENTE_001) com base no perfil de acesso |
+| **RF-054** | O sistema deve rotear toda comunicação de mídia com a nuvem pelo Cloud Integration Domain para garantir conformidade |
 
 ---
 
@@ -115,9 +137,9 @@
 | **RNF-004** | Disponibilidade | O sistema deve ter disponibilidade mínima de 99% em ambiente de produção |
 | **RNF-005** | Escalabilidade | Cada serviço de domínio deve escalar horizontalmente de forma independente |
 | **RNF-006** | Segurança | Todos os dados em trânsito devem ser criptografados via TLS 1.3 |
-| **RNF-007** | Segurança | Dados de pacientes devem ser criptografados em repouso (AES-256) |
-| **RNF-008** | Segurança | Credenciais devem ser gerenciadas exclusivamente via Azure Key Vault |
-| **RNF-009** | Segurança | O sistema deve estar em conformidade com a LGPD (Lei 13.709/2018) |
+| **RNF-007** | Segurança | Dados de pacientes devem ser criptografados em repouso com algoritmo AES-256 |
+| **RNF-008** | Segurança | A Gestão de Segredos e credenciais deve ser feita exclusivamente via Azure Key Vault |
+| **RNF-009** | Segurança | O sistema deve estar em estrita conformidade com a LGPD (Lei 13.709/2018), garantindo minimização e privacidade por design |
 | **RNF-010** | Qualidade | A cobertura de testes unitários deve ser ≥ 80% por serviço |
 | **RNF-011** | Qualidade | O código deve passar no linting (ruff/flake8) sem erros |
 | **RNF-012** | Observabilidade | Todos os serviços devem emitir logs estruturados em JSON |
@@ -140,12 +162,12 @@
 | **RN-004** | Alertas | Alertas de nível Crítico (IRA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável |
 | **RN-005** | Alertas | Um alerta não pode ser descartado sem que o responsável registre uma justificativa |
 | **RN-006** | Sessões | Uma sessão clínica não pode ter mais de 3 arquivos de vídeo, 3 de áudio e 10 de documentos |
-| **RN-007** | LGPD | Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita |
-| **RN-008** | LGPD | Dados de pacientes devem ser anonimizados após 5 anos de inatividade (conforme CFM) |
+| **RN-007** | LGPD | Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita (mecanismo de consentimento dinâmico) |
+| **RN-008** | LGPD | Dados de pacientes devem ser completamente anonimizados/pseudo-anonimizados nas bases analíticas e mantidos em segredo de acordo com o CFM |
 | **RN-009** | Documentos | O consentimento informado deve ser verificado antes do processamento de qualquer mídia |
-| **RN-010** | Vídeo | A análise de vídeo deve ser realizada apenas em arquivos previamente anonimizados ou com consentimento verificado |
+| **RN-010** | Vídeo | A análise de vídeo deve ser realizada apenas em arquivos previamente autorizados pelo consentimento verificado |
 | **RN-011** | Áudio | A gravação de consultas requer consentimento explícito documentado e registrado no sistema |
-| **RN-012** | Papéis | Profissionais de saúde podem criar sessões e visualizar seus próprios pacientes; Gestores podem visualizar todas as sessões; Auditores podem acessar apenas relatórios |
+| **RN-012** | Papéis | Médicos e Enfermeiros podem criar sessões e visualizar seus pacientes; Auditores e Admins podem acessar logs e relatórios anonimizados |
 | **RN-013** | Relatórios | Relatórios de auditoria são imutáveis após geração e devem ter hash SHA-256 registrado |
 | **RN-014** | Processamento | O processamento de vídeo e áudio deve ser realizado em background sem bloquear a submissão de novas sessões |
 | **RN-015** | Retenção | Logs de sistema devem ser retidos por no mínimo 1 ano |

@@ -1,4 +1,4 @@
-# RISKS.md — GuardIA Parto Seguro
+# RISK_MATRIX.md — GuardIA Parto Seguro
 
 > Matriz de Riscos e Plano de Mitigação — v1.0
 
@@ -21,6 +21,7 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 | **RT-007** | Azure Document Intelligence com baixa acurácia em documentos escaneados com qualidade ruim | 2 | 2 | 🟡 4 | Pré-processar imagem (deskew, binarização OpenCV); aceitar threshold mínimo de qualidade no upload; documentar requisitos de qualidade | Evandro Rosa Sampaio |
 | **RT-008** | Migrations de banco inconsistentes entre serviços | 2 | 3 | 🔴 6 | Cada serviço tem suas próprias migrations Alembic; CI verifica migrations antes do deploy; scripts de rollback documentados | Wallace Gomes |
 | **RT-009** | YOLOv8 detectando falsos positivos (objetos de risco inexistentes) | 2 | 2 | 🟡 4 | Fine-tuning com dataset obstétrico; threshold de confiança ≥ 0.7; validação humana para alertas de objetos | Paulo Roberto Gonçalves |
+| **RT-010** | Gargalo no Cloud Integration Domain centralizando as requisições | 2 | 3 | 🔴 6 | Implementar circuit breaker, rate limiting, e escalar horizontalmente os containers do Cloud Domain | Wallace Gomes |
 
 ---
 
@@ -45,6 +46,8 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 | **RS-003** | Token JWT com expiração longa comprometido | 2 | 3 | 🔴 6 | Expiração de 1h com refresh token de 7 dias; blacklist de tokens revogados; HTTPS obrigatório | Wallace Gomes |
 | **RS-004** | Arquivo malicioso no upload (path traversal, zip bomb) | 2 | 3 | 🔴 6 | Validar extensão e MIME type; limite de tamanho rígido; análise do arquivo em sandbox; nunca executar arquivo recebido | Wallace Gomes + Paulo Roberto Gonçalves |
 | **RS-005** | Não conformidade com LGPD para dados de pacientes | 2 | 3 | 🔴 6 | Anonimização de dados pessoais (hash de nome); consentimento verificado antes do processamento; log de auditoria imutável; política de retenção documentada | Evandro Rosa Sampaio |
+| **RS-006** | Vazamento da Chave Mestra do Key Vault | 1 | 3 | 🟢 3 | Rotação automática de chaves, acesso condicional, e uso exclusivo via Managed Identity em produção | Wallace Gomes |
+| **RS-007** | Falha na pseudo-anonimização enviando PII para nuvem | 2 | 3 | 🔴 6 | Testes estritos na camada de integração do Security Domain; varredura de regex local antes do envio ao Azure AI | Wallace Gomes + Evandro R. |
 
 ---
 

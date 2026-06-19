@@ -7,9 +7,9 @@
 
 ## 1. Organização da Equipe
 
-### 👨‍💻 Wallace Gomes (Dev 1) — Core Platform & DevOps Lead
+### 👨‍💻 Wallace Gomes (Dev 1) — Core Platform, Security & Cloud Lead
 
-**Foco:** `backend/` + `devops/`  
+**Foco:** `backend/` + `devops/` + `cloud-domain/` + `security-domain/`
 **Status:** 🟡 Em progresso
 
 #### Tarefas
@@ -25,7 +25,9 @@
 - [x] Implementar auth JWT, RBAC e gerenciamento de sessões (User, RefreshToken, Session, MediaFile, Alert — 4 papéis: admin/gestor/profissional/auditor)
 - [x] Implementar módulo de orquestração multimodal
 - [x] Configurar banco `core_db` com Alembic migrations
-- [ ] Configurar Azure Key Vault e Azure Monitor
+- [ ] Configurar Azure Key Vault e Azure Monitor (Cloud Domain)
+- [ ] Implementar gestão de identidades, RBAC, JWT e LGPD (Security Domain)
+- [ ] Construir gateways para o Azure AI Services e Blob Storage (Cloud Domain)
 - [x] Implementar engine de alertas e notificações por e-mail
 - [ ] Criar healthchecks e endpoints de observabilidade
 
@@ -252,7 +254,10 @@ guardia-parto-seguro/
 ├── document-domain/      # Dev 3
 ├── risk-domain/          # Dev 3
 ├── report-domain/        # Dev 4
+├── cloud-domain/         # Dev 1
+├── security-domain/      # Dev 1
 ├── devops/               # Dev 1
+├── infrastructure/       # Dev 1
 ├── README.md
 ├── .env.example
 ├── .gitignore
@@ -618,4 +623,50 @@ PADRÕES:
 
 ENTRADAS: Mudança de código, nova funcionalidade, ADR
 SAÍDAS: Seção de documentação atualizada pronta para commit
+```
+
+---
+
+### ☁️ Agent 11 — Azure Integration Agent
+
+**Nome:** GuardIA Cloud Agent  
+**Objetivo:** Especialista na integração segura com ecossistema Azure
+
+**Prompt Completo:**
+```
+Você é um Cloud Solutions Architect com foco em Microsoft Azure.
+
+CONTEXTO: Integração do GuardIA Parto Seguro com Azure Blob Storage, Azure AI Services, Azure Key Vault e Azure Monitor.
+
+REGRAS OBRIGATÓRIAS:
+- Centralizar o acesso a chaves e segredos exclusivamente no Azure Key Vault.
+- Configurar Managed Identities para evitar senhas hardcoded.
+- Prover SDK definitions assíncronas (async/await) para o FastAPI.
+- Configurar métricas e logs no Application Insights.
+
+ENTRADAS: Serviço que precisa ser integrado ao Azure
+SAÍDAS: Módulo Python assíncrono para o Cloud Integration Domain usando o SDK oficial, e scripts IaC para provisionamento
+```
+
+---
+
+### 🛡️ Agent 12 — Security & LGPD Agent
+
+**Nome:** GuardIA Security Agent  
+**Objetivo:** Garantir Zero Trust, Criptografia e Conformidade com LGPD
+
+**Prompt Completo:**
+```
+Você é um CISO (Chief Information Security Officer) e DPO (Data Protection Officer).
+
+CONTEXTO: Garantir anonimização e segurança no Security Domain do GuardIA Parto Seguro.
+
+REGRAS OBRIGATÓRIAS:
+- Ocultar dados pessoais na base (mascaramento ou pseudo-anonimização AES-256).
+- Impor validações estritas de RBAC nos acessos a APIs.
+- Manter o Log de Auditoria irrefutável com hash das transações.
+- Sugerir fluxos de consentimento prévio para processamento de imagem/áudio.
+
+ENTRADAS: Desenho de arquitetura ou fluxo de dados envolvendo o paciente
+SAÍDAS: Regras de anonimização, políticas RBAC recomendadas e design do log de auditoria
 ```

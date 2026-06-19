@@ -74,26 +74,26 @@ C4Context
 
     Person(profissional, "Profissional de Saúde", "Médico, enfermeiro, parteiro")
     Person(gestor, "Gestor Hospitalar", "Coordenador de qualidade assistencial")
-    Person(ouvidor, "Ouvidor / Compliance", "Responsável por denúncias e auditoria")
+    Person(ouvidor, "Ouvidor / Auditor", "Responsável por auditoria e LGPD")
 
-    System(guardia, "GuardIA Parto Seguro", "Plataforma multimodal de IA para vigilância obstétrica")
+    System(guardia, "GuardIA Parto Seguro", "Plataforma multimodal Híbrida (Local + Nuvem)")
 
     System_Ext(azure_speech, "Azure Speech", "STT e análise de fala")
-    System_Ext(azure_lang, "Azure AI Language", "NLP e análise de sentimento")
-    System_Ext(azure_doc, "Azure Document Intelligence", "OCR e extração documental")
-    System_Ext(azure_blob, "Azure Blob Storage", "Armazenamento de mídias")
-    System_Ext(azure_kv, "Azure Key Vault", "Gerenciamento de segredos")
-    System_Ext(azure_monitor, "Azure Monitor", "Observabilidade")
+    System_Ext(azure_lang, "Azure AI Language", "NLP, sentimento e entidades")
+    System_Ext(azure_doc, "Azure Document Intelligence", "OCR estruturado")
+    System_Ext(azure_blob, "Azure Blob Storage", "Armazenamento seguro de mídias")
+    System_Ext(azure_kv, "Azure Key Vault", "Gestão de segredos e chaves")
+    System_Ext(azure_monitor, "Azure Monitor", "Auditoria e observabilidade")
 
-    Rel(profissional, guardia, "Visualiza alertas e relatórios")
-    Rel(gestor, guardia, "Monitora IRA e dashboard")
-    Rel(ouvidor, guardia, "Acessa relatórios de auditoria")
-    Rel(guardia, azure_speech, "Transcreve áudios de consulta")
-    Rel(guardia, azure_lang, "Analisa texto para sentimento e risco")
-    Rel(guardia, azure_doc, "Processa documentos médicos")
-    Rel(guardia, azure_blob, "Armazena vídeos e documentos")
-    Rel(guardia, azure_kv, "Recupera credenciais e chaves")
-    Rel(guardia, azure_monitor, "Envia logs e métricas")
+    Rel(profissional, guardia, "Visualiza alertas e relatórios", "HTTPS")
+    Rel(gestor, guardia, "Monitora IRA e dashboard", "HTTPS")
+    Rel(ouvidor, guardia, "Acessa relatórios de auditoria", "HTTPS")
+    Rel(guardia, azure_speech, "Transcreve áudios e detecta anomalias", "HTTPS/TLS 1.3")
+    Rel(guardia, azure_lang, "Analisa sentimentos e extrai entidades", "HTTPS/TLS 1.3")
+    Rel(guardia, azure_doc, "Processa documentos médicos", "HTTPS/TLS 1.3")
+    Rel(guardia, azure_blob, "Armazena vídeos, áudios e documentos", "HTTPS/TLS 1.3")
+    Rel(guardia, azure_kv, "Recupera credenciais dinâmicas", "HTTPS/TLS 1.3")
+    Rel(guardia, azure_monitor, "Registra logs de auditoria (LGPD)", "HTTPS/TLS 1.3")
 ```
 
 ---
@@ -104,31 +104,41 @@ C4Context
 C4Container
     title GuardIA Parto Seguro — Diagrama de Contêiner
 
-    Person(user, "Usuário", "Profissional de Saúde / Gestor")
+    Person(user, "Usuário", "Profissional de Saúde / Gestor / Auditor")
 
     Container(frontend, "Dashboard", "Streamlit", "Interface multimodal de monitoramento")
-    Container(gateway, "API Gateway", "FastAPI :8000", "Roteamento, autenticação, orquestração")
+    Container(gateway, "API Gateway", "FastAPI :8000", "Roteamento e orquestração")
+    Container(security_svc, "Security Domain", "FastAPI :8006", "Auth, RBAC, Criptografia, Anonimização LGPD")
+    Container(cloud_svc, "Cloud Integration", "FastAPI :8007", "Gateway para serviços Azure, Blob, e Auditoria")
     Container(video_svc, "Video Service", "FastAPI :8001", "OpenCV, MediaPipe, DeepFace, YOLOv8")
-    Container(audio_svc, "Audio Service", "FastAPI :8002", "Azure Speech, Azure AI Language")
-    Container(doc_svc, "Document Service", "FastAPI :8003", "Azure Document Intelligence")
+    Container(audio_svc, "Audio Service", "FastAPI :8002", "Integra com Cloud Integration para STT/NLP")
+    Container(doc_svc, "Document Service", "FastAPI :8003", "Integra com Cloud Integration para OCR")
     Container(risk_svc, "Risk Service", "FastAPI :8004", "Cálculo do IRA")
     Container(report_svc, "Report Service", "FastAPI :8005", "Geração de PDF/Excel")
 
-    ContainerDb(db_core, "Core DB", "PostgreSQL", "Usuários, sessões, alertas")
+    ContainerDb(db_core, "Core DB", "PostgreSQL", "Sessões, alertas")
+    ContainerDb(db_security, "Security DB", "PostgreSQL", "Usuários, RBAC, AuditLog, Consents")
+    ContainerDb(db_cloud, "Cloud DB", "PostgreSQL", "CloudProcessingHistory")
     ContainerDb(db_video, "Video DB", "PostgreSQL", "Análises de vídeo")
     ContainerDb(db_audio, "Audio DB", "PostgreSQL", "Transcrições e análises de áudio")
     ContainerDb(db_doc, "Document DB", "PostgreSQL", "Documentos processados")
     ContainerDb(db_risk, "Risk DB", "PostgreSQL", "Histórico de IRA")
     ContainerDb(db_report, "Report DB", "PostgreSQL", "Relatórios gerados")
 
-    Rel(user, frontend, "Acessa via browser", "HTTP")
+    Rel(user, frontend, "Acessa via browser", "HTTPS")
     Rel(frontend, gateway, "Chama APIs", "REST/JSON")
-    Rel(gateway, video_svc, "Delega análise de vídeo", "REST")
+    Rel(gateway, security_svc, "Valida Auth/RBAC/LGPD", "REST")
+    Rel(gateway, cloud_svc, "Upload de mídias seguro", "REST")
+    Rel(gateway, video_svc, "Delega análise de vídeo (Local)", "REST")
     Rel(gateway, audio_svc, "Delega análise de áudio", "REST")
     Rel(gateway, doc_svc, "Delega análise documental", "REST")
     Rel(gateway, risk_svc, "Solicita cálculo de IRA", "REST")
     Rel(gateway, report_svc, "Solicita geração de relatório", "REST")
-    Rel(gateway, db_core, "Lê/Escreve", "SQL")
+    Rel(audio_svc, cloud_svc, "Pede transcrição/sentimento", "REST")
+    Rel(doc_svc, cloud_svc, "Pede extração de texto OCR", "REST")
+    
+    Rel(security_svc, db_security, "Lê/Escreve", "SQL")
+    Rel(cloud_svc, db_cloud, "Lê/Escreve", "SQL")
     Rel(video_svc, db_video, "Lê/Escreve", "SQL")
     Rel(audio_svc, db_audio, "Lê/Escreve", "SQL")
     Rel(doc_svc, db_doc, "Lê/Escreve", "SQL")
@@ -198,8 +208,12 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[Upload Sessão Clínica] --> B{Tipo de Mídia}
-    B -->|Vídeo| C[Video Service]
+    A[Upload Sessão Clínica] --> SEC{Security & LGPD Check}
+    SEC -->|Token Inválido / Sem Consentimento| REJ[Rejeita Requisição]
+    SEC -->|OK| C_STORE[Cloud Integration: Store in Azure Blob]
+    
+    C_STORE --> B{Tipo de Mídia}
+    B -->|Vídeo| C[Video Service - Local Processing]
     B -->|Áudio| D[Audio Service]
     B -->|Documento| E[Document Service]
 
@@ -208,11 +222,13 @@ flowchart TD
     C --> C3[Detecção Objetos - YOLOv8]
     C --> C4[Análise Temporal - OpenCV]
 
-    D --> D1[STT - Azure Speech]
-    D --> D2[Análise Sentimento - Azure Language]
-    D --> D3[NER Clínico]
+    D --> D_CLOUD[Cloud Integration Domain]
+    D_CLOUD --> D1[STT - Azure Speech]
+    D_CLOUD --> D2[Análise Sentimento - Azure Language]
+    D_CLOUD --> D3[NER Clínico]
 
-    E --> E1[OCR - Azure Doc Intelligence]
+    E --> E_CLOUD[Cloud Integration Domain]
+    E_CLOUD --> E1[OCR - Azure Doc Intelligence]
     E --> E2[Extração Estruturada]
     E --> E3[Validação de Inconsistências]
 
@@ -230,6 +246,8 @@ flowchart TD
     N --> O[PDF/Excel Report]
     K & L & M --> P[Dashboard Streamlit]
     O --> P
+    
+    K & L & M & O --> AUDIT[Security Domain - Registra no Azure Monitor]
 ```
 
 ---
@@ -238,13 +256,25 @@ flowchart TD
 
 ```mermaid
 graph LR
+    subgraph "Security Domain"
+        SEC_AUTH[Auth & Identity]
+        SEC_RBAC[RBAC Control]
+        SEC_LGPD[Anonymization & LGPD]
+        SEC_AUDIT[Audit Logger]
+    end
+
     subgraph "Core Platform"
-        AUTH[Auth & Identity]
         SESSION[Session Manager]
         ALERT[Alert Engine]
     end
+    
+    subgraph "Cloud Integration Domain"
+        CLOUD_STORE[Azure Blob Gateway]
+        CLOUD_AI[Azure AI Services Gateway]
+        CLOUD_MON[Azure Monitor Gateway]
+    end
 
-    subgraph "Video Domain"
+    subgraph "Video Domain (Local)"
         VID_INGEST[Video Ingestion]
         VID_FACE[Facial Analysis]
         VID_POSE[Pose Analysis]
@@ -253,14 +283,12 @@ graph LR
 
     subgraph "Audio Domain"
         AUD_INGEST[Audio Ingestion]
-        AUD_STT[Speech-to-Text]
-        AUD_SENT[Sentiment Analysis]
-        AUD_NER[Clinical NER]
+        AUD_SENT[Sentiment Processing]
+        AUD_NER[NER Processing]
     end
 
     subgraph "Document Domain"
         DOC_INGEST[Document Ingestion]
-        DOC_OCR[OCR Processing]
         DOC_EXTRACT[Data Extraction]
         DOC_VALID[Validation]
     end
@@ -274,24 +302,29 @@ graph LR
     subgraph "Report Domain"
         RPT_GEN[Report Generator]
         RPT_TMPL[Template Engine]
-        RPT_STORE[Report Storage]
     end
 
     subgraph "Dashboard Domain"
         DASH_RT[Real-time View]
         DASH_HIST[Historical View]
-        DASH_ALERT[Alert Center]
     end
 
-    AUTH --> SESSION
-    SESSION --> VID_INGEST & AUD_INGEST & DOC_INGEST
+    SEC_AUTH --> SESSION
+    SESSION --> CLOUD_STORE
+    CLOUD_STORE --> VID_INGEST & AUD_INGEST & DOC_INGEST
+    
     VID_INGEST --> VID_FACE & VID_POSE & VID_OBJ
-    AUD_INGEST --> AUD_STT --> AUD_SENT & AUD_NER
-    DOC_INGEST --> DOC_OCR --> DOC_EXTRACT --> DOC_VALID
+    AUD_INGEST --> CLOUD_AI
+    DOC_INGEST --> CLOUD_AI
+    
+    CLOUD_AI --> AUD_SENT & AUD_NER & DOC_EXTRACT
+    DOC_EXTRACT --> DOC_VALID
 
     VID_OBJ & AUD_NER & DOC_VALID --> RISK_CORR --> IRA_CALC
-    IRA_CALC --> ALERT --> DASH_ALERT
-    IRA_CALC --> RPT_GEN --> RPT_STORE --> DASH_HIST
+    IRA_CALC --> ALERT --> DASH_RT
+    IRA_CALC --> RPT_GEN --> DASH_HIST
+    
+    ALERT & RPT_GEN --> SEC_AUDIT --> CLOUD_MON
 ```
 
 ---
@@ -329,14 +362,24 @@ graph LR
 **Justificativa:** Permite desenvolvimento paralelo sem conflitos, deploy independente e isolamento de falhas.  
 **Consequências:** Overhead de infraestrutura, mas ganho em autonomia da equipe.
 
-### ADR-002: Comunicação Síncrona via REST
-**Decisão:** Comunicação entre serviços via REST HTTP (v1.0), com possibilidade de migrar para mensageria assíncrona (RabbitMQ/Azure Service Bus) na v2.0.  
+### ADR-002: Arquitetura Híbrida (Local + Cloud)
+**Decisão:** O processamento de Visão Computacional (Vídeo) será executado integralmente de forma local utilizando OpenCV, MediaPipe, e YOLO. Já os processamentos de Áudio, Linguagem Natural e OCR de Documentos serão delegados ao Azure AI Services.
+**Justificativa:** Algoritmos de visão de alta frequência e deep learning de imagens requerem alta capacidade computacional e largura de banda que seriam proibitivamente caros e lentos se enviados para a nuvem frame a frame. Por outro lado, STT, NLP e OCR em nuvem são altamente otimizados pela Microsoft.
+**Consequências:** Necessidade de gerenciar latência para Azure e criar fallback/mock para testes locais.
+
+### ADR-003: Segurança por Design e Conformidade LGPD
+**Decisão:** Centralizar segurança no `Security Domain`, implementando mascaramento de dados pessoais (anonimização) em bancos e logs, AES-256 para dados em repouso e TLS 1.3 em trânsito. Nenhuma credencial será exposta; o `Cloud Domain` integrará com o Azure Key Vault.
+**Justificativa:** Vídeos, áudios e prontuários são classificados como dados pessoais sensíveis pela LGPD, requerendo proteção máxima.
+**Consequências:** Complexidade adicional na gestão de acesso, exigindo criptografia antes da persistência e decriptação para exibição baseada em RBAC (Role-Based Access Control).
+
+### ADR-004: Comunicação Síncrona via REST
+**Decisão:** Comunicação entre serviços via REST HTTPS (v1.0), com possibilidade de migrar para mensageria assíncrona (RabbitMQ/Azure Service Bus) na v2.0.  
 **Justificativa:** Simplicidade de implementação para o escopo acadêmico.
 
-### ADR-003: Banco por Domínio
+### ADR-005: Banco por Domínio
 **Decisão:** Cada serviço tem seu próprio banco de dados PostgreSQL (schemas separados na mesma instância para o ambiente de dev).  
 **Justificativa:** Isolamento de dados, evita acoplamento via banco compartilhado.
 
-### ADR-004: IRA como Score Composto
+### ADR-006: IRA como Score Composto
 **Decisão:** O IRA é calculado pelo Risk Service com base em pesos ponderados das contribuições de vídeo (40%), áudio (35%) e documentos (25%).  
 **Justificativa:** Pesos baseados na literatura de detecção de violência obstétrica.

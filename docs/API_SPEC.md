@@ -513,7 +513,75 @@ Download ou URL do relatório.
 
 ---
 
-## 7. OpenAPI / Swagger
+## 7. Security API — Porta 8006
+
+#### GET `/api/v1/audit`
+Recupera o log de auditoria imutável (requer role `auditor` ou `admin`).
+
+**Response 200:**
+```json
+{
+  "total": 125,
+  "items": [
+    {
+      "timestamp": "2024-01-15T10:30:00-03:00",
+      "actor_id": "550e8400-e29b-41d4-a716-446655440000",
+      "role": "medico",
+      "action": "READ_SESSION",
+      "resource_type": "session",
+      "resource_id": "550e8400-e29b-41d4-a716-446655440002",
+      "ip_address": "192.168.1.50"
+    }
+  ]
+}
+```
+
+---
+
+## 8. Cloud Integration API — Porta 8007
+
+#### POST `/api/v1/storage/upload`
+Faz upload seguro mascarado (anonimizado) de mídias direto para o Azure Blob Storage.
+
+**Request:** `multipart/form-data`
+```
+file: <arquivo_binário>
+media_type: "video" | "audio" | "document"
+```
+
+**Response 202:**
+```json
+{
+  "media_id": "550e8400-e29b-41d4-a716-446655440010",
+  "status": "uploaded_to_blob",
+  "blob_url": "https://storageaccount.blob.core.windows.net/media/anon/arquivo.mp4"
+}
+```
+
+---
+
+#### GET `/api/v1/cloud-processing-history`
+Recupera o histórico de chamadas ao Azure AI Services e métricas de consumo de cota.
+
+**Response 200:**
+```json
+{
+  "total_calls_today": 45,
+  "history": [
+    {
+      "service": "Azure Speech",
+      "timestamp": "2024-01-15T10:35:00-03:00",
+      "status": "success",
+      "duration_ms": 1240,
+      "cost_estimate_usd": 0.05
+    }
+  ]
+}
+```
+
+---
+
+## 9. OpenAPI / Swagger
 
 Cada serviço expõe automaticamente sua documentação Swagger em:
 
@@ -525,10 +593,12 @@ Cada serviço expõe automaticamente sua documentação Swagger em:
 | Document API | http://localhost:8003/docs | http://localhost:8003/openapi.json |
 | Risk API | http://localhost:8004/docs | http://localhost:8004/openapi.json |
 | Report API | http://localhost:8005/docs | http://localhost:8005/openapi.json |
+| Security API | http://localhost:8006/docs | http://localhost:8006/openapi.json |
+| Cloud API | http://localhost:8007/docs | http://localhost:8007/openapi.json |
 
 ---
 
-## 8. Códigos de Status HTTP
+## 10. Códigos de Status HTTP
 
 | Código | Significado |
 |---|---|

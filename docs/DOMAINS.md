@@ -6,7 +6,7 @@
 
 ## Visão Geral dos Domínios
 
-O sistema é composto por **8 domínios independentes**. Cada domínio possui:
+O sistema é composto por **10 domínios independentes**. Cada domínio possui:
 - Banco de dados próprio (schema isolado)
 - API pública versionada
 - Eventos publicados e consumidos
@@ -36,8 +36,8 @@ Prover a infraestrutura central do sistema: autenticação, gerenciamento de ses
 - ❌ Não calcula IRA
 
 ### Dependências
-- Azure Key Vault (segredos)
-- Azure Monitor (logs)
+- Security Domain (Auth, LGPD, Audit)
+- Cloud Domain (Armazenamento Blob)
 - Banco: `core_db` (PostgreSQL)
 
 ### APIs Públicas
@@ -125,7 +125,7 @@ Processar vídeos clínicos para detectar indicadores de risco assistencial: exp
 - ❌ Não calcula o IRA final
 
 ### Dependências
-- Azure Blob Storage (armazenamento de vídeos)
+- Cloud Integration Domain (Upload e Storage seguro)
 - Core Platform (recebe token de sessão)
 - Banco: `video_db` (PostgreSQL)
 
@@ -202,9 +202,7 @@ Transcrever e analisar áudios de consultas para detectar indicadores linguísti
 - ❌ Não calcula o IRA final
 
 ### Dependências
-- Azure Speech Service
-- Azure AI Language Service
-- Azure Blob Storage
+- Cloud Integration Domain (para STS, NLP e Storage no Azure)
 - Banco: `audio_db` (PostgreSQL)
 
 ### APIs Públicas
@@ -266,8 +264,7 @@ Processar documentos médicos (prontuários, exames, consentimentos) para extrai
 - Geração de score de contribuição para o IRA
 
 ### Dependências
-- Azure Document Intelligence
-- Azure Blob Storage
+- Cloud Integration Domain (para OCR no Azure)
 - Banco: `document_db` (PostgreSQL)
 
 ### APIs Públicas
@@ -483,4 +480,79 @@ devops/
 └── monitoring/
     ├── alerts.json
     └── dashboards.json
+```
+
+---
+
+## Domínio 9 — Cloud Integration Domain
+
+### Objetivo
+Atuar como um gateway seguro e centralizado para todos os serviços providos pelo Azure, evitando que múltiplos serviços lidem com chaves ou configurações de nuvem.
+
+### Responsabilidades
+- Upload e gestão de ciclos de vida no Azure Blob Storage
+- Roteamento de requisições para o Azure Speech e AI Language
+- Roteamento para Azure Document Intelligence
+- Disparo de métricas e logs para o Azure Monitor e Application Insights
+
+### Limites
+- ✅ Ponto único de saída da VPC para a rede Microsoft
+- ❌ Não analisa regras de negócio (apenas passa para frente)
+
+### Dependências
+- Azure Blob Storage, Azure Speech, Azure Language, Azure Doc Intel, Azure Monitor
+- Banco: `cloud_db` (PostgreSQL - Histórico de chamadas para nuvem e custos)
+
+### Estrutura de Pastas
+```
+cloud-domain/
+├── app/
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── storage/
+│   ├── speech/
+│   ├── document/
+│   └── telemetry/
+├── Dockerfile
+└── requirements.txt
+```
+
+---
+
+## Domínio 10 — Security Domain
+
+### Objetivo
+Garantir total conformidade com a LGPD e políticas Zero Trust. 
+
+### Responsabilidades
+- Gestão de Identidade e Autenticação (JWT) e RBAC
+- Criptografia e decriptação em tempo real (AES-256)
+- Anonimização de dados (Hash unidirecional, mascaramento)
+- Gestão de segredos via Azure Key Vault
+- Audit Logger (Trilha de auditoria imutável)
+
+### Limites
+- ✅ Intercepta requisições no API Gateway para checar tokens
+- ✅ Realiza mascaramento de PII (Personally Identifiable Information) antes da persistência no Core
+- ❌ Não gerencia a sessão clínica
+
+### Dependências
+- Azure Key Vault
+- Banco: `security_db` (PostgreSQL - Auth, Tokens, Access History, Consentimentos)
+
+### Estrutura de Pastas
+```
+security-domain/
+├── app/
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── auth/
+│   ├── rbac/
+│   ├── crypto/
+│   ├── audit/
+│   └── lgpd/
+├── Dockerfile
+└── requirements.txt
 ```

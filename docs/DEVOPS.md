@@ -66,7 +66,39 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  # ============ SECURITY DOMAIN ============
+  security-service:
+    build:
+      context: ../security-domain
+      dockerfile: Dockerfile
+    container_name: guardia-security
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
+      AZURE_KEY_VAULT_URL: ${AZURE_KEY_VAULT_URL}
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret}
+    ports:
+      - "8006:8006"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
+  # ============ CLOUD INTEGRATION DOMAIN ============
+  cloud-service:
+    build:
+      context: ../cloud-domain
+      dockerfile: Dockerfile
+    container_name: guardia-cloud
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
+      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING}
+      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY}
+      AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY}
+      AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY}
+    ports:
+      - "8007:8007"
+    depends_on:
+      postgres:
+        condition: service_healthy
   # ============ VIDEO DOMAIN ============
   video-service:
     build:
@@ -96,10 +128,7 @@ services:
     container_name: guardia-audio
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY}
-      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-brazilsouth}
-      AZURE_LANGUAGE_ENDPOINT: ${AZURE_LANGUAGE_ENDPOINT}
-      AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY}
+      CLOUD_SERVICE_URL: http://cloud-service:8007
     ports:
       - "8002:8002"
     depends_on:
@@ -114,9 +143,7 @@ services:
     container_name: guardia-document
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_DOC_INTELLIGENCE_ENDPOINT: ${AZURE_DOC_INTELLIGENCE_ENDPOINT}
-      AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY}
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING}
+      CLOUD_SERVICE_URL: http://cloud-service:8007
     ports:
       - "8003:8003"
     depends_on:
@@ -260,7 +287,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [backend, video-domain, audio-domain, document-domain, risk-domain, report-domain, frontend]
+        service: [backend, security-domain, cloud-domain, video-domain, audio-domain, document-domain, risk-domain, report-domain, frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -368,10 +395,18 @@ jobs:
 
       - name: Check dependencies for known vulnerabilities
         run: |
-          for service in backend video-domain audio-domain document-domain risk-domain report-domain frontend; do
+          for service in backend security-domain cloud-domain video-domain audio-domain document-domain risk-domain report-domain frontend; do
             echo "Checking $service..."
             safety check -r $service/requirements.txt || true
           done
+
+      - name: Run TruffleHog (Secret Scanning)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
