@@ -54,7 +54,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RF-011** O sistema deve detectar presença e identificação de pessoas no vídeo (face_recognition)
 - [ ] **RF-012** O sistema deve analisar sangramento visível classificando-o por localização e intensidade estimada
 - [ ] **RF-013** O sistema deve gerar um score de contribuição de vídeo para o IRA (0–100)
-- [ ] **RF-014** O sistema deve processar vídeos em background sem bloquear a interface do usuário
+- [x] **RF-014** O sistema deve processar vídeos em background sem bloquear a interface do usuário
 
 ### 1.3 Análise de Áudio (Processamento via Nuvem - Azure Cognitive Services)
 

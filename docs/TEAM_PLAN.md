@@ -52,8 +52,8 @@
 #### Tarefas
 
 **Video Domain:**
-- [ ] Configurar serviço FastAPI de vídeo
-- [ ] Implementar pipeline de extração de frames (OpenCV)
+- [x] Configurar serviço FastAPI de vídeo
+- [x] Implementar pipeline de extração de frames (OpenCV)
 - [ ] Integrar DeepFace para análise de emoções
 - [ ] Integrar MediaPipe para pose estimation
 - [ ] Integrar YOLOv8 para detecção de objetos
