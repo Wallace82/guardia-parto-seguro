@@ -45,7 +45,7 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 | **RS-002** | Credenciais Azure hardcoded no código | 2 | 3 | 🔴 6 | CODEOWNERS + Bandit verifica hardcoded strings; Azure Key Vault para produção; `.env` para dev (gitignored) | Wallace Gomes |
 | **RS-003** | Token JWT com expiração longa comprometido | 2 | 3 | 🔴 6 | Expiração de 1h com refresh token de 7 dias; blacklist de tokens revogados; HTTPS obrigatório | Wallace Gomes |
 | **RS-004** | Arquivo malicioso no upload (path traversal, zip bomb) | 2 | 3 | 🔴 6 | Validar extensão e MIME type; limite de tamanho rígido; análise do arquivo em sandbox; nunca executar arquivo recebido | Wallace Gomes + Paulo Roberto Gonçalves |
-| **RS-005** | Não conformidade com LGPD para dados de pacientes | 2 | 3 | 🔴 6 | Anonimização de dados pessoais (hash de nome); consentimento verificado antes do processamento; log de auditoria imutável; política de retenção documentada | Evandro Rosa Sampaio |
+| **RS-005** | Não conformidade com LGPD para dados de pacientes | 2 | 3 | 🔴 6 | Anonimização de dados pessoais; log de auditoria imutável **(Implementado)**; política de retenção | Evandro Rosa Sampaio |
 | **RS-006** | Vazamento da Chave Mestra do Key Vault | 1 | 3 | 🟢 3 | Rotação automática de chaves, acesso condicional, e uso exclusivo via Managed Identity em produção | Wallace Gomes |
 | **RS-007** | Falha na pseudo-anonimização enviando PII para nuvem | 2 | 3 | 🔴 6 | Testes estritos na camada de integração do Security Domain; varredura de regex local antes do envio ao Azure AI | Wallace Gomes + Evandro R. |
 
@@ -65,7 +65,7 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
-| **RQ-001** | IRA gera score errado por pesos incorretos | 2 | 3 | 🔴 6 | Testes unitários extensivos para o calculador de IRA; casos de teste documentados com valores esperados; revisão da fórmula por todos | Evandro Rosa Sampaio |
+| **RQ-001** | IRA gera score errado por pesos incorretos | 2 | 3 | 🔴 6 | Testes unitários extensivos **(Cobertura implementada no backend)**; revisão da fórmula por todos | Evandro Rosa Sampaio |
 | **RQ-002** | Sistema detecta violência onde não há (falso positivo) causando problema na demonstração | 2 | 3 | 🔴 6 | Sempre apresentar confidence scores; dashboards mostram "indicativo de risco", não "diagnóstico"; disclaimers claros no sistema | Gustavo Octaviano |
 | **RQ-003** | Sistema não detecta violência real (falso negativo) | 2 | 3 | 🔴 6 | Thresholds conservadores (prefere falso positivo a negativo); sistema é de apoio, não substitui avaliação humana | Paulo Roberto Gonçalves + Evandro Rosa Sampaio |
 

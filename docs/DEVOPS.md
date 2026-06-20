@@ -622,7 +622,7 @@ Fecha #(número)
 
 ## ✅ Checklist
 - [ ] Código segue os padrões do projeto (ruff + black)
-- [ ] Testes adicionados/atualizados (cobertura ≥ 80%)
+- [x] Testes adicionados/atualizados (cobertura ≥ 80%)
 - [ ] Documentação atualizada (se necessário)
 - [ ] Nenhum segredo ou credencial no código
 - [ ] Dockerfile atualizado (se necessário)

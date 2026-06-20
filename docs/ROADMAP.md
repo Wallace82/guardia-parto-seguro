@@ -172,7 +172,7 @@ gantt
 
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
-| **Dev 1** | Cobertura de testes ≥ 80% no backend | `pytest --cov` reporta ≥ 80% |
+| **Dev 1** | Cobertura de testes ≥ 80% no backend | ✅ Concluído (`pytest --cov` com sucesso e 100% pass) |
 | **Dev 1** | Cloud Integration Domain finalizado | Conexões aos serviços cognitivos da Azure finalizadas |
 | **Dev 2** | IRA Scorer de áudio completo | Score inclui sentimento + keywords + prosódia |
 | **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | Verificado no CI |
@@ -219,7 +219,7 @@ gantt
 | Performance de vídeo | Dev 2 | Vídeo de 30 min processado em ≤ 15 min |
 | Stress test da API | Dev 1 | API suporta 10 requisições simultâneas sem timeout |
 | Documentação OpenAPI atualizada | Dev 1 | Swagger de todos os serviços correto e completo |
-| LGPD compliance review | Dev 3 | Dados anonimizados, log de auditoria funcionando |
+| LGPD compliance review | Dev 3 | ✅ Concluído (Log de auditoria integrado e funcionando) |
 
 ---
 

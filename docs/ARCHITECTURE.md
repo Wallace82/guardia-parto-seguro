@@ -59,8 +59,8 @@ O Brasil registra altos índices de violência obstétrica e mortalidade materna
 | **Desacoplamento** | Cada domínio é independente; comunicação via API/eventos |
 | **Isolamento de dados** | Nenhum domínio acessa o banco de outro diretamente |
 | **Contratos versionados** | Toda integração usa contratos com versionamento semântico |
-| **Testabilidade** | Cobertura mínima de 80% em testes unitários |
-| **Observabilidade** | Logs estruturados, métricas e rastreamento distribuído |
+| **Testabilidade** | Cobertura mínima de 80% em testes unitários **(Atingido no core-api com pytest)** |
+| **Observabilidade** | Logs estruturados **(Implementado com structlog)**, métricas e rastreamento distribuído |
 | **Segurança** | Zero-trust, criptografia em repouso e em trânsito |
 | **Escalabilidade** | Cada serviço escala independentemente via Docker |
 

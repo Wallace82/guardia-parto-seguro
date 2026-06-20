@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import CurrentUser
+from app.audit.service import AuditService
 from app.sessions.schemas import (
     SessionCreateRequest,
     SessionCreatedResponse,
@@ -40,6 +41,7 @@ async def create_session(
     O `patient_code` deve ser um identificador anonimizado — nunca o nome real (LGPD).
     """
     session = await SessionService(db).create(data, current_user.id)
+    await AuditService.log_action(db, action="create_session", resource=f"session_{session.id}", user_id=current_user.id)
     return SessionCreatedResponse(session=SessionOut.model_validate(session))
 
 
@@ -83,6 +85,7 @@ async def get_session(
     session = await SessionService(db).get_by_id(
         session_id, current_user.id, current_user.role
     )
+    await AuditService.log_action(db, action="view_session", resource=f"session_{session.id}", user_id=current_user.id)
     return SessionOut.model_validate(session)
 
 
@@ -101,6 +104,7 @@ async def update_session(
     session = await SessionService(db).update(
         session_id, data, current_user.id, current_user.role
     )
+    await AuditService.log_action(db, action="update_session", resource=f"session_{session.id}", user_id=current_user.id)
     return SessionOut.model_validate(session)
 
 
@@ -114,8 +118,8 @@ async def delete_session(
     current_user: CurrentUser,
     db: DB,
 ):
-    """Remove a sessão e todos os seus arquivos de mídia associados."""
     await SessionService(db).delete(session_id, current_user.id, current_user.role)
+    await AuditService.log_action(db, action="delete_session", resource=f"session_{session_id}", user_id=current_user.id)
 
 
 @router.post(

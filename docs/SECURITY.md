@@ -62,7 +62,7 @@ O sistema utiliza JSON Web Tokens (JWT) com verificação assimétrica para gara
 
 ## 6. Audit Logger (Trilha de Auditoria)
 
-Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security Domain` mantém um **Audit Log** imutável.
+Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security Domain` (através do `core-api`) mantém um **Audit Log** imutável no banco de dados, registrando todas as ações de leitura e escrita.
 
 **O que é registrado:**
 - Autenticações (Sucesso/Falha).

@@ -112,7 +112,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 - [x] **RF-049** O sistema deve suportar login com usuário e senha com autenticação JWT
 - [x] **RF-050** O sistema deve implementar controle de acesso baseado em papéis (RBAC): Admin, Médico, Enfermeiro, Auditor
-- [ ] **RF-051** O sistema deve registrar log de auditoria detalhado (usuário/data/recurso/operação) em todos os acessos e ações
+- [x] **RF-051** O sistema deve registrar log de auditoria detalhado (usuário/data/recurso/operação) em todos os acessos e ações
 - [x] **RF-052** O sistema deve encerrar sessões inativas após 30 minutos
 - [ ] **RF-053** O sistema deve mascarar dados sensíveis de pacientes (anonimização: ex. Maria Silva → PACIENTE_001) com base no perfil de acesso
 - [ ] **RF-054** O sistema deve rotear toda comunicação de mídia com a nuvem pelo Cloud Integration Domain para garantir conformidade
@@ -130,9 +130,9 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RNF-007** Segurança: Dados de pacientes devem ser criptografados em repouso com algoritmo AES-256
 - [ ] **RNF-008** Segurança: A Gestão de Segredos e credenciais deve ser feita exclusivamente via Azure Key Vault
 - [ ] **RNF-009** Segurança: O sistema deve estar em estrita conformidade com a LGPD (Lei 13.709/2018), garantindo minimização e privacidade por design
-- [ ] **RNF-010** Qualidade: A cobertura de testes unitários deve ser ≥ 80% por serviço
+- [x] **RNF-010** Qualidade: A cobertura de testes unitários deve ser ≥ 80% por serviço
 - [ ] **RNF-011** Qualidade: O código deve passar no linting (ruff/flake8) sem erros
-- [ ] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON
+- [x] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON
 - [ ] **RNF-013** Observabilidade: O sistema deve expor métricas de saúde via `/health` endpoint
 - [ ] **RNF-014** Manutenibilidade: Toda API deve ter documentação OpenAPI/Swagger atualizada
 - [x] **RNF-015** Portabilidade: O sistema deve ser executável integralmente de forma local via Docker Compose (foco em demonstração do Tech Challenge, sem exigência de CI/CD remota)

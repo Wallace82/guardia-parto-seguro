@@ -18,6 +18,7 @@ from app.database import Base
 from app.auth.models import User, RefreshToken
 from app.sessions.models import Session, MediaFile
 from app.alerts.models import Alert
+from app.audit.models import AuditLog
 
 target_metadata = Base.metadata
 

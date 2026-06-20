@@ -12,6 +12,19 @@ from app.alerts.router import router as alerts_router
 from app.auth.router import router as auth_router
 from app.config import settings
 from app.sessions.router import router as sessions_router
+from app.middleware.logging import StructlogMiddleware
+
+# Configura o structlog para gerar JSON
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),
+    cache_logger_on_first_use=True,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -56,6 +69,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Observabilidade e Logs
+app.add_middleware(StructlogMiddleware)
 
 # Routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])

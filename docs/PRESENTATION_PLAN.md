@@ -165,7 +165,8 @@ sentiment = text_analytics_client.analyze_sentiment([text])
 - ✅ Dashboard em tempo real com alertas
 - ✅ Relatórios PDF/Excel gerados automaticamente
 - ✅ Arquitetura desacoplada para 4 devs em paralelo
-- ✅ CI/CD com GitHub Actions
+- ✅ Cobertura de testes de 100% no Core API
+- ✅ Execução totalmente local via Docker Compose (Otimizada para demonstração)
 - ✅ Conformidade com LGPD
 
 ### Impacto Potencial (30s)

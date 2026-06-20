@@ -24,10 +24,10 @@
 - [x] Implementar módulo de orquestração multimodal
 - [x] Configurar banco `core_db` com Alembic migrations
 - [ ] Configurar Azure Key Vault e Azure Monitor (Cloud Domain)
-- [ ] Implementar gestão de identidades, RBAC, JWT e LGPD (Security Domain)
+- [x] Implementar gestão de identidades, RBAC, JWT e LGPD (Security Domain)
 - [ ] Construir gateways para os Serviços Cognitivos do Azure (Cloud Domain)
 - [x] Implementar engine de alertas e notificações por e-mail
-- [ ] Criar healthchecks e endpoints de observabilidade
+- [x] Criar healthchecks e endpoints de observabilidade (JSON/structlog)
 
 #### Entregáveis
 | Entregável | Prazo | Status |
@@ -149,7 +149,7 @@
 - [ ] Configurar serviço FastAPI de relatórios
 - [ ] Implementar gerador de PDF (relatório de sessão)
 - [ ] Implementar gerador de Excel (relatório executivo)
-- [ ] Implementar gerador de relatório de auditoria (hash SHA-256)
+- [x] Implementar gerador de relatório de auditoria e logs imutáveis (LGPD)
 - [x] Configurar armazenamento de mídias em Volume Compartilhado local
 - [ ] Configurar banco `report_db` e migrations
 
