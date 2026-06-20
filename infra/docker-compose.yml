@@ -5,7 +5,7 @@
 # Ou usar o script: ./start.sh  |  .\start.ps1
 # =============================================================
 
-version: "3.9"
+# version está obsoleto no Docker Compose V2
 
 # --------------- VOLUMES PERSISTENTES ----------------
 volumes:
