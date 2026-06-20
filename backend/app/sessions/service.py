@@ -155,7 +155,8 @@ class SessionService:
         if not blob_url:
             # Salvar localmente
             import os
-            uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+            # Usa o volume compartilhado no Docker, ou um valor local default
+            uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
             os.makedirs(uploads_dir, exist_ok=True)
             file_path = os.path.join(uploads_dir, f"{session_id}_{media_type}_{filename}")
             with open(file_path, "wb") as f:

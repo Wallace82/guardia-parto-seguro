@@ -16,8 +16,6 @@
 - [x] Configurar repositório Git com branch strategy e proteções
 - [x] Criar `.env.example` e documentação de setup
 - [x] Criar `.gitignore` completo para projeto Python
-- [x] Implementar GitHub Actions: CI pipeline (`ci.yml`) com lint, testes e build
-- [x] Implementar GitHub Actions: deploy pipeline (`deploy.yml`)
 - [x] Criar `CODEOWNERS` para ownership por domínio
 - [x] Criar template de Pull Request (`.github/pull_request_template.md`)
 - [x] Configurar estrutura base do API Gateway (FastAPI): `main.py` + `config.py`
@@ -27,7 +25,7 @@
 - [x] Configurar banco `core_db` com Alembic migrations
 - [ ] Configurar Azure Key Vault e Azure Monitor (Cloud Domain)
 - [ ] Implementar gestão de identidades, RBAC, JWT e LGPD (Security Domain)
-- [ ] Construir gateways para o Azure AI Services e Blob Storage (Cloud Domain)
+- [ ] Construir gateways para os Serviços Cognitivos do Azure (Cloud Domain)
 - [x] Implementar engine de alertas e notificações por e-mail
 - [ ] Criar healthchecks e endpoints de observabilidade
 
@@ -38,13 +36,11 @@
 | API Gateway com auth | Semana 2 | ✅ Concluído |
 | Gerenciamento de sessões e mídia | Semana 3 | ✅ Concluído |
 | Motor de alertas | Semana 4 | ✅ Concluído |
-| CI/CD completo | Semana 5 | 🟡 Em progresso |
 | Documentação DevOps | Semana 6 | 🔴 Pendente |
 
 #### Métricas de Sucesso
 - 100% dos serviços sobem com `docker-compose up`
 - Auth JWT funcional com todos os papéis RBAC
-- Pipeline CI/CD passa em menos de 5 minutos
 - Cobertura de testes ≥ 80% no `backend/`
 
 ---
@@ -154,7 +150,7 @@
 - [ ] Implementar gerador de PDF (relatório de sessão)
 - [ ] Implementar gerador de Excel (relatório executivo)
 - [ ] Implementar gerador de relatório de auditoria (hash SHA-256)
-- [ ] Configurar armazenamento no Azure Blob
+- [x] Configurar armazenamento de mídias em Volume Compartilhado local
 - [ ] Configurar banco `report_db` e migrations
 
 #### Entregáveis
@@ -185,7 +181,7 @@ Adotamos **trunk-based development** com feature branches de curta duração (m�
 
 | Branch | Propósito | Proteção |
 |---|---|---|
-| `main` | Branch principal, sempre deployável | Require PR + 1 review + CI pass |
+| `main` | Branch principal, sempre deployável | Require PR + 1 review |
 | `feat/<domínio>/<descricao>` | Feature branch por desenvolvedor | — |
 | `fix/<domínio>/<descricao>` | Correção de bug | — |
 | `chore/<descricao>` | Manutenção, deps, config | — |
@@ -214,7 +210,7 @@ ci(github-actions): add security scan step
 ### Pull Requests
 - **Template obrigatório** (`.github/pull_request_template.md`)
 - Mínimo **1 reviewer** de outro desenvolvedor
-- CI/CD deve passar (lint + testes + build)
+- Testes locais devem passar (lint + testes)
 - Branch deve estar atualizada com `main`
 - Squash merge para manter histórico limpo
 
@@ -231,10 +227,6 @@ v1.0.0 — Release completo (semana 8)
 ```
 guardia-parto-seguro/
 ├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml
-│   │   ├── security.yml
-│   │   └── deploy.yml
 │   ├── pull_request_template.md
 │   └── CODEOWNERS
 ├── docs/
@@ -322,7 +314,7 @@ STACK DEFINIDA (não negociável):
 - Backend: Python 3.11+ com FastAPI
 - Frontend: Streamlit
 - Banco: PostgreSQL + SQLAlchemy + Alembic
-- Cloud: Azure (Speech, Language, Doc Intelligence, Blob, Key Vault, Monitor)
+- Cloud: Azure (Speech, Language, Doc Intelligence)
 - Visão: OpenCV, DeepFace, MediaPipe, YOLOv8, face_recognition
 - Container: Docker + Docker Compose
 
@@ -532,28 +524,18 @@ SAÍDAS: IRA final, classificação, justificativas por componente, recomendaç�
 Você é um engenheiro DevOps especializado em Python, Docker, GitHub Actions e Azure.
 
 STACK DE INFRAESTRUTURA:
-- Containerização: Docker + Docker Compose
-- CI/CD: GitHub Actions
-- Cloud: Azure Container Registry + Azure Container Apps (ou ACI)
-- Secrets: Azure Key Vault
-- Monitoramento: Azure Monitor + Application Insights
+- Containerização: Docker + Docker Compose (Execução puramente local para demonstração)
+- Secrets: Arquivo .env local (sem necessidade de Key Vault para esta fase local)
+- Cloud Integrations: Azure Cognitive Services restrito aos domínios de Áudio e Documento
 
 PADRÕES OBRIGATÓRIOS:
-- Dockerfile multi-stage para produção (builder + runtime)
+- Dockerfile focado no ambiente local
 - Imagens baseadas em python:3.11-slim
 - Health checks em todos os containers
-- Variáveis sensíveis NUNCA no Dockerfile ou código
-- Secrets via Azure Key Vault em produção, .env em dev
+- Variáveis sensíveis NUNCA hardcoded no código, sempre via `.env`
 
-GITHUB ACTIONS — JOBS OBRIGATÓRIOS:
-1. lint: ruff check + black --check
-2. test: pytest com coverage ≥ 80%
-3. security: bandit (SAST) + safety check (deps)
-4. build: docker build --no-cache
-5. deploy: apenas na branch main, após aprovação manual
-
-ENTRADAS: Descrição de necessidade de infraestrutura ou pipeline
-SAÍDAS: Dockerfile, docker-compose.yml, GitHub Actions workflow, scripts de deploy
+ENTRADAS: Descrição de necessidade de infraestrutura
+SAÍDAS: Dockerfile, docker-compose.yml e scripts de setup local
 ```
 
 ---
@@ -636,7 +618,7 @@ SAÍDAS: Seção de documentação atualizada pronta para commit
 ```
 Você é um Cloud Solutions Architect com foco em Microsoft Azure.
 
-CONTEXTO: Integração do GuardIA Parto Seguro com Azure Blob Storage, Azure AI Services, Azure Key Vault e Azure Monitor.
+CONTEXTO: Integração do GuardIA Parto Seguro com Azure Cognitive Services (Speech, Language, Document Intelligence).
 
 REGRAS OBRIGATÓRIAS:
 - Centralizar o acesso a chaves e segredos exclusivamente no Azure Key Vault.

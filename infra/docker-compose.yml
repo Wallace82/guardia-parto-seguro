@@ -12,6 +12,7 @@ volumes:
   postgres_core_data:
   postgres_domains_data:
   redis_data:
+  shared_media_data:
 
 # --------------- REDES INTERNAS ----------------------
 networks:
@@ -107,8 +108,10 @@ services:
       DOCUMENT_SERVICE_URL: http://document-service:8003
       RISK_SERVICE_URL: http://risk-service:8004
       REPORT_SERVICE_URL: http://report-service:8005
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../backend:/app
+      - shared_media_data:/shared_media
     ports:
       - "8000:8000"
     networks:
@@ -142,8 +145,10 @@ services:
       VIDEO_FRAME_SAMPLE_RATE: ${VIDEO_FRAME_SAMPLE_RATE:-1.0}
       DEEPFACE_BACKEND: ${DEEPFACE_BACKEND:-retinaface}
       YOLO_CONFIDENCE_THRESHOLD: ${YOLO_CONFIDENCE_THRESHOLD:-0.70}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../video-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8001:8001"
     networks:
@@ -177,8 +182,10 @@ services:
       AZURE_SPEECH_LANGUAGE: ${AZURE_SPEECH_LANGUAGE:-pt-BR}
       AZURE_LANGUAGE_ENDPOINT: ${AZURE_LANGUAGE_ENDPOINT:-}
       AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY:-}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../audio-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8002:8002"
     networks:
@@ -209,8 +216,10 @@ services:
       SERVICE_PORT: "8003"
       AZURE_DOC_INTELLIGENCE_ENDPOINT: ${AZURE_DOC_INTELLIGENCE_ENDPOINT:-}
       AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY:-}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../document-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8003:8003"
     networks:

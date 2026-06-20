@@ -110,10 +110,10 @@ Processar vídeos clínicos para detectar indicadores de risco assistencial: exp
 
 ### Responsabilidades
 - Receber e armazenar vídeos temporariamente
-- Extração de frames e pré-processamento (OpenCV)
-- Análise de expressões faciais e emoções (DeepFace)
-- Análise de postura corporal (MediaPipe)
-- Detecção de objetos (YOLOv8)
+- Extração de frames e pré-processamento local (OpenCV)
+- Análise de expressões faciais e emoções de forma local (DeepFace)
+- Análise de postura corporal de forma local (MediaPipe)
+- Detecção de objetos de forma local (YOLOv8)
 - Detecção de sangramento por análise de cor (OpenCV)
 - Identificação de pessoas (face_recognition)
 - Geração de score de contribuição para o IRA
@@ -457,14 +457,12 @@ frontend/
 ## Domínio 8 — DevOps Domain
 
 ### Objetivo
-Prover toda a infraestrutura de CI/CD, containerização, monitoramento e deploy.
+Prover toda a infraestrutura de orquestração via containers puramente para execução local e demonstração do Tech Challenge.
 
 ### Responsabilidades
-- Docker Compose para ambiente local
-- GitHub Actions para CI/CD
-- Scripts de deploy para Azure
-- Configuração de Azure Monitor
-- Gestão de secrets via Key Vault
+- Configuração do Docker Compose para ambiente local
+- Scripts de setup, migrações locais e gestão de serviços
+- Gestão de chaves da Azure limitadas ao `.env` local
 
 ### Estrutura de Pastas
 ```
@@ -487,13 +485,12 @@ devops/
 ## Domínio 9 — Cloud Integration Domain
 
 ### Objetivo
-Atuar como um gateway seguro e centralizado para todos os serviços providos pelo Azure, evitando que múltiplos serviços lidem com chaves ou configurações de nuvem.
+Atuar como ponte para os serviços cognitivos gerenciados (Azure Speech, Language, Document Intelligence), cumprindo a exigência de integração com nuvem do Tech Challenge.
 
 ### Responsabilidades
-- Upload e gestão de ciclos de vida no Azure Blob Storage
-- Roteamento de requisições para o Azure Speech e AI Language
-- Roteamento para Azure Document Intelligence
-- Disparo de métricas e logs para o Azure Monitor e Application Insights
+- Roteamento de requisições para o Azure Speech e AI Language (consumidos pelo Domínio de Áudio)
+- Roteamento para Azure Document Intelligence (consumido pelo Domínio de Documentos)
+- (Opcional) Integração avançada com Azure Blob e Azure Monitor se as demonstrações exigirem
 
 ### Limites
 - ✅ Ponto único de saída da VPC para a rede Microsoft

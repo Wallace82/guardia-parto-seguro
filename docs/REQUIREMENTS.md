@@ -45,7 +45,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RF-005** O sistema deve associar múltiplas mídias a uma única sessão clínica
 - [x] **RF-006** O sistema deve registrar metadados da sessão: data, hora, profissional, tipo de atendimento e unidade de saúde
 
-### 1.2 Análise de Vídeo
+### 1.2 Análise de Vídeo (Processamento Local)
 
 - [ ] **RF-007** O sistema deve detectar expressões faciais de dor, medo e sofrimento utilizando DeepFace
 - [ ] **RF-008** O sistema deve analisar a postura corporal da paciente para detectar sinais de coerção ou desconforto (MediaPipe)
@@ -56,7 +56,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RF-013** O sistema deve gerar um score de contribuição de vídeo para o IRA (0–100)
 - [ ] **RF-014** O sistema deve processar vídeos em background sem bloquear a interface do usuário
 
-### 1.3 Análise de Áudio
+### 1.3 Análise de Áudio (Processamento via Nuvem - Azure Cognitive Services)
 
 - [ ] **RF-015** O sistema deve transcrever o áudio da consulta para texto utilizando Azure Speech Services
 - [ ] **RF-016** O sistema deve detectar o idioma predominante no áudio automaticamente
@@ -67,7 +67,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RF-021** O sistema deve analisar o tom de voz e indicadores prosódicos de sofrimento
 - [ ] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IRA (0–100)
 
-### 1.4 Análise de Documentos
+### 1.4 Análise de Documentos (Processamento via Nuvem - Azure Cognitive Services)
 
 - [ ] **RF-023** O sistema deve extrair texto de documentos médicos via OCR (Azure Document Intelligence)
 - [ ] **RF-024** O sistema deve identificar campos-chave em prontuários: diagnóstico, medicamentos, procedimentos, datas
@@ -135,7 +135,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON
 - [ ] **RNF-013** Observabilidade: O sistema deve expor métricas de saúde via `/health` endpoint
 - [ ] **RNF-014** Manutenibilidade: Toda API deve ter documentação OpenAPI/Swagger atualizada
-- [x] **RNF-015** Portabilidade: O sistema deve ser executável localmente via Docker Compose
+- [x] **RNF-015** Portabilidade: O sistema deve ser executável integralmente de forma local via Docker Compose (foco em demonstração do Tech Challenge, sem exigência de CI/CD remota)
 - [ ] **RNF-016** Interoperabilidade: As APIs devem seguir padrão REST com retorno JSON
 - [ ] **RNF-017** Usabilidade: O dashboard deve ser responsivo e funcionar em resolução mínima de 1280x720
 - [ ] **RNF-018** Auditabilidade: Todo acesso a dados de pacientes deve ser registrado em log imutável

@@ -350,8 +350,7 @@ graph LR
 | ORM | SQLAlchemy | 2.0+ | Mapeamento objeto-relacional |
 | Migrations | Alembic | 1.13+ | Controle de schema |
 | Auth | PyJWT + OAuth2 | — | Autenticação e autorização |
-| Containerização | Docker + Compose | — | Deploy local e cloud |
-| CI/CD | GitHub Actions | — | Pipeline automatizado |
+| Containerização | Docker + Compose | — | Execução e testes estritamente locais |
 
 ---
 
@@ -363,9 +362,9 @@ graph LR
 **Consequências:** Overhead de infraestrutura, mas ganho em autonomia da equipe.
 
 ### ADR-002: Arquitetura Híbrida (Local + Cloud)
-**Decisão:** O processamento de Visão Computacional (Vídeo) será executado integralmente de forma local utilizando OpenCV, MediaPipe, e YOLO. Já os processamentos de Áudio, Linguagem Natural e OCR de Documentos serão delegados ao Azure AI Services.
-**Justificativa:** Algoritmos de visão de alta frequência e deep learning de imagens requerem alta capacidade computacional e largura de banda que seriam proibitivamente caros e lentos se enviados para a nuvem frame a frame. Por outro lado, STT, NLP e OCR em nuvem são altamente otimizados pela Microsoft.
-**Consequências:** Necessidade de gerenciar latência para Azure e criar fallback/mock para testes locais.
+**Decisão:** O processamento de Visão Computacional (Vídeo) será executado integralmente de forma local (Opção A) utilizando OpenCV, DeepFace, MediaPipe, e YOLOv8. Já os processamentos de Áudio, Linguagem Natural e OCR de Documentos serão delegados aos serviços gerenciados na nuvem (Azure Speech, Azure AI Language, Azure Document Intelligence). O projeto será executado exclusivamente de forma local via Docker, sem CI/CD no GitHub.
+**Justificativa:** O projeto deve cumprir o requisito de integrar serviços em nuvem gerenciados com segurança. Usaremos a Azure para os serviços cognitivos complexos de linguagem e documentos, enquanto a visão computacional (que exige latência muito baixa e alta vazão de dados) rodará localmente. A execução apenas local é suficiente para fins de demonstração do Tech Challenge.
+**Consequências:** O setup inicial requer a injeção manual das chaves da Azure no `.env` e a infraestrutura não necessitará de pipelines de esteira automatizados.
 
 ### ADR-003: Segurança por Design e Conformidade LGPD
 **Decisão:** Centralizar segurança no `Security Domain`, implementando mascaramento de dados pessoais (anonimização) em bancos e logs, AES-256 para dados em repouso e TLS 1.3 em trânsito. Nenhuma credencial será exposta; o `Cloud Domain` integrará com o Azure Key Vault.

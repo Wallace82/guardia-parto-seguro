@@ -1,74 +1,77 @@
 """
-GuardIA — Audio Domain Service Mock
+GuardIA — Audio Domain Service (Azure Integration)
 """
-from fastapi import FastAPI, status
+import os
+import azure.cognitiveservices.speech as speechsdk
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.textanalytics import TextAnalyticsClient
+from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from dotenv import load_dotenv
+
+# Load env variables from root .env
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
 
 app = FastAPI(title="GuardIA — Audio Service", version="1.0.0")
 
 class AudioAnalyzeRequest(BaseModel):
-    session_id: str
-    media_id: str
-    blob_url: str
-    language: Optional[str] = "pt-BR"
-    options: Optional[dict] = None
+    file_path: str
 
 class AudioAnalyzeResponse(BaseModel):
-    job_id: str
-    status: str
+    text: str
+    sentiment: str
+    confidence: float
+
+def analyze_audio_with_azure(file_path: str):
+    speech_key = os.environ.get("AZURE_SPEECH_KEY")
+    speech_region = os.environ.get("AZURE_SPEECH_REGION")
+    language_key = os.environ.get("AZURE_LANGUAGE_KEY")
+    language_endpoint = os.environ.get("AZURE_LANGUAGE_ENDPOINT")
+
+    if not all([speech_key, speech_region, language_key, language_endpoint]):
+        raise HTTPException(status_code=500, detail="Azure credentials missing in .env")
+
+    # 1. Azure Speech (STT)
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    speech_config.speech_recognition_language = "pt-BR"
+    
+    audio_config = speechsdk.audio.AudioConfig(filename=file_path)
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+    
+    speech_recognition_result = speech_recognizer.recognize_once_async().get()
+
+    if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        text = speech_recognition_result.text
+    elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+        raise HTTPException(status_code=400, detail="No speech could be recognized")
+    elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+        cancellation_details = speech_recognition_result.cancellation_details
+        raise HTTPException(status_code=500, detail=f"Speech Recognition canceled: {cancellation_details.reason}")
+        
+    # 2. Azure AI Language (Sentiment)
+    credential = AzureKeyCredential(language_key)
+    text_analytics_client = TextAnalyticsClient(endpoint=language_endpoint, credential=credential)
+    
+    documents = [text]
+    response = text_analytics_client.analyze_sentiment(documents=documents, language="pt")[0]
+    
+    if response.is_error:
+        raise HTTPException(status_code=500, detail=f"Text Analytics Error: {response.error.message}")
+        
+    sentiment = response.sentiment
+    confidence = getattr(response.confidence_scores, sentiment, 0.0)
+
+    return {"text": text, "sentiment": sentiment, "confidence": confidence}
 
 @app.get("/api/v1/audio/health", status_code=status.HTTP_200_OK)
 async def health():
     return {"status": "healthy", "domain": "audio"}
 
-@app.post("/api/v1/audio/analyze", status_code=status.HTTP_202_ACCEPTED, response_model=AudioAnalyzeResponse)
+@app.post("/api/v1/audio/analyze", status_code=status.HTTP_200_OK, response_model=AudioAnalyzeResponse)
 async def analyze(data: AudioAnalyzeRequest):
+    result = analyze_audio_with_azure(data.file_path)
     return AudioAnalyzeResponse(
-        job_id="550e8400-e29b-41d4-a716-446655440021",
-        status="queued"
+        text=result["text"],
+        sentiment=result["sentiment"],
+        confidence=result["confidence"]
     )
-
-@app.get("/api/v1/audio/results/{session_id}", status_code=status.HTTP_200_OK)
-async def results(session_id: str):
-    return {
-        "session_id": session_id,
-        "ira_score": 55.2,
-        "transcription": {
-            "full_text": "Médico: Vamos fazer o procedimento agora. Paciente: Tá doendo muito, por favor...",
-            "language": "pt-BR",
-            "duration_seconds": 1823.5,
-            "segments": [
-                {
-                    "speaker": "Speaker_0",
-                    "role": "profissional",
-                    "start": 0.0,
-                    "end": 5.2,
-                    "text": "Vamos fazer o procedimento agora.",
-                    "sentiment": "neutral",
-                    "sentiment_confidence": 0.78
-                },
-                {
-                    "speaker": "Speaker_1",
-                    "role": "paciente",
-                    "start": 5.8,
-                    "end": 10.1,
-                    "text": "Tá doendo muito, por favor.",
-                    "sentiment": "negative",
-                    "sentiment_confidence": 0.94
-                }
-            ]
-        },
-        "risk_keywords": [
-            {
-                "keyword": "tá doendo muito",
-                "category": "dor",
-                "timestamp_seconds": 5.8,
-                "speaker": "Speaker_1",
-                "severity": "high"
-            }
-        ],
-        "clinical_entities": [
-            {"text": "procedimento", "category": "Procedimento", "confidence": 0.88}
-        ]
-    }

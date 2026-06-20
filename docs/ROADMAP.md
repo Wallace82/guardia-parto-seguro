@@ -15,9 +15,8 @@ gantt
     API Gateway + Auth               :done, a2, after a1, 7d
     Sessões + Orquestração           :done, a3, after a2, 7d
     Motor de Alertas                 :done, a4, after a3, 7d
-    CI/CD Completo                   :active, a5, after a4, 7d
-    Security Domain (LGPD/Audit)     :a6, after a5, 7d
-    Cloud Domain (Azure Gateway)     :a7, after a6, 7d
+    Security Domain (LGPD/Audit)     :active, a5, after a4, 7d
+    Cloud Domain (Azure Gateway)     :a6, after a5, 7d
 
     section Paulo Roberto Gonçalves (Dev 2)
     Video Service Base               :done, b1, 2024-01-15, 7d
@@ -90,8 +89,7 @@ gantt
 ### Critérios de Aceite da Semana
 - [x] `docker-compose up` funciona sem erros
 - [x] Todos os 6 serviços respondem no healthcheck
-- [ ] GitHub Actions roda lint básico (mesmo que vazio)
-- [ ] README com instruções de setup testadas por todos
+- [ ] README com instruções de setup local testadas por todos
 
 ---
 
@@ -111,7 +109,7 @@ gantt
 |---|---|---|
 | **Dev 1** | Auth JWT completo (login, refresh, RBAC) | POST /auth/login retorna token; endpoints protegidos retornam 401 sem token |
 | **Dev 1** | CRUD de sessões clínicas | POST /sessions cria sessão; GET /sessions/{id} retorna com status |
-| **Dev 1** | Upload de mídia para Azure Blob | Arquivo de vídeo/áudio/doc é armazenado no Azure Blob |
+| **Dev 1** | Upload de mídia para Volume Compartilhado | Arquivo de vídeo/áudio/doc é armazenado localmente (`/shared_media`) |
 | **Dev 2** | Pipeline de extração de frames (OpenCV) | 30 frames extraídos de vídeo de 1 min |
 | **Dev 2** | DeepFace integrado (análise de emoções) | JSON com emoções detectadas retornado para vídeo de teste |
 | **Dev 2** | Azure Speech STT básico | Transcrição de áudio de 1 min em pt-BR com ≥ 80% acurácia |
@@ -174,9 +172,8 @@ gantt
 
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
-| **Dev 1** | GitHub Actions completo (lint+test+security+build) | Pipeline roda em ≤ 5 min e bloqueia merge se falhar |
 | **Dev 1** | Cobertura de testes ≥ 80% no backend | `pytest --cov` reporta ≥ 80% |
-| **Dev 1** | Cloud Integration Domain finalizado | Proxy para Azure Speech e Blob operando |
+| **Dev 1** | Cloud Integration Domain finalizado | Conexões aos serviços cognitivos da Azure finalizadas |
 | **Dev 2** | IRA Scorer de áudio completo | Score inclui sentimento + keywords + prosódia |
 | **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | Verificado no CI |
 | **Dev 3** | IRA Scorer documental completo | Score inclui completude + inconsistências + consentimento |
