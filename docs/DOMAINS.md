@@ -1,6 +1,6 @@
 # DOMAINS.md — GuardIA Parto Seguro
 
-> Definição Completa de Domínios — v1.0
+> Definição Completa de Domínios — v2.0
 
 ---
 
@@ -22,7 +22,7 @@ Nenhum domínio acessa diretamente o banco de outro. Toda comunicação ocorre v
 Prover a infraestrutura central do sistema: autenticação, gerenciamento de sessões, motor de alertas e log de auditoria.
 
 ### Responsabilidades
-- Autenticação e autorização (JWT + RBAC)
+- Autenticação e autorização (JWT + IAM RBAC)
 - Gerenciamento de usuários e papéis
 - Criação e controle de sessões clínicas
 - Motor de alertas e notificações
@@ -37,7 +37,7 @@ Prover a infraestrutura central do sistema: autenticação, gerenciamento de ses
 
 ### Dependências
 - Security Domain (Auth, LGPD, Audit)
-- Cloud Domain (Armazenamento Blob)
+- AWS Integration Domain (Armazenamento S3)
 - Banco: `core_db` (PostgreSQL)
 
 ### APIs Públicas
@@ -78,23 +78,9 @@ backend/
 │   ├── config.py
 │   ├── database.py
 │   ├── auth/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   ├── sessions/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   ├── alerts/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   └── orchestrator/
-│       ├── orchestrator.py
-│       └── domain_client.py
 ├── migrations/
 ├── tests/
 ├── Dockerfile
@@ -106,7 +92,7 @@ backend/
 ## Domínio 2 — Video Analysis Domain
 
 ### Objetivo
-Processar vídeos clínicos para detectar indicadores de risco assistencial: expressões de sofrimento, postura, sangramento e objetos de risco.
+Processar vídeos clínicos de forma estritamente local (MVP) para detectar indicadores de risco assistencial: expressões de sofrimento, postura, sangramento e objetos de risco.
 
 ### Responsabilidades
 - Receber e armazenar vídeos temporariamente
@@ -119,65 +105,29 @@ Processar vídeos clínicos para detectar indicadores de risco assistencial: exp
 - Geração de score de contribuição para o IRA
 
 ### Limites
-- ✅ Processa apenas arquivos de vídeo
+- ✅ Processa apenas arquivos de vídeo localmente
 - ✅ Retorna scores e alertas para o Core
 - ❌ Não acessa banco de áudio ou documentos
-- ❌ Não calcula o IRA final
 
 ### Dependências
-- Cloud Integration Domain (Upload e Storage seguro)
+- AWS Integration Domain (Upload e Storage seguro em S3)
 - Core Platform (recebe token de sessão)
 - Banco: `video_db` (PostgreSQL)
-
-### APIs Públicas
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| POST | `/api/v1/video/analyze` | Inicia análise de vídeo |
-| GET | `/api/v1/video/jobs/{job_id}` | Status do job de análise |
-| GET | `/api/v1/video/results/{session_id}` | Resultado da análise |
-| GET | `/api/v1/video/health` | Healthcheck |
-
-### Eventos Publicados
-- `video.analysis_started` — Início do processamento
-- `video.analysis_completed` — Análise concluída com sucesso
-- `video.analysis_failed` — Falha no processamento
-
-### Eventos Consumidos
-- `session.media_uploaded` (tipo vídeo) — Inicia o processamento
-
-### Banco de Dados: `video_db`
-Tabelas: `video_jobs`, `video_results`, `frame_analyses`, `face_detections`, `pose_analyses`, `object_detections`
 
 ### Estrutura de Pastas
 ```
 video-domain/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── video/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   ├── analyzers/
 │   │   ├── deepface_analyzer.py
 │   │   ├── mediapipe_analyzer.py
 │   │   ├── yolo_analyzer.py
 │   │   ├── opencv_analyzer.py
 │   │   └── face_recognition_analyzer.py
-│   ├── pipeline/
-│   │   ├── video_pipeline.py
-│   │   └── frame_extractor.py
-│   └── scoring/
-│       └── ira_video_scorer.py
+│   └── ...
 ├── models/
 │   └── yolov8n.pt
-├── migrations/
-├── tests/
-├── Dockerfile
-└── requirements.txt
+└── Dockerfile
 ```
 
 ---
@@ -185,67 +135,33 @@ video-domain/
 ## Domínio 3 — Audio Analysis Domain
 
 ### Objetivo
-Transcrever e analisar áudios de consultas para detectar indicadores linguísticos e prosódicos de sofrimento, ameaça e risco obstétrico.
+Transcrever e analisar áudios de consultas delegando o processamento para AWS, visando detectar indicadores linguísticos e prosódicos de sofrimento, ameaça e risco obstétrico.
 
 ### Responsabilidades
 - Receber e armazenar arquivos de áudio
-- Transcrição via Azure Speech (STT com speaker diarization)
-- Análise de sentimento (Azure AI Language)
-- Extração de entidades clínicas (NER)
+- Transcrição via Amazon Transcribe (STT com speaker diarization)
+- Análise de sentimento (Amazon Comprehend)
+- Extração de entidades clínicas (NER via Amazon Comprehend)
 - Detecção de verbalizações de risco (keywords, padrões)
 - Análise de tom e prosódia
 - Geração de score de contribuição para o IRA
 
-### Limites
-- ✅ Processa apenas arquivos de áudio
-- ❌ Não processa vídeo ou documentos
-- ❌ Não calcula o IRA final
-
 ### Dependências
-- Cloud Integration Domain (para STS, NLP e Storage no Azure)
+- AWS Integration Domain (para Transcribe, Comprehend e Storage no S3)
 - Banco: `audio_db` (PostgreSQL)
-
-### APIs Públicas
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| POST | `/api/v1/audio/analyze` | Inicia análise de áudio |
-| GET | `/api/v1/audio/jobs/{job_id}` | Status do job |
-| GET | `/api/v1/audio/results/{session_id}` | Resultado com transcrição |
-| GET | `/api/v1/audio/health` | Healthcheck |
-
-### Eventos Publicados
-- `audio.analysis_started`
-- `audio.analysis_completed`
-- `audio.analysis_failed`
-
-### Banco de Dados: `audio_db`
-Tabelas: `audio_jobs`, `transcriptions`, `speaker_segments`, `sentiment_results`, `ner_results`, `risk_keywords`, `audio_scores`
 
 ### Estrutura de Pastas
 ```
 audio-domain/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── audio/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   ├── analyzers/
-│   │   ├── azure_speech_analyzer.py
-│   │   ├── azure_language_analyzer.py
+│   │   ├── aws_transcribe_analyzer.py
+│   │   ├── aws_comprehend_analyzer.py
 │   │   ├── sentiment_analyzer.py
 │   │   ├── ner_analyzer.py
 │   │   └── prosody_analyzer.py
-│   └── scoring/
-│       └── ira_audio_scorer.py
-├── migrations/
-├── tests/
-├── Dockerfile
-└── requirements.txt
+│   └── ...
+└── Dockerfile
 ```
 
 ---
@@ -253,55 +169,31 @@ audio-domain/
 ## Domínio 4 — Document Analysis Domain
 
 ### Objetivo
-Processar documentos médicos (prontuários, exames, consentimentos) para extrair informações estruturadas e detectar inconsistências.
+Processar documentos médicos (prontuários, exames, consentimentos) delegando para a AWS a extração de informações estruturadas e detecção de inconsistências.
 
 ### Responsabilidades
 - Receber e armazenar documentos
-- OCR e extração de texto (Azure Document Intelligence)
+- OCR e extração de texto (Amazon Textract)
 - Parsing de campos obstétricos
 - Validação de completude e consistência
 - Verificação de consentimento informado
 - Geração de score de contribuição para o IRA
 
 ### Dependências
-- Cloud Integration Domain (para OCR no Azure)
+- AWS Integration Domain (para OCR via Textract)
 - Banco: `document_db` (PostgreSQL)
-
-### APIs Públicas
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| POST | `/api/v1/documents/analyze` | Inicia análise documental |
-| GET | `/api/v1/documents/jobs/{job_id}` | Status do job |
-| GET | `/api/v1/documents/results/{session_id}` | Resultado estruturado |
-| GET | `/api/v1/documents/health` | Healthcheck |
-
-### Banco de Dados: `document_db`
-Tabelas: `document_jobs`, `document_results`, `extracted_fields`, `consistency_checks`, `consent_records`
 
 ### Estrutura de Pastas
 ```
 document-domain/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── documents/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
 │   ├── analyzers/
-│   │   ├── azure_doc_analyzer.py
+│   │   ├── aws_textract_analyzer.py
 │   │   ├── field_extractor.py
 │   │   ├── consistency_checker.py
 │   │   └── consent_validator.py
-│   └── scoring/
-│       └── ira_document_scorer.py
-├── migrations/
-├── tests/
-├── Dockerfile
-└── requirements.txt
+│   └── ...
+└── Dockerfile
 ```
 
 ---
@@ -318,43 +210,9 @@ Receber os scores parciais dos três domínios de análise e calcular o IRA (Ín
 - Classificar o nível de risco (Baixo/Moderado/Crítico)
 - Gerar justificativas textuais por componente
 - Manter histórico de IRA por paciente
-- Calcular tendências temporais
-
-### APIs Públicas
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| POST | `/api/v1/risk/correlate` | Calcula IRA com base nos scores |
-| GET | `/api/v1/risk/history/{patient_id}` | Histórico de IRA da paciente |
-| GET | `/api/v1/risk/session/{session_id}` | IRA da sessão |
-| GET | `/api/v1/risk/health` | Healthcheck |
 
 ### Banco de Dados: `risk_db`
 Tabelas: `ira_calculations`, `risk_components`, `risk_justifications`, `patient_risk_history`
-
-### Estrutura de Pastas
-```
-risk-domain/
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── risk/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
-│   ├── calculators/
-│   │   ├── ira_calculator.py
-│   │   ├── weight_model.py
-│   │   └── trend_analyzer.py
-│   └── classifiers/
-│       └── risk_classifier.py
-├── migrations/
-├── tests/
-├── Dockerfile
-└── requirements.txt
-```
 
 ---
 
@@ -367,152 +225,81 @@ Gerar relatórios especializados em PDF e Excel a partir dos dados consolidados 
 - Gerar relatório completo de sessão (PDF)
 - Gerar relatório executivo (Excel)
 - Gerar relatório de auditoria (PDF imutável com hash)
-- Armazenar relatórios no Azure Blob Storage
-- Disponibilizar URLs de download
-
-### APIs Públicas
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| POST | `/api/v1/reports/generate` | Gera relatório da sessão |
-| GET | `/api/v1/reports/{report_id}` | Download do relatório |
-| GET | `/api/v1/reports/session/{session_id}` | Lista relatórios da sessão |
-| GET | `/api/v1/reports/health` | Healthcheck |
+- Armazenar relatórios no Amazon S3 (via AWS Integration)
+- Disponibilizar URLs pré-assinadas para download
 
 ### Banco de Dados: `report_db`
 Tabelas: `reports`, `report_sections`, `report_attachments`
-
-### Estrutura de Pastas
-```
-report-domain/
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── reports/
-│   │   ├── router.py
-│   │   ├── service.py
-│   │   ├── models.py
-│   │   └── schemas.py
-│   ├── generators/
-│   │   ├── pdf_generator.py
-│   │   ├── excel_generator.py
-│   │   └── audit_report_generator.py
-│   └── templates/
-│       ├── session_report.html
-│       └── audit_report.html
-├── migrations/
-├── tests/
-├── Dockerfile
-└── requirements.txt
-```
 
 ---
 
 ## Domínio 7 — Dashboard Domain
 
 ### Objetivo
-Fornecer interface visual multimodal para monitoramento em tempo real, histórico de IRA e central de alertas.
-
-### Responsabilidades
-- Exibir dashboard de sessão com IRA e alertas
-- Exibir mapa de calor temporal do IRA
-- Sincronizar transcrição com vídeo
-- Exibir histórico de IRA da paciente
-- Central de alertas com filtros
-- Download de relatórios
-
-### Dependências
-- Core Platform API
-- Risk Domain API
-- Report Domain API
-
-### Estrutura de Pastas
-```
-frontend/
-├── app.py
-├── pages/
-│   ├── 1_Dashboard.py
-│   ├── 2_Sessions.py
-│   ├── 3_Alerts.py
-│   ├── 4_Reports.py
-│   └── 5_Admin.py
-├── components/
-│   ├── ira_gauge.py
-│   ├── video_player.py
-│   ├── transcript_viewer.py
-│   ├── alert_card.py
-│   └── risk_heatmap.py
-├── services/
-│   ├── api_client.py
-│   └── auth_service.py
-├── assets/
-│   └── styles.css
-├── Dockerfile
-└── requirements.txt
-```
+Fornecer interface visual multimodal (Streamlit) para monitoramento em tempo real, histórico de IRA e central de alertas.
 
 ---
 
 ## Domínio 8 — DevOps Domain
 
 ### Objetivo
-Prover toda a infraestrutura de orquestração via containers puramente para execução local e demonstração do Tech Challenge.
+Prover toda a infraestrutura de orquestração via containers para os diferentes ambientes de execução, incluindo deploy na AWS.
 
 ### Responsabilidades
-- Configuração do Docker Compose para ambiente local
-- Scripts de setup, migrações locais e gestão de serviços
-- Gestão de chaves da Azure limitadas ao `.env` local
+- Configuração do Docker Compose para ambientes LOCAL e DEV.
+- Pipelines de CI/CD para deploy nos ambientes HML e PRD (AWS ECS Fargate).
+- Scripts de setup de infraestrutura em nuvem (IaC - Terraform/CloudFormation).
 
 ### Estrutura de Pastas
 ```
-devops/
-├── docker-compose.yml
-├── docker-compose.override.yml
-├── nginx/
-│   └── nginx.conf
-├── scripts/
-│   ├── setup_local.sh
-│   ├── deploy_azure.sh
-│   └── seed_db.py
-└── monitoring/
-    ├── alerts.json
-    └── dashboards.json
+infrastructure/
+├── terraform/
+│   ├── vpc/
+│   ├── ecs/
+│   ├── rds/
+│   └── s3/
+environments/
+├── local/
+│   └── docker-compose.yml
+├── dev/
+├── hml/
+└── prd/
 ```
 
 ---
 
-## Domínio 9 — Cloud Integration Domain
+## Domínio 9 — AWS Integration Domain
 
 ### Objetivo
-Atuar como ponte para os serviços cognitivos gerenciados (Azure Speech, Language, Document Intelligence), cumprindo a exigência de integração com nuvem do Tech Challenge.
+Atuar como hub centralizado de integração para os serviços cognitivos e de infraestrutura gerenciados da AWS.
 
 ### Responsabilidades
-- Roteamento de requisições para o Azure Speech e AI Language (consumidos pelo Domínio de Áudio)
-- Roteamento para Azure Document Intelligence (consumido pelo Domínio de Documentos)
-- (Opcional) Integração avançada com Azure Blob e Azure Monitor se as demonstrações exigirem
+- Roteamento de requisições para o Amazon Transcribe e Amazon Comprehend (consumidos pelo Domínio de Áudio)
+- Roteamento para Amazon Textract (consumido pelo Domínio de Documentos)
+- Integração de armazenamento com Amazon S3
+- Integração de auditoria e logs com Amazon CloudWatch
+- Integração com Amazon Bedrock (opcional para IA Generativa avançada)
+- Gestão de chaves dinâmicas via AWS Secrets Manager
 
 ### Limites
-- ✅ Ponto único de saída da VPC para a rede Microsoft
-- ❌ Não analisa regras de negócio (apenas passa para frente)
+- ✅ Ponto único de saída da VPC local para a rede AWS
+- ❌ Não analisa regras de negócio
 
 ### Dependências
-- Azure Blob Storage, Azure Speech, Azure Language, Azure Doc Intel, Azure Monitor
-- Banco: `cloud_db` (PostgreSQL - Histórico de chamadas para nuvem e custos)
+- Amazon S3, Amazon Transcribe, Amazon Comprehend, Amazon Textract, Amazon CloudWatch, AWS Secrets Manager, Amazon Bedrock.
+- Banco: `aws_db` (PostgreSQL - Histórico de chamadas para nuvem e custos)
 
 ### Estrutura de Pastas
 ```
-cloud-domain/
+aws-domain/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── storage/
-│   ├── speech/
-│   ├── document/
-│   └── telemetry/
-├── Dockerfile
-└── requirements.txt
+│   ├── storage/ (S3)
+│   ├── speech/ (Transcribe)
+│   ├── language/ (Comprehend)
+│   ├── document/ (Textract)
+│   ├── telemetry/ (CloudWatch)
+│   └── secrets/ (Secrets Manager)
+└── Dockerfile
 ```
 
 ---
@@ -520,36 +307,32 @@ cloud-domain/
 ## Domínio 10 — Security Domain
 
 ### Objetivo
-Garantir total conformidade com a LGPD e políticas Zero Trust. 
+Garantir total conformidade com a LGPD e políticas de acesso AWS IAM e Zero Trust.
 
 ### Responsabilidades
-- Gestão de Identidade e Autenticação (JWT) e RBAC
-- Criptografia e decriptação em tempo real (AES-256)
-- Anonimização de dados (Hash unidirecional, mascaramento)
-- Gestão de segredos via Azure Key Vault
-- Audit Logger (Trilha de auditoria imutável)
+- Gestão de Identidade, Autenticação e IAM (Identity and Access Management)
+- Criptografia de dados em repouso (S3 Encryption) e em trânsito (HTTPS/TLS)
+- Anonimização de dados pessoais antes de armazenamento permanente (Hash unidirecional, mascaramento)
+- Integração com AWS Secrets Manager para credenciais dinâmicas
+- Audit Logger (Trilha de auditoria enviada para o Amazon CloudWatch Logs)
 
 ### Limites
-- ✅ Intercepta requisições no API Gateway para checar tokens
-- ✅ Realiza mascaramento de PII (Personally Identifiable Information) antes da persistência no Core
+- ✅ Intercepta requisições no API Gateway para checar tokens e permissões
+- ✅ Realiza mascaramento de PII (Personally Identifiable Information)
 - ❌ Não gerencia a sessão clínica
 
 ### Dependências
-- Azure Key Vault
-- Banco: `security_db` (PostgreSQL - Auth, Tokens, Access History, Consentimentos)
+- AWS Secrets Manager, Amazon CloudWatch
+- Banco: `security_db` (PostgreSQL)
 
 ### Estrutura de Pastas
 ```
 security-domain/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
 │   ├── auth/
-│   ├── rbac/
+│   ├── iam/
 │   ├── crypto/
 │   ├── audit/
 │   └── lgpd/
-├── Dockerfile
-└── requirements.txt
+└── Dockerfile
 ```

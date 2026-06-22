@@ -14,7 +14,7 @@ O sistema utiliza **PostgreSQL 16** com **schemas isolados por domínio** na mes
 | `video` | Video Analysis | `video-domain/` |
 | `audio` | Audio Analysis | `audio-domain/` |
 | `document` | Document Analysis | `document-domain/` |
-| `cloud` | Cloud Integration | `cloud-domain/` |
+| `aws` | AWS Integration | `aws-domain/` |
 | `security` | Security Domain | `security-domain/` |
 
 ---
@@ -82,7 +82,7 @@ erDiagram
         varchar ip_address
     }
 
-    CLOUD_PROCESSING_HISTORY {
+    AWS_PROCESSING_HISTORY {
         uuid id PK
         varchar service_name
         timestamp call_time
@@ -240,13 +240,13 @@ CREATE TABLE security.access_history (
 );
 
 -- ============================================
--- SCHEMA CLOUD
+-- SCHEMA AWS
 -- ============================================
-CREATE SCHEMA IF NOT EXISTS cloud;
+CREATE SCHEMA IF NOT EXISTS aws;
 
-CREATE TABLE cloud.cloud_processing_history (
+CREATE TABLE aws.aws_processing_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    service_name VARCHAR(100) NOT NULL, -- Azure Speech, Azure Doc Intel
+    service_name VARCHAR(100) NOT NULL, -- Amazon Transcribe, Amazon Textract
     session_id UUID NOT NULL,
     call_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     duration_ms NUMERIC(10, 2),

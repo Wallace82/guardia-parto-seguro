@@ -155,7 +155,7 @@ media_type: "video" | "audio" | "document"
 {
   "media_id": "550e8400-e29b-41d4-a716-446655440010",
   "status": "uploaded",
-  "blob_url": "https://storageaccount.blob.core.windows.net/media/session_id/arquivo.mp4",
+  "blob_url": "s3://guardia-parto-seguro/media/session_id/arquivo.mp4",
   "processing_started": true,
   "message": "Análise iniciada em background"
 }
@@ -222,7 +222,7 @@ Inicia análise de vídeo.
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
   "media_id": "550e8400-e29b-41d4-a716-446655440010",
-  "blob_url": "https://storageaccount.blob.core.windows.net/media/video.mp4",
+  "blob_url": "s3://guardia-parto-seguro/media/video.mp4",
   "options": {
     "analyze_emotions": true,
     "analyze_pose": true,
@@ -286,7 +286,7 @@ Inicia análise de áudio.
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
   "media_id": "550e8400-e29b-41d4-a716-446655440011",
-  "blob_url": "https://storageaccount.blob.core.windows.net/media/audio.wav",
+  "blob_url": "s3://guardia-parto-seguro/media/audio.wav",
   "language": "pt-BR",
   "options": {
     "speaker_diarization": true,
@@ -367,7 +367,7 @@ Inicia análise documental.
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
   "media_id": "550e8400-e29b-41d4-a716-446655440012",
-  "blob_url": "https://storageaccount.blob.core.windows.net/media/prontuario.pdf",
+  "blob_url": "s3://guardia-parto-seguro/media/prontuario.pdf",
   "document_type": "prontuario"
 }
 ```
@@ -503,7 +503,7 @@ Download ou URL do relatório.
   "title": "Relatório de Sessão — 15/01/2024",
   "report_type": "session",
   "report_format": "pdf",
-  "download_url": "https://storageaccount.blob.core.windows.net/reports/report.pdf?sas=...",
+  "download_url": "https://guardia-parto-seguro.s3.amazonaws.com/reports/report.pdf?X-Amz-Algorithm=...",
   "file_size_bytes": 245760,
   "file_hash_sha256": "a1b2c3d4...",
   "generated_at": "2024-01-15T10:48:00-03:00",
@@ -538,10 +538,10 @@ Recupera o log de auditoria imutável (requer role `auditor` ou `admin`).
 
 ---
 
-## 8. Cloud Integration API — Porta 8007
+## 8. AWS Integration API — Porta 8007
 
 #### POST `/api/v1/storage/upload`
-Faz upload seguro mascarado (anonimizado) de mídias direto para o Azure Blob Storage.
+Faz upload seguro mascarado (anonimizado) de mídias direto para o Amazon S3.
 
 **Request:** `multipart/form-data`
 ```
@@ -553,15 +553,15 @@ media_type: "video" | "audio" | "document"
 ```json
 {
   "media_id": "550e8400-e29b-41d4-a716-446655440010",
-  "status": "uploaded_to_blob",
-  "blob_url": "https://storageaccount.blob.core.windows.net/media/anon/arquivo.mp4"
+  "status": "uploaded_to_s3",
+  "blob_url": "s3://guardia-parto-seguro/media/anon/arquivo.mp4"
 }
 ```
 
 ---
 
-#### GET `/api/v1/cloud-processing-history`
-Recupera o histórico de chamadas ao Azure AI Services e métricas de consumo de cota.
+#### GET `/api/v1/aws-processing-history`
+Recupera o histórico de chamadas ao AWS AI Services e métricas de consumo de cota.
 
 **Response 200:**
 ```json
@@ -569,7 +569,7 @@ Recupera o histórico de chamadas ao Azure AI Services e métricas de consumo de
   "total_calls_today": 45,
   "history": [
     {
-      "service": "Azure Speech",
+      "service": "Amazon Transcribe",
       "timestamp": "2024-01-15T10:35:00-03:00",
       "status": "success",
       "duration_ms": 1240,
@@ -594,7 +594,7 @@ Cada serviço expõe automaticamente sua documentação Swagger em:
 | Risk API | http://localhost:8004/docs | http://localhost:8004/openapi.json |
 | Report API | http://localhost:8005/docs | http://localhost:8005/openapi.json |
 | Security API | http://localhost:8006/docs | http://localhost:8006/openapi.json |
-| Cloud API | http://localhost:8007/docs | http://localhost:8007/openapi.json |
+| AWS API | http://localhost:8007/docs | http://localhost:8007/openapi.json |
 
 ---
 
@@ -614,4 +614,4 @@ Cada serviço expõe automaticamente sua documentação Swagger em:
 | 422 | Unprocessable Entity — falha de validação Pydantic |
 | 429 | Too Many Requests — rate limit atingido |
 | 500 | Internal Server Error — erro interno |
-| 503 | Service Unavailable — serviço Azure indisponível |
+| 503 | Service Unavailable — serviço AWS indisponível |

@@ -1,6 +1,6 @@
 # SECURITY.md — GuardIA Parto Seguro
 
-> Políticas de Segurança, Privacidade e Conformidade LGPD — v1.0
+> Políticas de Segurança, Privacidade e Conformidade LGPD — v2.0
 
 ---
 
@@ -8,7 +8,7 @@
 
 O **GuardIA Parto Seguro** lida com dados médicos extremamente sensíveis (vídeos de partos, áudios de consultas, prontuários). A arquitetura foi projetada sob o princípio de **Security by Design** e **Zero Trust**, operando em forte conformidade com a Lei Geral de Proteção de Dados (LGPD).
 
-O domínio central responsável por orquestrar essas regras é o **Security Domain**, enquanto o **Cloud Integration Domain** atua como proxy seguro para serviços externos.
+O domínio central responsável por orquestrar essas regras é o **Security Domain**, enquanto o **AWS Integration Domain** atua como proxy seguro para serviços externos.
 
 ---
 
@@ -19,21 +19,21 @@ De acordo com a LGPD, os dados processados pelo GuardIA enquadram-se na categori
 ### 2.1 Módulo de Anonimização (Pseudo-anonimização)
 Para reduzir a superfície de risco e limitar o acesso aos dados reais, o sistema aplica um algoritmo de pseudo-anonimização em tempo real:
 - **Identificadores Diretos (Nomes, CPFs):** São substituídos por um código opaco assim que entram no sistema (Ex: "Maria da Silva" → `PACIENTE_001`).
-- **Mapeamento Criptografado:** A tabela de equivalência (De/Para) fica armazenada no `Security DB`, criptografada por uma chave mestre residente no Azure Key Vault.
-- **Processamento na Nuvem:** Quando um áudio ou documento é enviado ao Azure AI Services, ele não leva o nome da paciente, apenas o ID opaco.
+- **Mapeamento Criptografado:** A tabela de equivalência (De/Para) fica armazenada no `Security DB`, criptografada por uma chave mestre residente no AWS Secrets Manager.
+- **Processamento na Nuvem:** Quando um áudio ou documento é enviado aos serviços da AWS (Transcribe, Comprehend, Textract), ele não leva o nome da paciente, apenas o ID opaco.
 
 ---
 
 ## 3. Criptografia
 
 ### 3.1 Em Trânsito (Data in Transit)
-- **TLS 1.3 Obrigatório:** Toda comunicação entre os nós da rede (APIs, Banco de Dados, Azure Services, Dashboard) ocorre exclusivamente sobre HTTPS/TLS 1.3.
+- **TLS 1.3 Obrigatório:** Toda comunicação entre os nós da rede (APIs, Banco de Dados, AWS Services, Dashboard) ocorre exclusivamente sobre HTTPS/TLS 1.3.
 - Redirecionamento HTTP para HTTPS é compulsório em todos os endpoints públicos.
 
 ### 3.2 Em Repouso (Data at Rest)
-- **Bancos de Dados:** Todos os bancos de dados PostgreSQL (incluindo backups) utilizam encriptação transparente no nível do disco (TDE) ou extensão `pgcrypto` para colunas sensíveis.
-- **Armazenamento de Mídias (Azure Blob):** O Azure Blob Storage está configurado com criptografia em repouso ativada (Storage Service Encryption - SSE) utilizando **AES-256**.
-- As chaves de criptografia são rotacionadas periodicamente.
+- **Bancos de Dados:** Todos os bancos de dados PostgreSQL (incluindo backups) utilizam encriptação transparente no nível do disco (Amazon RDS Encryption) ou extensão `pgcrypto` para colunas sensíveis.
+- **Armazenamento de Mídias (Amazon S3):** O Amazon S3 está configurado com criptografia em repouso ativada (S3 Encryption) utilizando **AES-256**.
+- As chaves de criptografia são rotacionadas periodicamente através do AWS KMS.
 
 ---
 
@@ -41,16 +41,16 @@ Para reduzir a superfície de risco e limitar o acesso aos dados reais, o sistem
 
 > **NUNCA commite senhas, tokens ou connection strings no repositório.**
 
-A gestão de credenciais é delegada ao **Azure Key Vault**:
-- **Acesso Dinâmico:** Os serviços da plataforma recuperam dinamicamente strings de conexão, tokens do Azure AI e chaves de API durante o bootstrap ou em tempo de execução via *Azure Managed Identities*.
-- **Sem chaves estáticas:** Chaves estáticas em arquivos `.env` são permitidas **apenas** no ambiente de desenvolvimento local.
-- **Auditoria de Acesso a Segredos:** O Azure Key Vault emite logs toda vez que uma chave é lida.
+A gestão de credenciais é delegada ao **AWS Secrets Manager**:
+- **Acesso Dinâmico:** Os serviços da plataforma recuperam dinamicamente strings de conexão, tokens e chaves de API durante o bootstrap ou em tempo de execução via *AWS IAM Roles*.
+- **Sem chaves estáticas:** Chaves estáticas em arquivos `.env` são permitidas **apenas** no ambiente de desenvolvimento local (LOCAL/DEV). Nos ambientes de nuvem (HML/PRD), usa-se IAM Policies.
+- **Auditoria de Acesso a Segredos:** O AWS CloudTrail / CloudWatch emite logs toda vez que uma chave é lida.
 
 ---
 
-## 5. Controle de Acesso (RBAC)
+## 5. Controle de Acesso (IAM e RBAC)
 
-O sistema utiliza JSON Web Tokens (JWT) com verificação assimétrica para garantir autorização rigorosa.
+O sistema utiliza JSON Web Tokens (JWT) com verificação assimétrica para garantir autorização rigorosa no lado da aplicação, aliados ao controle de políticas do AWS IAM para os recursos de nuvem.
 
 **Perfis de Acesso:**
 1. **Admin:** Acesso técnico total. Gerencia integrações e usuários, mas **não** pode visualizar vídeos, áudios ou prontuários desanonimizados sem um token de consentimento de auditoria.
@@ -62,7 +62,7 @@ O sistema utiliza JSON Web Tokens (JWT) com verificação assimétrica para gara
 
 ## 6. Audit Logger (Trilha de Auditoria)
 
-Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security Domain` (através do `core-api`) mantém um **Audit Log** imutável no banco de dados, registrando todas as ações de leitura e escrita.
+Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security Domain` (através do `core-api`) mantém um **Audit Log** imutável no banco de dados, registrando todas as ações de leitura e escrita, e envia esses logs para o **Amazon CloudWatch Logs**.
 
 **O que é registrado:**
 - Autenticações (Sucesso/Falha).
@@ -70,7 +70,7 @@ Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security 
 - Disparos de Alertas e Reconhecimentos (Quem ignorou um alerta crítico e a justificativa).
 - Uploads e modificações de estado do IRA.
 
-**Formato do Log (JSON Estruturado no Azure Monitor):**
+**Formato do Log (JSON Estruturado no CloudWatch):**
 ```json
 {
   "timestamp": "2024-10-15T14:32:01Z",
@@ -89,4 +89,4 @@ Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security 
 
 A plataforma implementa mecanismos de deleção lógica e expurgo:
 - **Vídeos e Áudios:** Retidos pelo período legal exigido (padrão: 5 anos de inatividade, mas configurável conforme o Conselho Federal de Medicina).
-- Após o período, o processo de "Shredding" digital destrói o dado no Azure Blob e exclui a chave do paciente no banco, impossibilitando a reversão da pseudo-anonimização.
+- Após o período, o processo de "Shredding" digital destrói o dado no Amazon S3 e exclui a chave do paciente no banco, impossibilitando a reversão da pseudo-anonimização.

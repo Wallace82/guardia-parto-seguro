@@ -67,10 +67,10 @@
 |---|---|
 | Backend | FastAPI (Python 3.11) |
 | Visão | OpenCV + DeepFace + MediaPipe + YOLOv8 |
-| Voz/NLP | Azure Speech + Azure AI Language |
-| Docs | Azure Document Intelligence |
+| Voz/NLP | Amazon Transcribe + Amazon Comprehend |
+| Docs | Amazon Textract |
 | Frontend | Streamlit |
-| Cloud | Azure (Blob, Key Vault, Monitor) |
+| Cloud | AWS (S3, Secrets Manager, CloudWatch) |
 | Banco | PostgreSQL |
 
 ### Destaque de Decisões Arquiteturais (30s)
@@ -135,22 +135,22 @@ with mp_holistic.Holistic() as holistic:
     pose_score = classify_posture(results.pose_landmarks)
 ```
 
-**NLP com Azure:**
+**NLP com AWS:**
 ```python
-# Azure Speech — Speaker Diarization
-result = speech_recognizer.recognize_once_async().get()
+# Amazon Transcribe — Speaker Diarization
+# (Assincronamente via job no S3 ou stream, retorno formatado)
 # Output: "Speaker_1: 'Tá doendo muito, para por favor'"
 
-# Azure Language — Análise de sentimento
-sentiment = text_analytics_client.analyze_sentiment([text])
-# Output: {'sentiment': 'negative', 'confidence': 0.94}
+# Amazon Comprehend — Análise de sentimento
+sentiment = comprehend_client.detect_sentiment(Text=text, LanguageCode='pt')
+# Output: {'Sentiment': 'NEGATIVE', 'SentimentScore': {'Negative': 0.94}}
 ```
 
 ### Resultados Obtidos (1 min)
 | Métrica | Resultado |
 |---|---|
 | Precisão DeepFace (emoções) | 73% em vídeos de demonstração |
-| WER Azure Speech (pt-BR) | < 18% em áudio limpo |
+| WER Amazon Transcribe (pt-BR) | < 18% em áudio limpo |
 | Acurácia OCR (prontuários) | > 87% em documentos bem digitalizados |
 | Tempo de processamento (30 min de vídeo) | ~ 12 minutos |
 | Latência da API Gateway | < 350ms (p95) |

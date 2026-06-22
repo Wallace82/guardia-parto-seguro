@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B?logo=streamlit)](https://streamlit.io/)
-[![Azure](https://img.shields.io/badge/Azure-Cloud-0078D4?logo=microsoft-azure)](https://azure.microsoft.com/)
+[![AWS](https://img.shields.io/badge/AWS-Cloud-232F3E?logo=amazon-aws)](https://aws.amazon.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -23,26 +23,31 @@ O **GuardIA Parto Seguro** é uma plataforma acadêmica de inteligência artific
 - ⚠️ Desvios em procedimentos obstétricos
 - 📊 Indicadores de Risco Assistencial (IRA)
 
-A solução utiliza uma **Arquitetura Híbrida** combinando processamento local e serviços em nuvem, processando simultaneamente **vídeos clínicos**, **áudios de consultas**, **documentos médicos** e **histórico do paciente**, gerando alertas automáticos e relatórios especializados, com rígidos controles de **Segurança e conformidade LGPD**.
+A solução utiliza uma **Arquitetura Híbrida** (MVP Local + AWS), processando simultaneamente **vídeos clínicos**, **áudios de consultas**, **documentos médicos** e **histórico do paciente**. As aplicações e bancos rodam localmente, enquanto os serviços cognitivos e de IA avançada são delegados via API à AWS, gerando alertas automáticos e relatórios especializados, com rígidos controles de **Segurança e conformidade LGPD**.
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Arquitetura e Ambientes
+
+A estratégia arquitetural está dividida em quatro ambientes ([Detalhes em ENVIRONMENTS.md](docs/ENVIRONMENTS.md)):
+* **LOCAL/DEV**: Execução local (MVP) consumindo APIs da AWS (Transcribe, Comprehend, Textract, S3).
+* **HML/PRD**: Implantação 100% nuvem AWS (ECS, RDS, S3, Secrets Manager, CloudWatch).
 
 ```
 guardia-parto-seguro/
 ├── infra/                   # ⚙️ Infraestrutura local (Docker, DB, scripts)
-├── infrastructure/          # ☁️ Scripts e IaC (Infrastructure as Code) para Azure
+├── infrastructure/          # ☁️ Scripts e IaC (Infrastructure as Code) para AWS
 ├── docs/                    # 📚 Documentação completa do projeto
 ├── backend/                 # 🔐 Core Platform + API Gateway (FastAPI)
 ├── frontend/                # 🖥️ Dashboard Multimodal (Streamlit)
 ├── video-domain/            # 🎥 Domínio Local de Visão Computacional (OpenCV/YOLOv8/DeepFace)
-├── audio-domain/            # 🎙️ Domínio de Análise de Áudio (delegado ao Azure Speech/Language)
-├── document-domain/         # 📄 Domínio de Análise de Documentos (delegado ao Azure Doc Intel)
+├── audio-domain/            # 🎙️ Domínio de Análise de Áudio (delegado ao Amazon Transcribe/Comprehend)
+├── document-domain/         # 📄 Domínio de Análise de Documentos (delegado ao Amazon Textract)
 ├── risk-domain/             # 📊 Domínio de Correlação de Risco (IRA)
 ├── report-domain/           # 📋 Domínio de Relatórios
-├── cloud-domain/            # 🌩️ Cloud Integration Domain (Storage, Azure AI, Auditoria)
-├── security-domain/         # 🛡️ Security Domain (LGPD, Auth, Anonimização, RBAC)
+├── aws-domain/              # 🌩️ AWS Integration Domain (S3, AWS AI, Secrets Manager, CloudWatch)
+├── security-domain/         # 🛡️ Security Domain (LGPD, IAM, Anonimização, Crypto)
+├── environments/            # 🌍 Configurações e docker-composes específicos de ambientes
 ├── start.ps1                # ▶️ Script de startup (Windows)
 └── start.sh                 # ▶️ Script de startup (Linux/macOS)
 ```
@@ -57,7 +62,7 @@ Veja a documentação completa em [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 - Docker Desktop (inclui Docker Compose)
 - Git
-- Conta Azure (para serviços de IA — opcional em desenvolvimento)
+- Conta AWS e Credenciais configuradas (`~/.aws/credentials`)
 
 ### 1. Clone o repositório
 
@@ -68,7 +73,7 @@ cd guardia-parto-seguro
 
 ### 2. Inicie o projeto
 
-> O script de startup configura o `.env`, aguarda os bancos ficarem saudáveis e sobe todos os containers automaticamente.
+> O script de startup configura o `.env`, aguarda os bancos ficarem saudáveis e sobe todos os containers automaticamente para o ambiente LOCAL.
 
 **Windows (PowerShell):**
 ```powershell
@@ -89,8 +94,8 @@ chmod +x start.sh
 | **API Gateway** | http://localhost:8000 | FastAPI backend principal |
 | **Swagger UI** | http://localhost:8000/docs | Documentação interativa da API |
 | Video Service | http://localhost:8001 | Análise de vídeo (OpenCV/DeepFace) |
-| Audio Service | http://localhost:8002 | Análise de áudio (Azure Speech) |
-| Document Service | http://localhost:8003 | OCR e análise documental |
+| Audio Service | http://localhost:8002 | Análise de áudio (Amazon Transcribe) |
+| Document Service | http://localhost:8003 | OCR e análise documental (Amazon Textract) |
 | Risk Service | http://localhost:8004 | Cálculo do IRA |
 | Report Service | http://localhost:8005 | Geração de PDF/Excel |
 
@@ -144,6 +149,7 @@ docker exec -it guardia-postgres-core psql -U guardia -d core_db
 | **Paulo Roberto Gonçalves (Dev 2)** | Video & Audio AI | `video-domain/`, `audio-domain/` |
 | **Evandro Rosa Sampaio (Dev 3)** | Document AI & Risk | `document-domain/`, `risk-domain/` |
 | **Gustavo Octaviano (Dev 4)** | Frontend & Reports | `frontend/`, `report-domain/` |
+| **Wallace Gomes (Dev 5)** | Nuvem AWS, Segurança, Observabilidade | `aws-domain/`, `security-domain/`, `infrastructure/` |
 
 ---
 
@@ -152,129 +158,54 @@ docker exec -it guardia-postgres-core psql -U guardia -d core_db
 | Documento | Descrição |
 |---|---|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitetura híbrida completa, diagramas C4, fluxos |
+| [ENVIRONMENTS.md](docs/ENVIRONMENTS.md) | Estratégia de 4 ambientes (LOCAL, DEV, HML, PRD) |
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requisitos funcionais, não funcionais, regras de negócio e segurança |
-| [DOMAINS.md](docs/DOMAINS.md) | Definição completa de todos os domínios (incluindo Cloud e Security) |
+| [DOMAINS.md](docs/DOMAINS.md) | Definição completa de todos os domínios (incluindo AWS e Security) |
 | [API_SPEC.md](docs/API_SPEC.md) | Especificação OpenAPI de todas as APIs |
 | [DATABASE.md](docs/DATABASE.md) | Modelo de dados, DDL e relacionamentos |
 | [DEVOPS.md](docs/DEVOPS.md) | CI/CD, segurança, Docker, estratégia de deploy |
-| [SECURITY.md](docs/SECURITY.md) | Diretrizes de Criptografia, RBAC, Auditoria, Gestão de Segredos e LGPD |
-| [TEAM_PLAN.md](docs/TEAM_PLAN.md) | Plano da equipe, responsabilidades e agentes IA |
-| [ROADMAP.md](docs/ROADMAP.md) | Roadmap de execução com Sprints de Segurança e Nuvem |
-| [RISK_MATRIX.md](docs/RISK_MATRIX.md) | Matriz de riscos (incluindo custos, vazamento e LGPD) e mitigações |
+| [SECURITY.md](docs/SECURITY.md) | Criptografia, RBAC, CloudWatch, Gestão de Segredos via AWS Secrets Manager e LGPD |
+| [TEAM_PLAN.md](docs/TEAM_PLAN.md) | Plano da equipe, responsabilidades e backlog Cloud |
+| [ROADMAP.md](docs/ROADMAP.md) | Roadmap de execução com Sprints de Nuvem AWS, Segurança e Observabilidade |
+| [RISK_MATRIX.md](docs/RISK_MATRIX.md) | Matriz de riscos e mitigações (LGPD, IAM, AWS) |
 
 ---
 
 ## 🤖 Tecnologias & Mapeamento de Bibliotecas
 
-Para garantir escalabilidade, isolamento de domínios e alta performance assíncrona, a plataforma é estruturada em microsserviços. Abaixo, detalhamos o ecossistema tecnológico distribuído nos contextos de **Arquitetura**, **Backend & IA**, **Frontend & Dados** e **Infraestrutura**, vinculando as principais bibliotecas Python aos problemas que resolvem:
+Para garantir escalabilidade, isolamento de domínios e alta performance assíncrona, a plataforma é estruturada em microsserviços. Abaixo, detalhamos o ecossistema tecnológico.
 
 ### 1. 🏗️ Contexto de Arquitetura (Integração & Orquestração)
-Define as tecnologias responsáveis pelo roteamento de requisições, modelagem de dados, comunicação entre microsserviços e governança do fluxo multimodal.
-
-*   **FastAPI (`0.110.0`)**
-    *   *Problema que resolve:* Necessidade de expor APIs RESTful assíncronas de baixíssima latência e documentação OpenAPI automática (Swagger) para os serviços de domínio.
-    *   *Solução:* Serve como a espinha dorsal do API Gateway principal e de todos os microsserviços, permitindo alta concorrência com o paradigma `async/await`.
-*   **Pydantic & Pydantic-Settings (`2.7.0` / `2.2.1`)**
-    *   *Problema que resolve:* Validação em tempo de execução de dados estruturados que transitam na rede e gestão segura de configurações.
-    *   *Solução:* Valida e sanitiza cargas úteis de dados (JSON) de entrada e saída, além de mapear com segurança e tipagem estrita as variáveis de ambiente (`.env`).
-*   **HTTPX (`0.27.0`)**
-    *   *Problema que resolve:* Bloqueio de threads em requisições HTTP entre microsserviços internos.
-    *   *Solução:* Realiza requisições HTTP assíncronas de forma não bloqueante, permitindo que o API Gateway dispare análises paralelas aos domínios de Vídeo, Áudio e Documentos de forma simultânea.
+*   **FastAPI** e **Pydantic**: APIs assíncronas, validação de dados e OpenAPI.
+*   **HTTPX**: Requisições HTTP não bloqueantes entre microsserviços.
 
 ### 2. 🔐 Contexto de Backend & Inteligência Artificial
-Compreende o núcleo de inteligência analítica multimodal e as capacidades de segurança do sistema.
 
 #### A. Domínio de Vídeo e Visão Computacional (`video-domain`)
-*   **OpenCV (opencv-python-headless `4.9.0.80`)**
-    *   *Problema que resolve:* Processamento de vídeo bruto, decodificação de frames em tempo real e manipulação geométrica de imagens.
-    *   *Solução:* Trata fluxos de imagem com eficiência em containers Docker sem dependência de drivers de interface gráfica (headless).
-*   **MediaPipe (`0.10.11`)**
-    *   *Problema que resolve:* Análise de movimentação, estimativa de pose corporal e detecção de pontos de articulação de profissionais e gestantes.
-    *   *Solução:* Mapeia coordenadas corporais e faciais tridimensionais (3D joints) para identificar padrões de queda, movimentos bruscos e posicionamentos anômalos.
-*   **DeepFace (`0.0.91`)**
-    *   *Problema que resolve:* Monitoramento de expressões faciais indicativas de sofrimento agudo da paciente no ambiente assistencial.
-    *   *Solução:* Realiza análise de atributos faciais para detecção de emoções primárias (dor, medo, tristeza, raiva), provendo inputs quantitativos ao Índice de Risco Assistencial (IRA).
-*   **Ultralytics YOLOv8 (`8.2.0`)**
-    *   *Problema que resolve:* Rastreamento em tempo real de objetos clínicos no ambiente (ex. presença de maca, bed occupancy, instrumentos cirúrgicos) e eventos atípicos (ex. manchas de sangue/hemorragias).
-    *   *Solução:* Detecta e classifica objetos na cena com alta precisão e baixíssimo tempo de inferência.
-*   **face-recognition (`1.3.0`)**
-    *   *Problema que resolve:* Identificação inequívoca de pacientes e profissionais para controle de auditoria e segurança.
-    *   *Solução:* Reconhecimento facial robusto baseado em redes neurais profundas pré-treinadas.
-*   **Pillow (`10.3.0`) & NumPy (`1.26.4`)**
-    *   *Problema que resolve:* Manipulação genérica de dados de imagem e arrays matriciais em alta performance.
+*   **OpenCV**, **MediaPipe**, **DeepFace**, **Ultralytics YOLOv8**, **face-recognition**. Modelos rodando localmente para análise inferencial de pose, reconhecimento e expressões.
 
 #### B. Domínio de Áudio e Linguagem Natural (`audio-domain`)
-*   **azure-cognitiveservices-speech (`1.37.0`)**
-    *   *Problema que resolve:* Transcrição de áudio contínuo de conversas e consultas médicas (Speech-to-Text).
-    *   *Solução:* Converte voz em texto em português, com reconhecimento acústico de terminologia médica e suporte a múltiplos interlocutores.
-*   **azure-ai-textanalytics (`5.3.0`)**
-    *   *Problema que resolve:* Necessidade de extrair sentimentos e termos sensíveis das falas transcritas.
-    *   *Solução:* Analisa o texto transcrito em busca de sentimentos negativos (medo, coação) e entidades clínicas específicas (termos indicativos de abuso verbal ou violência obstétrica).
+*   **Amazon Transcribe (boto3)**: Transcrição de áudio contínuo de conversas e consultas médicas (Speech-to-Text).
+*   **Amazon Comprehend (boto3)**: Extração de sentimentos, PII e entidades clínicas de falas transcritas.
 
 #### C. Domínio de Documentos (`document-domain`)
-*   **azure-ai-documentintelligence (`1.0.0`)**
-    *   *Problema que resolve:* Extração de textos de documentos digitalizados ou manuscritos (prontuários, termos de consentimento, laudos).
-    *   *Solução:* Executa OCR inteligente e mapeamento de chaves, tabelas e valores, estruturando dados antes ilegíveis para correlacionar com o histórico.
+*   **Amazon Textract (boto3)**: OCR inteligente para extração de textos de documentos digitalizados ou manuscritos estruturando dados.
 
-#### D. Integração Cloud & Segurança Híbrida (`cloud-domain`, `security-domain`)
-*   **Azure Identity & Key Vault (`azure-identity`, `azure-keyvault-secrets`)**
-    *   *Problema:* Proteção de segredos e credenciais, garantindo conformidade com arquiteturas Zero Trust.
-    *   *Solução:* Busca dinamicamente senhas, conexões e chaves diretamente do Azure Key Vault. Nenhuma credencial fica em código-fonte ou `.env` de produção.
-*   **Azure Monitor & Auditoria**
-    *   *Problema:* Observabilidade e rastreabilidade (requisito LGPD).
-    *   *Solução:* Centraliza logs estruturados de acessos, uploads e cálculos de risco em tempo real.
-*   **Módulo de Anonimização & LGPD**
-    *   *Problema:* Necessidade de ocultar dados sensíveis de pacientes em logs e bancos de dados (Ex: Maria Silva → PACIENTE_001).
-    *   *Solução:* Módulo de criptografia AES-256 para repouso, mascaramento e hash unidirecional para identificadores, operando no Security Domain.
-*   **python-jose (`3.3.0`) & passlib (`1.7.4`)**
-    *   *Problema:* Autenticação e RBAC (Role-Based Access Control).
-    *   *Solução:* Controla o acesso via JWT com validação forte para os perfis: Admin, Gestor, Médico, Enfermeiro e Auditor.
+#### D. AWS Integration Domain & Segurança Híbrida (`aws-domain`, `security-domain`)
+*   **AWS Secrets Manager (boto3)**: Proteção de segredos e credenciais, garantindo conformidade com arquiteturas Zero Trust.
+*   **Amazon CloudWatch**: Centraliza logs estruturados de acessos, uploads e cálculos de risco em tempo real para auditoria.
+*   **AWS IAM**: Políticas rígidas de controle de acesso para serviços e identidades de execução.
+*   **Módulo de Anonimização & LGPD**: Criptografia AES-256 (S3 Encryption), mascaramento e hash unidirecional para identificadores sensíveis.
 
 ### 3. 🖥️ Contexto de Frontend & Geração de Relatórios
-Garante a interface do usuário final de monitoramento e a confecção de arquivos exportáveis para ouvidorias e órgãos fiscalizadores.
-
-*   **Streamlit (`1.35.0`)**
-    *   *Problema que resolve:* Necessidade de criar e iterar rapidamente em um painel interativo sem criar uma complexa estrutura de frontend em React/HTML/CSS do zero.
-    *   *Solução:* Renderiza o painel principal, gráficos de risco (IRA) e tocadores de mídia a partir de scripts simples em Python.
-*   **Plotly (`5.21.0`)**
-    *   *Problema que resolve:* Apresentação estática e pouco intuitiva de métricas e tendências temporais de saúde.
-    *   *Solução:* Plota gráficos de linha e barras totalmente interativos com suporte a zoom e tooltips informativos.
-*   **Pandas (`2.2.2`)**
-    *   *Problema que resolve:* Organização de coleções complexas de dados do histórico de alertas e exames.
-    *   *Solução:* Permite ordenação rápida, filtragem temporal e pivotagem de dados em estruturas de DataFrames.
-*   **reportlab (`4.1.0`)**
-    *   *Problema que resolve:* Geração de documentos físicos imutáveis de auditoria e prontuários consolidados.
-    *   *Solução:* Constrói PDFs altamente customizados com logos, cabeçalhos dinâmicos, tabelas paginadas e metadados de assinatura.
-*   **openpyxl (`3.1.2`)**
-    *   *Problema que resolve:* Necessidade de exportar bases históricas de auditoria para manipulação externa por gestores hospitalares.
-    *   *Solução:* Exporta planilhas em formato nativo Excel (`.xlsx`).
-*   **Jinja2 (`3.1.4`)**
-    *   *Problema que resolve:* Acoplamento de strings para envio de e-mails de alerta ou relatórios simples.
-    *   *Solução:* Renderiza templates dinâmicos injetando dados em marcações HTML pré-existentes.
+*   **Streamlit**, **Plotly**, **Pandas**: Criação de dashboard, gráficos de risco e análise iterativa.
+*   **reportlab**, **openpyxl**, **Jinja2**: Geração de PDFs (auditoria) e planilhas, com relatórios dinâmicos.
 
 ### 4. ⚙️ Contexto de Infraestrutura & Integração com Nuvem
-Garante que a persistência relacional local e a conectividade com serviços de nuvem funcionem de forma assíncrona, robusta e sob a ótica de segurança Zero-Trust.
-
-*   **SQLAlchemy (`2.0.29`) & asyncpg (`0.29.0`)**
-    *   *Problema que resolve:* Bloqueio de IO em operações de banco de dados e acoplamento a SQL dialetos.
-    *   *Solução:* Proveem um ORM robusto mapeado sob transações assíncronas utilizando o driver assíncrono nativo para o PostgreSQL.
-*   **Alembic (`1.13.1`)**
-    *   *Problema que resolve:* Dificuldade de manter consistência de schemas de tabelas entre ambientes de desenvolvimento e produção.
-    *   *Solução:* Gerencia migrações incrementais do banco por meio de código Python.
-*   **azure-storage-blob (`12.19.1`)**
-    *   *Problema que resolve:* Custos e instabilidade física ao armazenar arquivos pesados de vídeo/áudio no disco local dos microsserviços.
-    *   *Solução:* Gerencia uploads assíncronos diretamente para contêineres de blobs Azure com segurança via SAS Tokens.
-*   **azure-identity (`1.16.0`)**
-    *   *Problema que resolve:* Chaves de API e segredos vulneráveis no código fonte (`credentials leakage`).
-    *   *Solução:* Permite autenticação sem senhas (passwordless) via Identidades Gerenciadas nos recursos Azure.
-*   **azure-keyvault-secrets (`4.8.0`)**
-    *   *Problema que resolve:* Distribuição centralizada de credenciais sensíveis (ex. chaves SMTP, segredos JWT) em ambiente distribuído.
-    *   *Solução:* Recupera credenciais dinamicamente sob demanda.
-*   **Docker & Docker Compose**
-    *   *Problema que resolve:* Instabilidade de ambiente ("funciona na minha máquina").
-    *   *Solução:* Isola os 9 containers em redes virtuais controladas por variáveis de ambiente.
-*   **PostgreSQL 16 & Redis 7**
-    *   *Problema que resolve:* Persistência de dados altamente estruturados e necessidade de cache / filas de processamento rápido.
+*   **SQLAlchemy** & **asyncpg**: ORM assíncrono conectado ao PostgreSQL local.
+*   **Amazon S3 (boto3)**: Armazenamento em nuvem para arquivos pesados de vídeo/áudio e logs protegidos.
+*   **Docker & Docker Compose**: Orquestração local dos containers para MVP.
+*   **PostgreSQL 16 & Redis 7**: Bancos em containers para LOCAL/DEV. Instâncias em Amazon RDS para HML/PRD.
 
 ---
 

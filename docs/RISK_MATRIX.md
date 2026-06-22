@@ -13,15 +13,15 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
 | **RT-001** | Latência alta no processamento de vídeo (> 15 min para 30 min de vídeo) | 3 | 3 | 🔴 9 | Usar amostragem de frames (1 FPS) em vez de todos os frames; processar em background assíncrono; usar GPU se disponível (OpenCV CUDA) | Paulo Roberto Gonçalves |
-| **RT-002** | Limite de quota do Azure Speech excedido durante testes | 3 | 2 | 🟡 6 | Criar mocks para Azure Speech nos testes; usar tier gratuito com controle de uso; criar fallback com Whisper local | Paulo Roberto Gonçalves |
-| **RT-003** | Acurácia do STT < 80% para sotaques regionais em pt-BR | 2 | 3 | 🔴 6 | Testar com múltiplos sotaques; ajustar linguagem personalizada no Azure Speech; documentar limitações claramente | Paulo Roberto Gonçalves |
+| **RT-002** | Limite de quota do Amazon Transcribe excedido durante testes | 3 | 2 | 🟡 6 | Criar mocks para Amazon Transcribe nos testes; usar tier gratuito com controle de uso; criar fallback com Whisper local | Paulo Roberto Gonçalves |
+| **RT-003** | Acurácia do STT < 80% para sotaques regionais em pt-BR | 2 | 3 | 🔴 6 | Testar com múltiplos sotaques; ajustar linguagem personalizada no Amazon Transcribe; documentar limitações claramente | Paulo Roberto Gonçalves |
 | **RT-004** | DeepFace com falsos positivos em condições de iluminação ruim | 3 | 2 | 🟡 6 | Pré-processar frames (equalização de histograma); incluir confidence score e threshold ajustável; documentar limitações | Paulo Roberto Gonçalves |
 | **RT-005** | Conflitos de merge entre desenvolvedores | 2 | 2 | 🟡 4 | Estrutura de pastas totalmente separada por domínio; CODEOWNERS; PRs pequenos (< 300 linhas); branch de curta duração | Wallace Gomes |
 | **RT-006** | Docker Compose com conflito de portas no ambiente local | 2 | 1 | 🟢 2 | Documentar portas usadas; criar script de verificação de portas livres; usar `.env` para configurar portas | Wallace Gomes |
-| **RT-007** | Azure Document Intelligence com baixa acurácia em documentos escaneados com qualidade ruim | 2 | 2 | 🟡 4 | Pré-processar imagem (deskew, binarização OpenCV); aceitar threshold mínimo de qualidade no upload; documentar requisitos de qualidade | Evandro Rosa Sampaio |
+| **RT-007** | Amazon Textract com baixa acurácia em documentos escaneados com qualidade ruim | 2 | 2 | 🟡 4 | Pré-processar imagem (deskew, binarização OpenCV); aceitar threshold mínimo de qualidade no upload; documentar requisitos de qualidade | Evandro Rosa Sampaio |
 | **RT-008** | Migrations de banco inconsistentes entre serviços | 2 | 3 | 🔴 6 | Cada serviço tem suas próprias migrations Alembic; CI verifica migrations antes do deploy; scripts de rollback documentados | Wallace Gomes |
 | **RT-009** | YOLOv8 detectando falsos positivos (objetos de risco inexistentes) | 2 | 2 | 🟡 4 | Fine-tuning com dataset obstétrico; threshold de confiança ≥ 0.7; validação humana para alertas de objetos | Paulo Roberto Gonçalves |
-| **RT-010** | Gargalo no Cloud Integration Domain centralizando as requisições | 2 | 3 | 🔴 6 | Implementar circuit breaker, rate limiting, e escalar horizontalmente os containers do Cloud Domain | Wallace Gomes |
+| **RT-010** | Gargalo no AWS Integration Domain centralizando as requisições | 2 | 3 | 🔴 6 | Implementar circuit breaker, rate limiting, e escalar horizontalmente os containers do AWS Domain | Wallace Gomes |
 
 ---
 
@@ -42,12 +42,12 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
 | **RS-001** | Exposição de dados de pacientes em logs | 3 | 3 | 🔴 9 | Nunca logar nome, CPF ou dados identificáveis; usar IDs opacos nos logs; filtro de PII em todos os serviços; revisão de código com foco em privacidade | Wallace Gomes + Evandro Rosa Sampaio |
-| **RS-002** | Credenciais Azure hardcoded no código | 2 | 3 | 🔴 6 | CODEOWNERS + Bandit verifica hardcoded strings; Azure Key Vault para produção; `.env` para dev (gitignored) | Wallace Gomes |
+| **RS-002** | Credenciais AWS hardcoded no código | 2 | 3 | 🔴 6 | CODEOWNERS + Bandit verifica hardcoded strings; AWS Secrets Manager para produção; `.env` para dev (gitignored) | Wallace Gomes |
 | **RS-003** | Token JWT com expiração longa comprometido | 2 | 3 | 🔴 6 | Expiração de 1h com refresh token de 7 dias; blacklist de tokens revogados; HTTPS obrigatório | Wallace Gomes |
 | **RS-004** | Arquivo malicioso no upload (path traversal, zip bomb) | 2 | 3 | 🔴 6 | Validar extensão e MIME type; limite de tamanho rígido; análise do arquivo em sandbox; nunca executar arquivo recebido | Wallace Gomes + Paulo Roberto Gonçalves |
 | **RS-005** | Não conformidade com LGPD para dados de pacientes | 2 | 3 | 🔴 6 | Anonimização de dados pessoais; log de auditoria imutável **(Implementado)**; política de retenção | Evandro Rosa Sampaio |
-| **RS-006** | Vazamento da Chave Mestra do Key Vault | 1 | 3 | 🟢 3 | Rotação automática de chaves, acesso condicional, e uso exclusivo via Managed Identity em produção | Wallace Gomes |
-| **RS-007** | Falha na pseudo-anonimização enviando PII para nuvem | 2 | 3 | 🔴 6 | Testes estritos na camada de integração do Security Domain; varredura de regex local antes do envio ao Azure AI | Wallace Gomes + Evandro R. |
+| **RS-006** | Vazamento da Chave Mestra do Secrets Manager | 1 | 3 | 🟢 3 | Rotação automática de chaves, acesso condicional, e uso exclusivo via IAM Roles em produção | Wallace Gomes |
+| **RS-007** | Falha na pseudo-anonimização enviando PII para nuvem | 2 | 3 | 🔴 6 | Testes estritos na camada de integração do Security Domain; varredura de regex local antes do envio aos serviços de IA da AWS | Wallace Gomes + Evandro R. |
 
 ---
 
@@ -55,8 +55,8 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
-| **RI-001** | Serviços Azure indisponíveis durante demonstração | 1 | 3 | 🟢 3 | Criar mocks de fallback para todos os serviços Azure; ter demo com dados pré-processados gravados; ambiente local como backup | Wallace Gomes |
-| **RI-002** | Custo Azure excedendo orçamento acadêmico | 2 | 2 | 🟡 4 | Usar tiers gratuitos sempre que possível; implementar mocks nos testes para não consumir quota; monitorar custos diariamente via Azure Cost Management | Wallace Gomes |
+| **RI-001** | Serviços AWS indisponíveis durante demonstração | 1 | 3 | 🟢 3 | Criar mocks de fallback para todos os serviços AWS; ter demo com dados pré-processados gravados; ambiente local como backup | Wallace Gomes |
+| **RI-002** | Custo AWS excedendo orçamento acadêmico | 2 | 2 | 🟡 4 | Usar tiers gratuitos sempre que possível; implementar mocks nos testes para não consumir quota; monitorar custos diariamente via AWS Cost Explorer | Wallace Gomes |
 | **RI-003** | PostgreSQL sem backup causando perda de dados | 1 | 3 | 🟢 3 | Docker volume para persistência; script de backup diário; dados de demo com script de seed para recriar | Wallace Gomes |
 
 ---

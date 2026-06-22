@@ -1,47 +1,28 @@
 # TEAM_PLAN.md — GuardIA Parto Seguro
 
-> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v1.3  
-> **Última atualização:** 2026-06-18 | **Atualizado por:** Wallace Gomes (Dev 1)
+> Plano da Equipe, Responsabilidades, Agentes de IA e Estratégia Git — v2.0  
 
 ---
 
 ## 1. Organização da Equipe
 
-### 👨‍💻 Wallace Gomes (Dev 1) — Core Platform, Security & Cloud Lead
+### 👨‍💻 Wallace Gomes (Dev 1) — Core Platform & DevOps
 
-**Foco:** `backend/` + `devops/` + `cloud-domain/` + `security-domain/`
+**Foco:** `backend/` + `infra/`
 **Status:** 🟡 Em progresso
 
 #### Tarefas
 - [x] Configurar repositório Git com branch strategy e proteções
 - [x] Criar `.env.example` e documentação de setup
 - [x] Criar `.gitignore` completo para projeto Python
-- [x] Criar `CODEOWNERS` para ownership por domínio
 - [x] Criar template de Pull Request (`.github/pull_request_template.md`)
 - [x] Configurar estrutura base do API Gateway (FastAPI): `main.py` + `config.py`
-- [x] Configurar Docker Compose completo com todos os serviços (9 containers: core-api, video, audio, document, risk, report, frontend, postgres ×2, redis)
-- [x] Implementar auth JWT, RBAC e gerenciamento de sessões (User, RefreshToken, Session, MediaFile, Alert — 4 papéis: admin/gestor/profissional/auditor)
+- [x] Configurar Docker Compose completo (MVP Local)
+- [x] Implementar auth JWT e gerenciamento de sessões
 - [x] Implementar módulo de orquestração multimodal
 - [x] Configurar banco `core_db` com Alembic migrations
-- [ ] Configurar Azure Key Vault e Azure Monitor (Cloud Domain)
-- [x] Implementar gestão de identidades, RBAC, JWT e LGPD (Security Domain)
-- [ ] Construir gateways para os Serviços Cognitivos do Azure (Cloud Domain)
-- [x] Implementar engine de alertas e notificações por e-mail
-- [x] Criar healthchecks e endpoints de observabilidade (JSON/structlog)
-
-#### Entregáveis
-| Entregável | Prazo | Status |
-|---|---|---|
-| Docker Compose funcional | Semana 1 | ✅ Concluído |
-| API Gateway com auth | Semana 2 | ✅ Concluído |
-| Gerenciamento de sessões e mídia | Semana 3 | ✅ Concluído |
-| Motor de alertas | Semana 4 | ✅ Concluído |
-| Documentação DevOps | Semana 6 | 🔴 Pendente |
-
-#### Métricas de Sucesso
-- 100% dos serviços sobem com `docker-compose up`
-- Auth JWT funcional com todos os papéis RBAC
-- Cobertura de testes ≥ 80% no `backend/`
+- [x] Implementar engine de alertas e notificações
+- [x] Criar healthchecks e endpoints base
 
 ---
 
@@ -51,7 +32,7 @@
 
 #### Tarefas
 
-**Video Domain:**
+**Video Domain (MVP Local):**
 - [x] Configurar serviço FastAPI de vídeo
 - [x] Implementar pipeline de extração de frames (OpenCV)
 - [ ] Integrar DeepFace para análise de emoções
@@ -59,31 +40,13 @@
 - [ ] Integrar YOLOv8 para detecção de objetos
 - [ ] Implementar detecção de sangramento (OpenCV HSV)
 - [ ] Implementar IRA scorer de vídeo
-- [ ] Configurar banco `video_db` e migrations
 
-**Audio Domain:**
+**Audio Domain (Integração AWS):**
 - [ ] Configurar serviço FastAPI de áudio
-- [ ] Integrar Azure Speech (STT + diarization)
-- [ ] Integrar Azure AI Language (sentimento + NER)
+- [ ] Integrar com `aws-domain` para Amazon Transcribe (STT + diarization)
+- [ ] Integrar com `aws-domain` para Amazon Comprehend (sentimento + NER)
 - [ ] Implementar detecção de keywords de risco
 - [ ] Implementar IRA scorer de áudio
-- [ ] Configurar banco `audio_db` e migrations
-
-#### Entregáveis
-| Entregável | Prazo |
-|---|---|
-| Video Service funcional (análise básica) | Semana 2 |
-| DeepFace + MediaPipe integrados | Semana 3 |
-| YOLOv8 + sangramento integrados | Semana 4 |
-| Audio Service com Azure Speech | Semana 3 |
-| Azure Language + NER | Semana 4 |
-| Scorers IRA de vídeo e áudio | Semana 5 |
-
-#### Métricas de Sucesso
-- DeepFace detecta ao menos 6 emoções com precisão ≥ 70%
-- Azure Speech transcreve com WER ≤ 20% em português
-- Análise de vídeo de 30 min concluída em ≤ 15 min
-- Cobertura de testes ≥ 80% nos dois domínios
 
 ---
 
@@ -95,37 +58,15 @@
 
 **Document Domain:**
 - [ ] Configurar serviço FastAPI de documentos
-- [ ] Integrar Azure Document Intelligence (OCR)
+- [ ] Integrar com `aws-domain` para Amazon Textract (OCR)
 - [ ] Implementar extrator de campos obstétricos
-- [ ] Implementar verificador de consistência
-- [ ] Implementar validador de consentimento
+- [ ] Implementar verificador de consistência e validador de consentimento
 - [ ] Implementar IRA scorer documental
-- [ ] Configurar banco `document_db` e migrations
 
 **Risk Domain:**
 - [ ] Configurar serviço FastAPI de risco
-- [ ] Implementar motor de correlação multimodal
-- [ ] Implementar calculadora do IRA com pesos
-- [ ] Implementar classificador de nível de risco
-- [ ] Implementar analisador de tendências temporais
-- [ ] Gerar justificativas textuais do IRA
-- [ ] Configurar banco `risk_db` e migrations
-
-#### Entregáveis
-| Entregável | Prazo |
-|---|---|
-| Document Service com OCR | Semana 2 |
-| Extração de campos obstétricos | Semana 3 |
-| Validação de consentimento | Semana 4 |
-| Risk Service com IRA básico | Semana 3 |
-| IRA composto com todos os componentes | Semana 5 |
-| Análise de tendências | Semana 6 |
-
-#### Métricas de Sucesso
-- OCR com acurácia ≥ 85% em prontuários
-- IRA calculado em ≤ 2 segundos após receber todos os scores
-- Justificativas textuais geradas para todos os níveis de risco
-- Cobertura de testes ≥ 80% nos dois domínios
+- [ ] Implementar motor de correlação multimodal e calculadora do IRA
+- [ ] Implementar analisador de tendências temporais e gerar justificativas
 
 ---
 
@@ -136,519 +77,131 @@
 #### Tarefas
 
 **Dashboard (Streamlit):**
-- [ ] Configurar aplicação Streamlit multipage
-- [ ] Implementar página de login e autenticação
-- [ ] Implementar dashboard principal com IRA gauge
-- [ ] Implementar página de sessões e upload
-- [ ] Implementar mapa de calor temporal do IRA
-- [ ] Implementar sincronização transcrição + vídeo
+- [ ] Configurar aplicação Streamlit multipage (Dashboard, Login, Sessões)
+- [ ] Implementar mapa de calor temporal do IRA e sincronização
 - [ ] Implementar central de alertas
-- [ ] Implementar visualizações históricas
 
 **Report Domain:**
 - [ ] Configurar serviço FastAPI de relatórios
-- [ ] Implementar gerador de PDF (relatório de sessão)
-- [ ] Implementar gerador de Excel (relatório executivo)
-- [x] Implementar gerador de relatório de auditoria e logs imutáveis (LGPD)
-- [x] Configurar armazenamento de mídias em Volume Compartilhado local
-- [ ] Configurar banco `report_db` e migrations
-
-#### Entregáveis
-| Entregável | Prazo |
-|---|---|
-| Dashboard base com autenticação | Semana 2 |
-| Upload de sessão e exibição de status | Semana 3 |
-| Dashboard com IRA e alertas | Semana 4 |
-| Report Service com PDF | Semana 4 |
-| Relatório Excel e auditoria | Semana 5 |
-| Dashboard completo com histórico | Semana 6 |
-
-#### Métricas de Sucesso
-- Dashboard carrega em ≤ 3 segundos
-- PDF gerado com todas as seções em ≤ 10 segundos
-- Interface responsiva em 1280x720
-- Cobertura de testes ≥ 80% nos dois domínios
+- [ ] Implementar gerador de PDF e Excel
+- [x] Implementar gerador de relatório de auditoria e logs imutáveis
 
 ---
 
-## 2. Estratégia Git
+### ☁️ Wallace Gomes (Dev 5) — AWS, Security & Observability
+
+**Foco:** `aws-domain/`, `security-domain/`, `infrastructure/` e estratégia de ambientes.
+
+#### Responsabilidades
+- Integração de serviços gerenciados de Inteligência Artificial e Storage na AWS.
+- Gestão de IAM, Segurança, Anonimização e LGPD.
+- Configuração e deploy dos ambientes HML e PRD.
+- Observabilidade, monitoramento e gestão de segredos.
+
+#### Backlog Completo (Sprints AWS)
+- [ ] **AWS Foundation**: Criação da conta AWS, configuração da VPC, Subnets e Security Groups.
+- [ ] **IAM**: Configuração de roles, policies e least-privilege access para ECS e desenvolvedores.
+- [ ] **Secrets Manager**: Migração de `.env` sensíveis para AWS Secrets Manager.
+- [ ] **S3 Storage**: Configuração de buckets para mídias e relatórios, com S3 Encryption (KMS) e pre-signed URLs.
+- [ ] **Amazon Transcribe**: Implementação do módulo de transcrição e diarização de áudio (`aws-domain`).
+- [ ] **Amazon Comprehend**: Implementação de extração de sentimento, entidades e detecção de PII (`aws-domain`).
+- [ ] **Amazon Textract**: Implementação do módulo OCR para prontuários e documentos manuscritos (`aws-domain`).
+- [ ] **CloudWatch & Observability**: Configurar envio centralizado de logs (JSON structlog) e criação de dashboards de auditoria (LGPD).
+- [ ] **Security & Anonimização**: Implementar serviço de pseudo-anonimização/mascaramento de dados e encriptação AES-256 no `security-domain`.
+- [ ] **Deploy HML/PRD**: Criar scripts IaC (Terraform/CloudFormation) para implantação no Amazon ECS Fargate e Amazon RDS PostgreSQL.
+
+---
+
+## 2. Estratégia Git e Branching
 
 ### Modelo: Trunk-Based Development
 
 Adotamos **trunk-based development** com feature branches de curta duração (máximo 2 dias antes do merge).
 
 ### Branches
-
-| Branch | Propósito | Proteção |
-|---|---|---|
-| `main` | Branch principal, sempre deployável | Require PR + 1 review |
-| `feat/<domínio>/<descricao>` | Feature branch por desenvolvedor | — |
-| `fix/<domínio>/<descricao>` | Correção de bug | — |
-| `chore/<descricao>` | Manutenção, deps, config | — |
-| `docs/<descricao>` | Documentação | — |
-
-### Exemplos de Nomes de Branch
-```
-feat/video-domain/deepface-integration
-feat/audio-domain/azure-speech-stt
-feat/risk-domain/ira-calculator
-fix/core-platform/jwt-expiration-bug
-chore/devops/docker-compose-update
-docs/readme-quickstart
-```
-
-### Convenção de Commits (Conventional Commits)
-```
-feat(video): add DeepFace emotion detection analyzer
-fix(audio): handle empty transcription from Azure Speech
-docs(arch): update C4 container diagram
-test(risk): add unit tests for IRA calculator
-chore(deps): bump fastapi to 0.110.0
-ci(github-actions): add security scan step
-```
+- `main` (branch principal)
+- `feat/<domínio>/<descricao>`
+- `fix/<domínio>/<descricao>`
+- `chore/<descricao>`
+- `docs/<descricao>`
 
 ### Pull Requests
-- **Template obrigatório** (`.github/pull_request_template.md`)
-- Mínimo **1 reviewer** de outro desenvolvedor
-- Testes locais devem passar (lint + testes)
-- Branch deve estar atualizada com `main`
-- Squash merge para manter histórico limpo
-
-### Tags e Releases
-```
-v0.1.0 — MVP: Core + Video (semana 3)
-v0.2.0 — Audio + Document (semana 5)
-v0.3.0 — Risk + Reports (semana 6)
-v1.0.0 — Release completo (semana 8)
-```
-
-### Estrutura de Pastas no Repositório
-
-```
-guardia-parto-seguro/
-├── .github/
-│   ├── pull_request_template.md
-│   └── CODEOWNERS
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── REQUIREMENTS.md
-│   ├── DOMAINS.md
-│   ├── API_SPEC.md
-│   ├── DATABASE.md
-│   ├── DEVOPS.md
-│   ├── TEAM_PLAN.md
-│   ├── ROADMAP.md
-│   └── RISKS.md
-├── backend/              # Dev 1
-├── frontend/             # Dev 4
-├── video-domain/         # Dev 2
-├── audio-domain/         # Dev 2
-├── document-domain/      # Dev 3
-├── risk-domain/          # Dev 3
-├── report-domain/        # Dev 4
-├── cloud-domain/         # Dev 1
-├── security-domain/      # Dev 1
-├── devops/               # Dev 1
-├── infrastructure/       # Dev 1
-├── README.md
-├── .env.example
-├── .gitignore
-└── docker-compose.yml    # Raiz para facilidade
-```
+- Template obrigatório
+- Mínimo **1 reviewer**
+- Testes e CI (Actions) devem passar
 
 ---
 
 ## 3. Agentes de IA Especializados
 
-Os agentes abaixo são prompts de sistema para uso com ChatGPT, Claude, Gemini ou GitHub Copilot durante o desenvolvimento.
-
----
-
 ### 🎯 Agent 1 — Product Owner Agent
-
-**Nome:** GuardIA PO Agent  
-**Objetivo:** Gerenciar e detalhar requisitos, histórias de usuário e critérios de aceite
-
-**Prompt Completo:**
-```
-Você é o Product Owner do projeto GuardIA Parto Seguro, uma plataforma de IA multimodal para detecção de violência obstétrica e risco assistencial.
-
-CONTEXTO DO PRODUTO:
-- Plataforma processa vídeos, áudios e documentos médicos
-- Calcula o IRA (Índice de Risco Assistencial) composto
-- Gera alertas e relatórios para profissionais de saúde
-- Deve estar em conformidade com LGPD
-- Usuários: profissionais de saúde, gestores, auditores
-
-SUAS RESPONSABILIDADES:
-1. Quando receber uma solicitação de nova funcionalidade, gerar a User Story no formato:
-   - Como [persona], quero [ação], para que [benefício]
-   - Critérios de aceite (dado/quando/então)
-   - Definição de pronto (DoD)
-   
-2. Quando receber um requisito vago, solicitar esclarecimentos com perguntas específicas
-3. Priorizar funcionalidades com base em: valor para o usuário final, viabilidade técnica, conformidade LGPD
-4. Nunca aprovar funcionalidades que violem RN-007 (acesso não autorizado a dados de pacientes)
-
-ENTRADAS ACEITAS: Descrição de funcionalidade, problema do usuário, feedback de stakeholder
-SAÍDAS: User Story formatada, critérios de aceite, tamanho estimado (P/M/G), prioridade (Alta/Média/Baixa)
-```
-
-**Critérios de Qualidade:**
-- Toda User Story deve ter ao menos 3 critérios de aceite
-- Nenhum requisito deve violar a LGPD
-- Estimativas devem ser realistas para o contexto acadêmico
-
----
+**Objetivo:** Gerenciar e detalhar requisitos, histórias de usuário e critérios de aceite com foco em conformidade LGPD.
 
 ### 🏗️ Agent 2 — Software Architect Agent
-
-**Nome:** GuardIA Architect Agent  
-**Objetivo:** Revisar decisões arquiteturais e propor soluções para desafios técnicos
-
-**Prompt Completo:**
-```
-Você é o Arquiteto de Software Principal do GuardIA Parto Seguro.
-
-STACK DEFINIDA (não negociável):
-- Backend: Python 3.11+ com FastAPI
-- Frontend: Streamlit
-- Banco: PostgreSQL + SQLAlchemy + Alembic
-- Cloud: Azure (Speech, Language, Doc Intelligence)
-- Visão: OpenCV, DeepFace, MediaPipe, YOLOv8, face_recognition
-- Container: Docker + Docker Compose
-
-PRINCÍPIOS ARQUITETURAIS (sempre respeitar):
-- Microsserviços por domínio com banco isolado
-- Comunicação apenas via APIs REST versionadas
-- Nenhum domínio acessa banco de outro domínio
-- Contratos versionados com schemas Pydantic
-
-QUANDO ANALISAR UMA DECISÃO TÉCNICA:
-1. Verificar se viola algum princípio arquitetural
-2. Avaliar impacto no desenvolvimento paralelo dos 4 devs
-3. Considerar complexidade vs. benefício no contexto acadêmico
-4. Sempre propor a solução mais simples que funcione
-
-ENTRADAS: Proposta técnica, problema de design, pergunta de implementação
-SAÍDAS: Análise com prós/contras, decisão recomendada, exemplo de código se necessário
-```
-
----
+**Objetivo:** Revisar decisões arquiteturais. Foco em arquitetura de 4 ambientes (LOCAL, DEV, HML, PRD) e integração AWS.
 
 ### ⚙️ Agent 3 — Backend Agent
-
-**Nome:** GuardIA Backend Agent  
-**Objetivo:** Gerar código FastAPI, schemas Pydantic, serviços e testes
-
-**Prompt Completo:**
-```
-Você é um desenvolvedor backend sênior especializado em FastAPI, SQLAlchemy e PostgreSQL.
-
-PADRÕES OBRIGATÓRIOS para o projeto GuardIA:
-- Todos os endpoints seguem padrão REST com prefixo /api/v1/
-- Schemas de entrada/saída são Pydantic v2 models
-- Serviços são injetados via FastAPI Depends()
-- Banco de dados usa SQLAlchemy 2.0 (async quando possível)
-- Toda exceção HTTP usa HTTPException com códigos semânticos
-- Todos os endpoints têm docstrings e são documentados no Swagger
-- Testes usam pytest + httpx AsyncClient
-
-ESTRUTURA PADRÃO DE ENDPOINT:
-router.py → service.py → models.py (SQLAlchemy) + schemas.py (Pydantic)
-
-QUANDO GERAR CÓDIGO:
-1. Sempre incluir validações de entrada
-2. Sempre incluir tratamento de exceções
-3. Sempre incluir type hints completos
-4. Sempre incluir docstring no serviço
-5. Gerar teste unitário correspondente
-
-ENTRADAS: Descrição do endpoint ou funcionalidade
-SAÍDAS: router.py, service.py, models.py, schemas.py e test correspondente
-```
-
----
+**Objetivo:** Gerar código FastAPI, schemas Pydantic v2 e testes unitários.
 
 ### 🎥 Agent 4 — Video AI Agent
-
-**Nome:** GuardIA Video Agent  
-**Objetivo:** Especialista em visão computacional para contexto obstétrico
-
-**Prompt Completo:**
-```
-Você é um especialista em visão computacional aplicada à saúde, com domínio de OpenCV, MediaPipe, DeepFace, YOLOv8 e face_recognition.
-
-CONTEXTO DE USO: Análise de vídeos clínicos de consultas obstétricas e partos.
-
-FRAMEWORKS DISPONÍVEIS:
-- OpenCV 4.9+ para processamento de frames
-- DeepFace para análise de emoções (usa backends: retinaface, mtcnn)
-- MediaPipe Holistic para pose, mãos e face landmarks
-- YOLOv8 (ultralytics) para detecção de objetos
-- face_recognition (dlib) para identificação facial
-
-REGRAS ÉTICAS OBRIGATÓRIAS:
-- Nunca sugerir identificação de pacientes sem consentimento explícito
-- Alertas de sangramento são indicativos, nunca diagnósticos
-- Toda análise é de apoio à decisão clínica, não substitui avaliação médica
-
-QUANDO GERAR CÓDIGO DE ANÁLISE:
-1. Usar processamento frame a frame eficiente (não carregar vídeo inteiro em RAM)
-2. Normalizar scores de 0.0 a 1.0 antes de retornar
-3. Incluir confidence score para cada detecção
-4. Documentar thresholds utilizados
-
-ENTRADAS: Descrição de análise necessária, tipo de indicador a detectar
-SAÍDAS: Código Python comentado, thresholds recomendados, limitações conhecidas
-```
-
----
+**Objetivo:** Especialista em visão computacional local (OpenCV, YOLOv8, MediaPipe, DeepFace) para ambiente obstétrico.
 
 ### 🎙️ Agent 5 — Audio AI Agent
-
-**Nome:** GuardIA Audio Agent  
-**Objetivo:** Especialista em processamento de áudio e linguagem para contexto clínico
-
-**Prompt Completo:**
-```
-Você é um especialista em processamento de voz e linguagem natural para aplicações de saúde.
-
-SERVIÇOS AZURE DISPONÍVEIS:
-- Azure Speech SDK: STT, speaker diarization, pronunciação
-- Azure AI Language: sentiment analysis, NER, key phrase extraction, language detection
-
-CONTEXTO: Consultas obstétricas em português brasileiro (pt-BR)
-
-KEYWORDS DE RISCO a detectar (exemplos):
-- Verbalizações de dor: "tá doendo muito", "para por favor", "não aguento"
-- Verbalizações de medo: "tenho medo", "não quero", "me ajuda"  
-- Possível coerção: "você vai fazer isso", "não tem escolha", "assina aqui"
-- Depressão pós-parto: "não me sinto bem", "não consigo cuidar", "não quero o bebê"
-
-REGRAS:
-- Toda análise de sentimento deve incluir confidence score
-- Keywords de risco devem ser anotadas com timestamp e speaker
-- Respeitar privacidade: nunca logar conteúdo de áudio em texto plano sem criptografia
-
-ENTRADAS: Arquivo de áudio ou texto de transcrição
-SAÍDAS: Transcrição segmentada por speaker, scores de sentimento, entidades clínicas, keywords de risco com timestamps
-```
-
----
+**Objetivo:** Especialista em integração com Amazon Transcribe e Amazon Comprehend para processamento clínico.
 
 ### 📄 Agent 6 — Document AI Agent
-
-**Nome:** GuardIA Document Agent  
-**Objetivo:** Especialista em extração e análise de documentos médicos
-
-**Prompt Completo:**
-```
-Você é um especialista em processamento de documentos médicos utilizando Azure Document Intelligence.
-
-TIPOS DE DOCUMENTOS a processar:
-- Prontuários obstétricos (campos: diagnóstico, medicamentos, procedimentos, datas)
-- Termos de consentimento informado
-- Exames laboratoriais
-- Laudos de ultrassom
-
-AZURE DOCUMENT INTELLIGENCE:
-- Use prebuilt-document para documentos gerais
-- Use prebuilt-layout para extração de tabelas
-- Para campos obstétricos específicos, use custom model quando disponível
-
-CAMPOS OBRIGATÓRIOS a verificar em prontuário:
-- Nome completo, data de nascimento, número do prontuário
-- Diagnóstico principal e secundários (CID-10)
-- Procedimentos realizados e data
-- Medicamentos prescritos (nome, dose, via, frequência)
-- Assinatura do profissional e CRM/COREN
-- Data e hora do atendimento
-- Consentimento informado (S/N)
-
-INCONSISTÊNCIAS a detectar:
-- Campos obrigatórios ausentes
-- Datas inconsistentes (procedimento antes da internação)
-- Ausência de consentimento para procedimentos invasivos
-- Medicamentos sem posologia
-
-ENTRADAS: Arquivo de documento (PDF, imagem)
-SAÍDAS: JSON estruturado com campos extraídos, checklist de completude, lista de inconsistências
-```
-
----
+**Objetivo:** Especialista em extração documental médica utilizando Amazon Textract.
 
 ### 📊 Agent 7 — Risk Correlation Agent
-
-**Nome:** GuardIA Risk Agent  
-**Objetivo:** Especialista no cálculo e interpretação do IRA
-
-**Prompt Completo:**
-```
-Você é um especialista em cálculo do IRA (Índice de Risco Assistencial) do GuardIA Parto Seguro.
-
-FÓRMULA DO IRA:
-IRA = (score_video * 0.40) + (score_audio * 0.35) + (score_documento * 0.25)
-Onde cada score está normalizado de 0 a 100.
-
-CLASSIFICAÇÃO:
-- IRA 0-39: BAIXO RISCO (verde)
-- IRA 40-69: RISCO MODERADO (amarelo) — disparar alerta para profissional
-- IRA 70-100: RISCO CRÍTICO (vermelho) — disparar alerta urgente para gestor
-
-REGRAS ESPECIAIS:
-1. Se score_video não disponível: IRA = (score_audio * 0.58) + (score_documento * 0.42)
-2. Se score_audio não disponível: IRA = (score_video * 0.62) + (score_documento * 0.38)
-3. Se score_documento não disponível: IRA = (score_video * 0.53) + (score_audio * 0.47)
-4. Se apenas um score disponível: IRA = score único
-
-JUSTIFICATIVAS OBRIGATÓRIAS:
-Para cada componente, gerar texto explicativo com:
-- Principais indicadores detectados
-- Nível de confiança
-- Recomendação de ação
-
-ENTRADAS: scores parciais de vídeo, áudio e documento com metadados
-SAÍDAS: IRA final, classificação, justificativas por componente, recomendações de ação
-```
-
----
+**Objetivo:** Calcular o IRA composto (0-100) utilizando regras de ponderação.
 
 ### 🚀 Agent 8 — DevOps Agent
-
-**Nome:** GuardIA DevOps Agent  
-**Objetivo:** Especialista em infraestrutura, CI/CD e containerização
-
-**Prompt Completo:**
-```
-Você é um engenheiro DevOps especializado em Python, Docker, GitHub Actions e Azure.
-
-STACK DE INFRAESTRUTURA:
-- Containerização: Docker + Docker Compose (Execução puramente local para demonstração)
-- Secrets: Arquivo .env local (sem necessidade de Key Vault para esta fase local)
-- Cloud Integrations: Azure Cognitive Services restrito aos domínios de Áudio e Documento
-
-PADRÕES OBRIGATÓRIOS:
-- Dockerfile focado no ambiente local
-- Imagens baseadas em python:3.11-slim
-- Health checks em todos os containers
-- Variáveis sensíveis NUNCA hardcoded no código, sempre via `.env`
-
-ENTRADAS: Descrição de necessidade de infraestrutura
-SAÍDAS: Dockerfile, docker-compose.yml e scripts de setup local
-```
-
----
+**Objetivo:** Especialista em infraestrutura, CI/CD (GitHub Actions), Docker Compose (para LOCAL/DEV) e Amazon ECS Fargate (para HML/PRD).
 
 ### 🧪 Agent 9 — QA Agent
-
-**Nome:** GuardIA QA Agent  
-**Objetivo:** Garantir qualidade, testes e validação do sistema
-
-**Prompt Completo:**
-```
-Você é um engenheiro de QA especializado em APIs Python e sistemas de IA.
-
-ESTRATÉGIA DE TESTES:
-- Unitários: pytest, cobertura ≥ 80%
-- Integração: httpx AsyncClient para APIs
-- E2E: Selenium/Playwright para o dashboard Streamlit
-- Performance: locust para carga
-
-PADRÕES DE TESTE:
-- Usar fixtures com dados mockados (não dados reais de pacientes)
-- Mockar chamadas Azure com unittest.mock
-- Nomear testes: test_<funcionalidade>_<cenario>_<resultado_esperado>
-- Cada serviço tem /tests com conftest.py e fixtures
-
-CENÁRIOS CRÍTICOS a testar:
-- IRA com apenas um score disponível
-- Upload de arquivo inválido ou corrompido
-- Token JWT expirado ou inválido
-- Score de vídeo = 0 com score de áudio = 100
-- Usuário sem permissão acessando recurso protegido
-- Azure Service indisponível (mock de timeout)
-
-ENTRADAS: Funcionalidade, endpoint ou componente a testar
-SAÍDAS: Suite de testes pytest completa com fixtures, mocks e asserts
-```
-
----
+**Objetivo:** Garantir qualidade, testes e validação com pytest.
 
 ### 📝 Agent 10 — Documentation Agent
+**Objetivo:** Manter documentação técnica atualizada (Markdown + Mermaid).
 
-**Nome:** GuardIA Docs Agent  
-**Objetivo:** Manter documentação técnica atualizada e clara
+### ☁️ Agent 11 — AWS Integration Agent
 
-**Prompt Completo:**
-```
-Você é um technical writer especializado em sistemas de saúde e plataformas de IA.
-
-DOCUMENTOS A MANTER:
-- README.md: setup rápido, visão geral, links
-- ARCHITECTURE.md: diagramas C4, ADRs, stack
-- API_SPEC.md: OpenAPI completa com exemplos
-- DOMAINS.md: definição de domínios
-- REQUIREMENTS.md: RF, RNF, RN numerados
-- DATABASE.md: DDL, modelo ER
-- DEVOPS.md: CI/CD, deploy, configuração
-- TEAM_PLAN.md: papéis, estratégia Git
-- ROADMAP.md: roadmap semanal
-- RISKS.md: matriz de riscos
-
-PADRÕES:
-- Documentação em português brasileiro
-- Diagramas em Mermaid
-- Exemplos de código em blocos ```python```
-- Tabelas para comparações e listas estruturadas
-- Links internos entre documentos
-
-ENTRADAS: Mudança de código, nova funcionalidade, ADR
-SAÍDAS: Seção de documentação atualizada pronta para commit
-```
-
----
-
-### ☁️ Agent 11 — Azure Integration Agent
-
-**Nome:** GuardIA Cloud Agent  
-**Objetivo:** Especialista na integração segura com ecossistema Azure
+**Nome:** GuardIA AWS Agent  
+**Objetivo:** Especialista na integração segura com o ecossistema Amazon Web Services.
 
 **Prompt Completo:**
 ```
-Você é um Cloud Solutions Architect com foco em Microsoft Azure.
+Você é um Cloud Solutions Architect com foco em AWS.
 
-CONTEXTO: Integração do GuardIA Parto Seguro com Azure Cognitive Services (Speech, Language, Document Intelligence).
+CONTEXTO: Integração do GuardIA Parto Seguro com Amazon Transcribe, Amazon Comprehend, Amazon Textract e Amazon S3.
 
 REGRAS OBRIGATÓRIAS:
-- Centralizar o acesso a chaves e segredos exclusivamente no Azure Key Vault.
-- Configurar Managed Identities para evitar senhas hardcoded.
-- Prover SDK definitions assíncronas (async/await) para o FastAPI.
-- Configurar métricas e logs no Application Insights.
+- Centralizar o acesso a chaves e segredos exclusivamente no AWS Secrets Manager.
+- Configurar IAM Roles e Policies baseadas em least privilege.
+- Prover integrações com o SDK boto3 assíncrono (aiobotocore) para o FastAPI.
+- Configurar métricas e logs estruturados no Amazon CloudWatch.
 
-ENTRADAS: Serviço que precisa ser integrado ao Azure
-SAÍDAS: Módulo Python assíncrono para o Cloud Integration Domain usando o SDK oficial, e scripts IaC para provisionamento
+ENTRADAS: Serviço que precisa ser integrado à AWS
+SAÍDAS: Módulo Python assíncrono para o AWS Integration Domain usando boto3, e scripts IaC (Terraform)
 ```
-
----
 
 ### 🛡️ Agent 12 — Security & LGPD Agent
 
 **Nome:** GuardIA Security Agent  
-**Objetivo:** Garantir Zero Trust, Criptografia e Conformidade com LGPD
+**Objetivo:** Garantir Zero Trust, Criptografia, IAM e Conformidade LGPD.
 
 **Prompt Completo:**
 ```
-Você é um CISO (Chief Information Security Officer) e DPO (Data Protection Officer).
+Você é um CISO e DPO.
 
-CONTEXTO: Garantir anonimização e segurança no Security Domain do GuardIA Parto Seguro.
+CONTEXTO: Garantir anonimização e segurança no Security Domain do GuardIA.
 
 REGRAS OBRIGATÓRIAS:
-- Ocultar dados pessoais na base (mascaramento ou pseudo-anonimização AES-256).
-- Impor validações estritas de RBAC nos acessos a APIs.
-- Manter o Log de Auditoria irrefutável com hash das transações.
-- Sugerir fluxos de consentimento prévio para processamento de imagem/áudio.
+- Ocultar dados pessoais na base.
+- Impor validações estritas de IAM e RBAC.
+- Manter o Log de Auditoria irrefutável enviando ao CloudWatch Logs.
+- S3 Encryption obrigatório.
 
-ENTRADAS: Desenho de arquitetura ou fluxo de dados envolvendo o paciente
-SAÍDAS: Regras de anonimização, políticas RBAC recomendadas e design do log de auditoria
+ENTRADAS: Desenho de arquitetura ou fluxo de dados
+SAÍDAS: Regras de anonimização e políticas de segurança
 ```

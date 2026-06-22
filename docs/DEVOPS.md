@@ -1,22 +1,24 @@
 # DEVOPS.md — GuardIA Parto Seguro
 
-> CI/CD, Docker, GitHub Actions e Infraestrutura — v1.0
+> CI/CD, Docker, GitHub Actions e Infraestrutura — v2.0
 
 ---
 
 ## 1. Visão Geral da Infraestrutura
 
 ```
-GitHub (código) → GitHub Actions (CI/CD) → Docker Hub/ACR → Azure Container Apps (produção)
+GitHub (código) → GitHub Actions (CI/CD) → Amazon ECR → AWS ECS Fargate (HML/PRD)
                                          ↓
                                    Testes + Lint + Segurança
 ```
+
+A execução no ambiente `LOCAL` e `DEV` se dá integralmente via `docker-compose`.
 
 ---
 
 ## 2. Docker Compose — Ambiente Local
 
-### `devops/docker-compose.yml`
+### `environments/local/docker-compose.yml`
 
 ```yaml
 version: "3.9"
@@ -32,7 +34,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-guardia_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init_schemas.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ../../infra/postgres/init-domains.sql:/docker-entrypoint-initdb.d/01_init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -44,13 +46,13 @@ services:
   # ============ CORE PLATFORM ============
   backend:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile
     container_name: guardia-backend
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
       SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_in_production}
-      AZURE_KEY_VAULT_URL: ${AZURE_KEY_VAULT_URL}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
       VIDEO_SERVICE_URL: http://video-service:8001
       AUDIO_SERVICE_URL: http://audio-service:8002
       DOCUMENT_SERVICE_URL: http://document-service:8003
@@ -66,15 +68,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
   # ============ SECURITY DOMAIN ============
   security-service:
     build:
-      context: ../security-domain
+      context: ../../security-domain
       dockerfile: Dockerfile
     container_name: guardia-security
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_KEY_VAULT_URL: ${AZURE_KEY_VAULT_URL}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
       JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret}
     ports:
       - "8006:8006"
@@ -82,32 +85,33 @@ services:
       postgres:
         condition: service_healthy
 
-  # ============ CLOUD INTEGRATION DOMAIN ============
-  cloud-service:
+  # ============ AWS INTEGRATION DOMAIN ============
+  aws-service:
     build:
-      context: ../cloud-domain
+      context: ../../aws-domain
       dockerfile: Dockerfile
-    container_name: guardia-cloud
+    container_name: guardia-aws
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING}
-      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY}
-      AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY}
-      AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
     ports:
       - "8007:8007"
     depends_on:
       postgres:
         condition: service_healthy
+
   # ============ VIDEO DOMAIN ============
   video-service:
     build:
-      context: ../video-domain
+      context: ../../video-domain
       dockerfile: Dockerfile
     container_name: guardia-video
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING}
+      AWS_SERVICE_URL: http://aws-service:8007
     ports:
       - "8001:8001"
     depends_on:
@@ -123,12 +127,12 @@ services:
   # ============ AUDIO DOMAIN ============
   audio-service:
     build:
-      context: ../audio-domain
+      context: ../../audio-domain
       dockerfile: Dockerfile
     container_name: guardia-audio
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      CLOUD_SERVICE_URL: http://cloud-service:8007
+      AWS_SERVICE_URL: http://aws-service:8007
     ports:
       - "8002:8002"
     depends_on:
@@ -138,12 +142,12 @@ services:
   # ============ DOCUMENT DOMAIN ============
   document-service:
     build:
-      context: ../document-domain
+      context: ../../document-domain
       dockerfile: Dockerfile
     container_name: guardia-document
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      CLOUD_SERVICE_URL: http://cloud-service:8007
+      AWS_SERVICE_URL: http://aws-service:8007
     ports:
       - "8003:8003"
     depends_on:
@@ -153,7 +157,7 @@ services:
   # ============ RISK DOMAIN ============
   risk-service:
     build:
-      context: ../risk-domain
+      context: ../../risk-domain
       dockerfile: Dockerfile
     container_name: guardia-risk
     environment:
@@ -167,12 +171,12 @@ services:
   # ============ REPORT DOMAIN ============
   report-service:
     build:
-      context: ../report-domain
+      context: ../../report-domain
       dockerfile: Dockerfile
     container_name: guardia-report
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres:5432/${DB_NAME:-guardia_db}
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING}
+      AWS_SERVICE_URL: http://aws-service:8007
     ports:
       - "8005:8005"
     depends_on:
@@ -182,7 +186,7 @@ services:
   # ============ FRONTEND ============
   frontend:
     build:
-      context: ../frontend
+      context: ../../frontend
       dockerfile: Dockerfile
     container_name: guardia-frontend
     environment:
@@ -287,7 +291,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [backend, security-domain, cloud-domain, video-domain, audio-domain, document-domain, risk-domain, report-domain, frontend]
+        service: [backend, security-domain, aws-domain, video-domain, audio-domain, document-domain, risk-domain, report-domain, frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -395,7 +399,7 @@ jobs:
 
       - name: Check dependencies for known vulnerabilities
         run: |
-          for service in backend security-domain cloud-domain video-domain audio-domain document-domain risk-domain report-domain frontend; do
+          for service in backend security-domain aws-domain video-domain audio-domain document-domain risk-domain report-domain frontend; do
             echo "Checking $service..."
             safety check -r $service/requirements.txt || true
           done
@@ -425,19 +429,14 @@ jobs:
       matrix:
         service:
           - name: backend
-            port: 8000
+          - name: aws-domain
+          - name: security-domain
           - name: video-domain
-            port: 8001
           - name: audio-domain
-            port: 8002
           - name: document-domain
-            port: 8003
           - name: risk-domain
-            port: 8004
           - name: report-domain
-            port: 8005
           - name: frontend
-            port: 8501
 
     steps:
       - uses: actions/checkout@v4
@@ -468,7 +467,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           cp .env.example .env
-          docker compose -f devops/docker-compose.yml up -d --build
+          docker compose -f environments/local/docker-compose.yml up -d --build
           sleep 30  # aguardar serviços iniciarem
 
       - name: Run integration tests
@@ -478,7 +477,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose -f devops/docker-compose.yml down
+        run: docker compose -f environments/local/docker-compose.yml down
 ```
 
 ---
@@ -486,7 +485,7 @@ jobs:
 ### `.github/workflows/deploy.yml`
 
 ```yaml
-name: Deploy to Azure
+name: Deploy to AWS ECS
 
 on:
   push:
@@ -502,30 +501,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Azure Container Registry
-        run: |
-          az acr login --name ${{ secrets.ACR_NAME }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           TAG=${GITHUB_REF#refs/tags/}
-          for service in backend video-domain audio-domain document-domain risk-domain report-domain frontend; do
-            docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/guardia/$service:$TAG ./$service/
-            docker push ${{ secrets.ACR_NAME }}.azurecr.io/guardia/$service:$TAG
+          for service in backend aws-domain security-domain video-domain audio-domain document-domain risk-domain report-domain frontend; do
+            docker build -t $ECR_REGISTRY/guardia-$service:$TAG ./$service/
+            docker push $ECR_REGISTRY/guardia-$service:$TAG
           done
 
-      - name: Deploy to Azure Container Apps
+      - name: Deploy to Amazon ECS
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          az containerapp update \
-            --name guardia-backend \
-            --resource-group ${{ secrets.AZURE_RG }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/guardia/backend:$TAG
+          # Exemplo de update do serviço core backend
+          aws ecs update-service --cluster guardia-cluster --service guardia-backend-service --force-new-deployment
 ```
 
 ---
@@ -539,30 +539,18 @@ jobs:
 DB_USER=guardia
 DB_PASSWORD=guardia_dev_pass
 DB_NAME=guardia_db
-DB_HOST=localhost
+DB_HOST=postgres
 DB_PORT=5432
 
 # ============ CORE API ============
 SECRET_KEY=your_secret_key_here_change_in_production
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-# ============ AZURE SERVICES ============
-AZURE_KEY_VAULT_URL=https://your-keyvault.vault.azure.net/
-AZURE_BLOB_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
-AZURE_BLOB_CONTAINER_MEDIA=guardia-media
-AZURE_BLOB_CONTAINER_REPORTS=guardia-reports
-
-# Azure Speech
-AZURE_SPEECH_KEY=your_speech_key
-AZURE_SPEECH_REGION=brazilsouth
-
-# Azure AI Language
-AZURE_LANGUAGE_ENDPOINT=https://your-language.cognitiveservices.azure.com/
-AZURE_LANGUAGE_KEY=your_language_key
-
-# Azure Document Intelligence
-AZURE_DOC_INTELLIGENCE_ENDPOINT=https://your-doc-intelligence.cognitiveservices.azure.com/
-AZURE_DOC_INTELLIGENCE_KEY=your_doc_key
+# ============ AWS SERVICES ============
+AWS_ACCESS_KEY_ID=sua_access_key
+AWS_SECRET_ACCESS_KEY=sua_secret_key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=guardia-parto-seguro
 
 # ============ NOTIFICAÇÕES ============
 SMTP_HOST=smtp.gmail.com
@@ -585,8 +573,8 @@ LOG_LEVEL=INFO
 ```
 # Responsáveis por domínio
 /backend/              @dev1
-/devops/               @dev1
-/.github/              @dev1
+/infrastructure/       @dev1 @cloud-dev
+/.github/              @dev1 @cloud-dev
 
 /video-domain/         @dev2
 /audio-domain/         @dev2
@@ -597,7 +585,10 @@ LOG_LEVEL=INFO
 /frontend/             @dev4
 /report-domain/        @dev4
 
-/docs/                 @dev1 @dev2 @dev3 @dev4
+/aws-domain/           @cloud-dev
+/security-domain/      @cloud-dev
+
+/docs/                 @dev1 @dev2 @dev3 @dev4 @cloud-dev
 ```
 
 ---

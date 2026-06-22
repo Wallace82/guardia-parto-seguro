@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — GuardIA Parto Seguro
 
-> Documento de Arquitetura de Software — Versão 1.0  
+> Documento de Arquitetura de Software — Versão 2.0  
 > Classificação: Acadêmico — FIAP Tech Challenge
 
 ---
@@ -60,9 +60,9 @@ O Brasil registra altos índices de violência obstétrica e mortalidade materna
 | **Isolamento de dados** | Nenhum domínio acessa o banco de outro diretamente |
 | **Contratos versionados** | Toda integração usa contratos com versionamento semântico |
 | **Testabilidade** | Cobertura mínima de 80% em testes unitários **(Atingido no core-api com pytest)** |
-| **Observabilidade** | Logs estruturados **(Implementado com structlog)**, métricas e rastreamento distribuído |
-| **Segurança** | Zero-trust, criptografia em repouso e em trânsito |
-| **Escalabilidade** | Cada serviço escala independentemente via Docker |
+| **Observabilidade** | Logs estruturados **(Implementado com structlog)**, métricas e rastreamento distribuído (Amazon CloudWatch) |
+| **Segurança** | Zero-trust, criptografia em repouso (S3 Encryption) e em trânsito (HTTPS/TLS) |
+| **Escalabilidade** | Cada serviço escala independentemente via Docker e futuramente ECS Fargate |
 
 ---
 
@@ -78,22 +78,22 @@ C4Context
 
     System(guardia, "GuardIA Parto Seguro", "Plataforma multimodal Híbrida (Local + Nuvem)")
 
-    System_Ext(azure_speech, "Azure Speech", "STT e análise de fala")
-    System_Ext(azure_lang, "Azure AI Language", "NLP, sentimento e entidades")
-    System_Ext(azure_doc, "Azure Document Intelligence", "OCR estruturado")
-    System_Ext(azure_blob, "Azure Blob Storage", "Armazenamento seguro de mídias")
-    System_Ext(azure_kv, "Azure Key Vault", "Gestão de segredos e chaves")
-    System_Ext(azure_monitor, "Azure Monitor", "Auditoria e observabilidade")
+    System_Ext(aws_transcribe, "Amazon Transcribe", "STT e análise de fala")
+    System_Ext(aws_comprehend, "Amazon Comprehend", "NLP, sentimento e entidades")
+    System_Ext(aws_textract, "Amazon Textract", "OCR estruturado")
+    System_Ext(aws_s3, "Amazon S3", "Armazenamento seguro de mídias")
+    System_Ext(aws_sm, "AWS Secrets Manager", "Gestão de segredos e credenciais")
+    System_Ext(aws_cw, "Amazon CloudWatch", "Auditoria e observabilidade")
 
     Rel(profissional, guardia, "Visualiza alertas e relatórios", "HTTPS")
     Rel(gestor, guardia, "Monitora IRA e dashboard", "HTTPS")
     Rel(ouvidor, guardia, "Acessa relatórios de auditoria", "HTTPS")
-    Rel(guardia, azure_speech, "Transcreve áudios e detecta anomalias", "HTTPS/TLS 1.3")
-    Rel(guardia, azure_lang, "Analisa sentimentos e extrai entidades", "HTTPS/TLS 1.3")
-    Rel(guardia, azure_doc, "Processa documentos médicos", "HTTPS/TLS 1.3")
-    Rel(guardia, azure_blob, "Armazena vídeos, áudios e documentos", "HTTPS/TLS 1.3")
-    Rel(guardia, azure_kv, "Recupera credenciais dinâmicas", "HTTPS/TLS 1.3")
-    Rel(guardia, azure_monitor, "Registra logs de auditoria (LGPD)", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_transcribe, "Transcreve áudios e detecta anomalias", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_comprehend, "Analisa sentimentos e extrai entidades", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_textract, "Processa documentos médicos", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_s3, "Armazena vídeos, áudios e documentos", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_sm, "Recupera credenciais dinâmicas", "HTTPS/TLS 1.3")
+    Rel(guardia, aws_cw, "Registra logs de auditoria (LGPD)", "HTTPS/TLS 1.3")
 ```
 
 ---
@@ -102,43 +102,43 @@ C4Context
 
 ```mermaid
 C4Container
-    title GuardIA Parto Seguro — Diagrama de Contêiner
+    title GuardIA Parto Seguro — Diagrama de Contêiner (MVP Local + AWS)
 
     Person(user, "Usuário", "Profissional de Saúde / Gestor / Auditor")
 
     Container(frontend, "Dashboard", "Streamlit", "Interface multimodal de monitoramento")
     Container(gateway, "API Gateway", "FastAPI :8000", "Roteamento e orquestração")
-    Container(security_svc, "Security Domain", "FastAPI :8006", "Auth, RBAC, Criptografia, Anonimização LGPD")
-    Container(cloud_svc, "Cloud Integration", "FastAPI :8007", "Gateway para serviços Azure, Blob, e Auditoria")
+    Container(security_svc, "Security Domain", "FastAPI :8006", "Auth, IAM, Criptografia, Anonimização LGPD")
+    Container(aws_svc, "AWS Integration Domain", "FastAPI :8007", "Gateway para serviços AWS (S3, IA, Auditoria)")
     Container(video_svc, "Video Service", "FastAPI :8001", "OpenCV, MediaPipe, DeepFace, YOLOv8")
-    Container(audio_svc, "Audio Service", "FastAPI :8002", "Integra com Cloud Integration para STT/NLP")
-    Container(doc_svc, "Document Service", "FastAPI :8003", "Integra com Cloud Integration para OCR")
+    Container(audio_svc, "Audio Service", "FastAPI :8002", "Integra com AWS Integration para STT/NLP")
+    Container(doc_svc, "Document Service", "FastAPI :8003", "Integra com AWS Integration para OCR")
     Container(risk_svc, "Risk Service", "FastAPI :8004", "Cálculo do IRA")
     Container(report_svc, "Report Service", "FastAPI :8005", "Geração de PDF/Excel")
 
-    ContainerDb(db_core, "Core DB", "PostgreSQL", "Sessões, alertas")
-    ContainerDb(db_security, "Security DB", "PostgreSQL", "Usuários, RBAC, AuditLog, Consents")
-    ContainerDb(db_cloud, "Cloud DB", "PostgreSQL", "CloudProcessingHistory")
-    ContainerDb(db_video, "Video DB", "PostgreSQL", "Análises de vídeo")
-    ContainerDb(db_audio, "Audio DB", "PostgreSQL", "Transcrições e análises de áudio")
-    ContainerDb(db_doc, "Document DB", "PostgreSQL", "Documentos processados")
-    ContainerDb(db_risk, "Risk DB", "PostgreSQL", "Histórico de IRA")
-    ContainerDb(db_report, "Report DB", "PostgreSQL", "Relatórios gerados")
+    ContainerDb(db_core, "Core DB", "PostgreSQL Local / RDS", "Sessões, alertas")
+    ContainerDb(db_security, "Security DB", "PostgreSQL Local / RDS", "Usuários, RBAC, AuditLog, Consents")
+    ContainerDb(db_cloud, "AWS Domain DB", "PostgreSQL Local / RDS", "AWSProcessingHistory")
+    ContainerDb(db_video, "Video DB", "PostgreSQL Local / RDS", "Análises de vídeo")
+    ContainerDb(db_audio, "Audio DB", "PostgreSQL Local / RDS", "Transcrições e análises de áudio")
+    ContainerDb(db_doc, "Document DB", "PostgreSQL Local / RDS", "Documentos processados")
+    ContainerDb(db_risk, "Risk DB", "PostgreSQL Local / RDS", "Histórico de IRA")
+    ContainerDb(db_report, "Report DB", "PostgreSQL Local / RDS", "Relatórios gerados")
 
     Rel(user, frontend, "Acessa via browser", "HTTPS")
     Rel(frontend, gateway, "Chama APIs", "REST/JSON")
-    Rel(gateway, security_svc, "Valida Auth/RBAC/LGPD", "REST")
-    Rel(gateway, cloud_svc, "Upload de mídias seguro", "REST")
+    Rel(gateway, security_svc, "Valida Auth/IAM/LGPD", "REST")
+    Rel(gateway, aws_svc, "Upload de mídias seguro", "REST")
     Rel(gateway, video_svc, "Delega análise de vídeo (Local)", "REST")
     Rel(gateway, audio_svc, "Delega análise de áudio", "REST")
     Rel(gateway, doc_svc, "Delega análise documental", "REST")
     Rel(gateway, risk_svc, "Solicita cálculo de IRA", "REST")
     Rel(gateway, report_svc, "Solicita geração de relatório", "REST")
-    Rel(audio_svc, cloud_svc, "Pede transcrição/sentimento", "REST")
-    Rel(doc_svc, cloud_svc, "Pede extração de texto OCR", "REST")
+    Rel(audio_svc, aws_svc, "Pede transcrição/sentimento", "REST")
+    Rel(doc_svc, aws_svc, "Pede extração de texto OCR", "REST")
     
     Rel(security_svc, db_security, "Lê/Escreve", "SQL")
-    Rel(cloud_svc, db_cloud, "Lê/Escreve", "SQL")
+    Rel(aws_svc, db_cloud, "Lê/Escreve", "SQL")
     Rel(video_svc, db_video, "Lê/Escreve", "SQL")
     Rel(audio_svc, db_audio, "Lê/Escreve", "SQL")
     Rel(doc_svc, db_doc, "Lê/Escreve", "SQL")
@@ -155,11 +155,11 @@ C4Component
     title API Gateway — Componentes Internos
 
     Container_Boundary(gateway, "API Gateway — FastAPI") {
-        Component(auth, "Auth Module", "JWT + Azure AD", "Autenticação e autorização")
+        Component(auth, "Auth Module", "JWT", "Autenticação e autorização")
         Component(router, "Domain Router", "FastAPI Router", "Roteia requisições para os domínios")
         Component(orchestrator, "Orchestrator", "Python", "Coordena fluxos multimodais")
         Component(alert_engine, "Alert Engine", "Python", "Dispara alertas com base em thresholds")
-        Component(audit_log, "Audit Logger", "Python + Azure Monitor", "Log imutável de auditoria")
+        Component(audit_log, "Audit Logger", "Python + Amazon CloudWatch", "Log imutável de auditoria")
     }
 ```
 
@@ -210,7 +210,7 @@ sequenceDiagram
 flowchart TD
     A[Upload Sessão Clínica] --> SEC{Security & LGPD Check}
     SEC -->|Token Inválido / Sem Consentimento| REJ[Rejeita Requisição]
-    SEC -->|OK| C_STORE[Cloud Integration: Store in Azure Blob]
+    SEC -->|OK| C_STORE[AWS Integration: Store in Amazon S3]
     
     C_STORE --> B{Tipo de Mídia}
     B -->|Vídeo| C[Video Service - Local Processing]
@@ -222,13 +222,13 @@ flowchart TD
     C --> C3[Detecção Objetos - YOLOv8]
     C --> C4[Análise Temporal - OpenCV]
 
-    D --> D_CLOUD[Cloud Integration Domain]
-    D_CLOUD --> D1[STT - Azure Speech]
-    D_CLOUD --> D2[Análise Sentimento - Azure Language]
+    D --> D_CLOUD[AWS Integration Domain]
+    D_CLOUD --> D1[STT - Amazon Transcribe]
+    D_CLOUD --> D2[Análise Sentimento - Amazon Comprehend]
     D_CLOUD --> D3[NER Clínico]
 
-    E --> E_CLOUD[Cloud Integration Domain]
-    E_CLOUD --> E1[OCR - Azure Doc Intelligence]
+    E --> E_CLOUD[AWS Integration Domain]
+    E_CLOUD --> E1[OCR - Amazon Textract]
     E --> E2[Extração Estruturada]
     E --> E3[Validação de Inconsistências]
 
@@ -247,7 +247,7 @@ flowchart TD
     K & L & M --> P[Dashboard Streamlit]
     O --> P
     
-    K & L & M & O --> AUDIT[Security Domain - Registra no Azure Monitor]
+    K & L & M & O --> AUDIT[Security Domain - Registra no Amazon CloudWatch]
 ```
 
 ---
@@ -257,24 +257,29 @@ flowchart TD
 ```mermaid
 graph LR
     subgraph "Security Domain"
-        SEC_AUTH[Auth & Identity]
+    direction TB
+        SEC_AUTH[Auth & IAM]
         SEC_RBAC[RBAC Control]
         SEC_LGPD[Anonymization & LGPD]
         SEC_AUDIT[Audit Logger]
     end
 
     subgraph "Core Platform"
+    direction TB
         SESSION[Session Manager]
         ALERT[Alert Engine]
     end
     
-    subgraph "Cloud Integration Domain"
-        CLOUD_STORE[Azure Blob Gateway]
-        CLOUD_AI[Azure AI Services Gateway]
-        CLOUD_MON[Azure Monitor Gateway]
+    subgraph "AWS Integration Domain"
+    direction TB
+        CLOUD_STORE[Amazon S3 Gateway]
+        CLOUD_AI[AWS AI Services Gateway]
+        CLOUD_MON[Amazon CloudWatch Gateway]
+        CLOUD_SEC[AWS Secrets Manager]
     end
 
     subgraph "Video Domain (Local)"
+    direction TB
         VID_INGEST[Video Ingestion]
         VID_FACE[Facial Analysis]
         VID_POSE[Pose Analysis]
@@ -282,29 +287,34 @@ graph LR
     end
 
     subgraph "Audio Domain"
+    direction TB
         AUD_INGEST[Audio Ingestion]
         AUD_SENT[Sentiment Processing]
         AUD_NER[NER Processing]
     end
 
     subgraph "Document Domain"
+    direction TB
         DOC_INGEST[Document Ingestion]
         DOC_EXTRACT[Data Extraction]
         DOC_VALID[Validation]
     end
 
     subgraph "Risk Domain"
+    direction TB
         RISK_CORR[Correlation Engine]
         IRA_CALC[IRA Calculator]
         RISK_HIST[Risk History]
     end
 
     subgraph "Report Domain"
+    direction TB
         RPT_GEN[Report Generator]
         RPT_TMPL[Template Engine]
     end
 
     subgraph "Dashboard Domain"
+    direction TB
         DASH_RT[Real-time View]
         DASH_HIST[Historical View]
     end
@@ -340,17 +350,18 @@ graph LR
 | Pose Estimation | MediaPipe | 0.10+ | Análise de postura corporal |
 | Detecção Objetos | YOLOv8 | ultralytics 8.x | Detecção de objetos/instrumentos |
 | Face Recognition | face_recognition | 1.3+ | Identificação de indivíduos |
-| STT | Azure Speech | SDK 1.37+ | Transcrição de fala |
-| NLP | Azure AI Language | SDK 1.0+ | Sentimento, NER, key phrases |
-| OCR | Azure Doc Intelligence | SDK 1.0+ | Extração documental |
-| Storage | Azure Blob Storage | — | Armazenamento de mídias |
-| Secrets | Azure Key Vault | — | Gerenciamento de segredos |
-| Observabilidade | Azure Monitor | — | Logs, métricas, traces |
+| STT | Amazon Transcribe | SDK boto3 | Transcrição de fala |
+| NLP | Amazon Comprehend | SDK boto3 | Sentimento, NER, key phrases |
+| OCR | Amazon Textract | SDK boto3 | Extração documental |
+| Storage | Amazon S3 | SDK boto3 | Armazenamento de mídias |
+| Secrets | AWS Secrets Manager | SDK boto3 | Gerenciamento de segredos e credenciais |
+| Observabilidade | Amazon CloudWatch | SDK boto3 | Logs, métricas, traces para auditoria |
 | Banco de Dados | PostgreSQL | 16+ | Persistência relacional |
 | ORM | SQLAlchemy | 2.0+ | Mapeamento objeto-relacional |
 | Migrations | Alembic | 1.13+ | Controle de schema |
-| Auth | PyJWT + OAuth2 | — | Autenticação e autorização |
-| Containerização | Docker + Compose | — | Execução e testes estritamente locais |
+| Auth | PyJWT + IAM | — | Autenticação e controle de acesso |
+| Containerização | Docker + Compose | — | Execução local |
+| Deploy (HML/PRD) | ECS Fargate | — | Orquestração Serverless na nuvem |
 
 ---
 
@@ -361,22 +372,27 @@ graph LR
 **Justificativa:** Permite desenvolvimento paralelo sem conflitos, deploy independente e isolamento de falhas.  
 **Consequências:** Overhead de infraestrutura, mas ganho em autonomia da equipe.
 
-### ADR-002: Arquitetura Híbrida (Local + Cloud)
-**Decisão:** O processamento de Visão Computacional (Vídeo) será executado integralmente de forma local (Opção A) utilizando OpenCV, DeepFace, MediaPipe, e YOLOv8. Já os processamentos de Áudio, Linguagem Natural e OCR de Documentos serão delegados aos serviços gerenciados na nuvem (Azure Speech, Azure AI Language, Azure Document Intelligence). O projeto será executado exclusivamente de forma local via Docker, sem CI/CD no GitHub.
-**Justificativa:** O projeto deve cumprir o requisito de integrar serviços em nuvem gerenciados com segurança. Usaremos a Azure para os serviços cognitivos complexos de linguagem e documentos, enquanto a visão computacional (que exige latência muito baixa e alta vazão de dados) rodará localmente. A execução apenas local é suficiente para fins de demonstração do Tech Challenge.
-**Consequências:** O setup inicial requer a injeção manual das chaves da Azure no `.env` e a infraestrutura não necessitará de pipelines de esteira automatizados.
+### ADR-002: Estratégia de Ambientes (LOCAL, DEV, HML, PRD) e MVP Local + AWS
+**Decisão:** O projeto adota uma estratégia evolutiva de 4 ambientes:
+- **LOCAL**: Execução 100% local (FastAPI, Postgres, IA Visual) consumindo serviços reais da AWS (Transcribe, Comprehend, Textract) via API, sem deploy na nuvem.
+- **DEV**: Similar ao LOCAL, mas focada na integração da equipe (banco compartilhado opcional e testes integrados).
+- **HML (Homologação)**: Primeiro deploy na nuvem (EC2/ECS, RDS PostgreSQL, CloudWatch).
+- **PRD (Produção)**: Arquitetura alvo totalmente nuvem (ECS Fargate, Amazon RDS, S3).
+O MVP será desenvolvido com foco nos ambientes LOCAL e DEV para agilidade e controle de custos no contexto acadêmico.
+**Justificativa:** Essa progressão permite foco no MVP funcional e IA avançada antes da sobrecarga de infraestrutura complexa na nuvem.
+**Consequências:** Inicialmente a execução será local, utilizando credenciais da AWS via `~/.aws/credentials` ou `.env`.
 
 ### ADR-003: Segurança por Design e Conformidade LGPD
-**Decisão:** Centralizar segurança no `Security Domain`, implementando mascaramento de dados pessoais (anonimização) em bancos e logs, AES-256 para dados em repouso e TLS 1.3 em trânsito. Nenhuma credencial será exposta; o `Cloud Domain` integrará com o Azure Key Vault.
+**Decisão:** Centralizar segurança no `Security Domain`, implementando mascaramento de dados pessoais (anonimização) em bancos e logs, S3 Encryption (AES-256) para dados em repouso e HTTPS/TLS 1.3 em trânsito. Nenhuma credencial será exposta; o `AWS Integration Domain` fará uso do AWS Secrets Manager e as políticas seguirão o IAM.
 **Justificativa:** Vídeos, áudios e prontuários são classificados como dados pessoais sensíveis pela LGPD, requerendo proteção máxima.
-**Consequências:** Complexidade adicional na gestão de acesso, exigindo criptografia antes da persistência e decriptação para exibição baseada em RBAC (Role-Based Access Control).
+**Consequências:** Complexidade adicional na gestão de acesso, exigindo criptografia antes da persistência e decriptação para exibição baseada em RBAC.
 
 ### ADR-004: Comunicação Síncrona via REST
-**Decisão:** Comunicação entre serviços via REST HTTPS (v1.0), com possibilidade de migrar para mensageria assíncrona (RabbitMQ/Azure Service Bus) na v2.0.  
-**Justificativa:** Simplicidade de implementação para o escopo acadêmico.
+**Decisão:** Comunicação entre serviços via REST HTTPS (v1.0), com possibilidade de migrar para mensageria assíncrona (RabbitMQ/Amazon SQS) na v2.0.  
+**Justificativa:** Simplicidade de implementação para o escopo inicial.
 
 ### ADR-005: Banco por Domínio
-**Decisão:** Cada serviço tem seu próprio banco de dados PostgreSQL (schemas separados na mesma instância para o ambiente de dev).  
+**Decisão:** Cada serviço tem seu próprio banco de dados PostgreSQL (schemas separados na mesma instância para o ambiente de dev local, instâncias RDS dedicadas no alvo).  
 **Justificativa:** Isolamento de dados, evita acoplamento via banco compartilhado.
 
 ### ADR-006: IRA como Score Composto

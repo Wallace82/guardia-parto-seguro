@@ -16,19 +16,19 @@ gantt
     Sessões + Orquestração           :done, a3, after a2, 7d
     Motor de Alertas                 :done, a4, after a3, 7d
     Security Domain (LGPD/Audit)     :active, a5, after a4, 7d
-    Cloud Domain (Azure Gateway)     :a6, after a5, 7d
+    AWS Domain (AWS Gateway)         :a6, after a5, 7d
 
     section Paulo Roberto Gonçalves (Dev 2)
     Video Service Base               :done, b1, 2024-01-15, 7d
     DeepFace + MediaPipe             :active, b2, after b1, 7d
     YOLOv8 + Sangramento             :b3, after b2, 7d
-    Audio Service + Azure Speech     :b4, 2024-01-22, 7d
-    Azure Language + NER             :b5, after b4, 7d
+    Audio Service + Amazon Transcribe:b4, 2024-01-22, 7d
+    Amazon Comprehend + NER          :b5, after b4, 7d
     Scorers IRA                      :b6, 2024-02-12, 7d
 
     section Evandro Rosa Sampaio (Dev 3)
     Document Service Base            :done, c1, 2024-01-15, 7d
-    Azure Doc Intelligence           :active, c2, after c1, 7d
+    Amazon Textract                  :active, c2, after c1, 7d
     Validações e Consistência        :c3, after c2, 7d
     Risk Service + IRA Básico        :c4, 2024-01-22, 7d
     IRA Composto + Tendências        :c5, after c4, 14d
@@ -101,7 +101,7 @@ gantt
 ### Objetivos
 - API Gateway com auth JWT funcionando
 - Primeiros resultados reais de análise de vídeo e áudio
-- Integração Azure Document Intelligence
+- Integração Amazon Textract
 
 ### Entregáveis
 
@@ -112,8 +112,8 @@ gantt
 | **Dev 1** | Upload de mídia para Volume Compartilhado | Arquivo de vídeo/áudio/doc é armazenado localmente (`/shared_media`) |
 | **Dev 2** | Pipeline de extração de frames (OpenCV) | 30 frames extraídos de vídeo de 1 min |
 | **Dev 2** | DeepFace integrado (análise de emoções) | JSON com emoções detectadas retornado para vídeo de teste |
-| **Dev 2** | Azure Speech STT básico | Transcrição de áudio de 1 min em pt-BR com ≥ 80% acurácia |
-| **Dev 3** | Azure Document Intelligence integrado | Extração de texto de PDF de prontuário funcionando |
+| **Dev 2** | Amazon Transcribe STT básico | Transcrição de áudio de 1 min em pt-BR com ≥ 80% acurácia |
+| **Dev 3** | Amazon Textract integrado | Extração de texto de PDF de prontuário funcionando |
 | **Dev 3** | Extrator de campos obstétricos | Campos chave (CID, medicamentos, data) extraídos corretamente |
 | **Dev 4** | Página de sessões no dashboard | Lista de sessões com status visível |
 | **Dev 4** | Upload de mídia via dashboard | Upload de arquivo a partir do Streamlit funciona |
@@ -133,7 +133,7 @@ gantt
 | **Dev 1** | Sistema de notificações por e-mail | E-mail enviado ao gestor para IRA crítico (testado com mock) |
 | **Dev 2** | MediaPipe Holistic integrado | Pose landmarks detectados e classificados (normal/defensivo) |
 | **Dev 2** | YOLOv8 integrado | Objetos detectados em frame de teste com bounding boxes |
-| **Dev 2** | Speaker Diarization (Azure Speech) | Transcrição com Speaker_0 e Speaker_1 identificados |
+| **Dev 2** | Speaker Diarization (Amazon Transcribe) | Transcrição com Speaker_0 e Speaker_1 identificados |
 | **Dev 3** | Checklist de completude de prontuário | Score de completude (0-100) calculado para prontuário de teste |
 | **Dev 3** | Risk Service com IRA básico (um componente) | IRA calculado corretamente com apenas score de vídeo |
 | **Dev 4** | IRA Gauge no dashboard | Indicador visual do IRA (0-100) renderiza com cores corretas |
@@ -155,7 +155,7 @@ gantt
 | **Dev 1** | Security Domain funcional | Rotas de auditoria e validação JWT RBAC funcionais |
 | **Dev 2** | Detecção de sangramento (OpenCV HSV) | Sangramento detectado em frame de teste com cor vermelha |
 | **Dev 2** | IRA Scorer de vídeo | Score de vídeo normalizado (0-100) retornado pela API |
-| **Dev 2** | Azure AI Language (sentimento + NER) | Sentimento e entidades clínicas extraídos da transcrição |
+| **Dev 2** | Amazon Comprehend (sentimento + NER) | Sentimento e entidades clínicas extraídos da transcrição |
 | **Dev 3** | Validação de consentimento informado | Campo consentimento verificado e resultado armazenado |
 | **Dev 3** | IRA composto com 2+ componentes | IRA calculado corretamente com vídeo + áudio |
 | **Dev 4** | Central de alertas no dashboard | Lista de alertas com filtros por severidade e status |
@@ -173,7 +173,7 @@ gantt
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
 | **Dev 1** | Cobertura de testes ≥ 80% no backend | ✅ Concluído (`pytest --cov` com sucesso e 100% pass) |
-| **Dev 1** | Cloud Integration Domain finalizado | Conexões aos serviços cognitivos da Azure finalizadas |
+| **Dev 1** | AWS Integration Domain finalizado | Conexões aos serviços cognitivos da AWS finalizadas |
 | **Dev 2** | IRA Scorer de áudio completo | Score inclui sentimento + keywords + prosódia |
 | **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | Verificado no CI |
 | **Dev 3** | IRA Scorer documental completo | Score inclui completude + inconsistências + consentimento |

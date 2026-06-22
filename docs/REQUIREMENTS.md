@@ -1,6 +1,6 @@
 # REQUIREMENTS.md — GuardIA Parto Seguro
 
-> Requisitos Funcionais, Não Funcionais e Regras de Negócio — v1.0
+> Requisitos Funcionais, Não Funcionais e Regras de Negócio — v2.0
 
 ---
 
@@ -56,20 +56,20 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RF-013** O sistema deve gerar um score de contribuição de vídeo para o IRA (0–100)
 - [x] **RF-014** O sistema deve processar vídeos em background sem bloquear a interface do usuário
 
-### 1.3 Análise de Áudio (Processamento via Nuvem - Azure Cognitive Services)
+### 1.3 Análise de Áudio (Processamento via Nuvem - Amazon Web Services)
 
-- [ ] **RF-015** O sistema deve transcrever o áudio da consulta para texto utilizando Azure Speech Services
+- [ ] **RF-015** O sistema deve transcrever o áudio da consulta para texto utilizando Amazon Transcribe
 - [ ] **RF-016** O sistema deve detectar o idioma predominante no áudio automaticamente
 - [ ] **RF-017** O sistema deve identificar múltiplos falantes na transcrição (speaker diarization)
-- [ ] **RF-018** O sistema deve analisar o sentimento do texto transcrito (positivo/negativo/neutro) utilizando Azure AI Language
-- [ ] **RF-019** O sistema deve identificar entidades clínicas relevantes no texto (NER): diagnósticos, medicamentos, procedimentos
+- [ ] **RF-018** O sistema deve analisar o sentimento do texto transcrito (positivo/negativo/neutro) utilizando Amazon Comprehend
+- [ ] **RF-019** O sistema deve identificar entidades clínicas relevantes no texto (NER): diagnósticos, medicamentos, procedimentos via Amazon Comprehend
 - [ ] **RF-020** O sistema deve detectar verbalizações de dor, medo, ameaça ou constrangimento
 - [ ] **RF-021** O sistema deve analisar o tom de voz e indicadores prosódicos de sofrimento
 - [ ] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IRA (0–100)
 
-### 1.4 Análise de Documentos (Processamento via Nuvem - Azure Cognitive Services)
+### 1.4 Análise de Documentos (Processamento via Nuvem - Amazon Web Services)
 
-- [ ] **RF-023** O sistema deve extrair texto de documentos médicos via OCR (Azure Document Intelligence)
+- [ ] **RF-023** O sistema deve extrair texto de documentos médicos via OCR Inteligente (Amazon Textract)
 - [ ] **RF-024** O sistema deve identificar campos-chave em prontuários: diagnóstico, medicamentos, procedimentos, datas
 - [ ] **RF-025** O sistema deve detectar inconsistências entre o prontuário e os dados da consulta (áudio/vídeo)
 - [ ] **RF-026** O sistema deve identificar ausência de consentimento informado documentado
@@ -111,11 +111,11 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 ### 1.9 Autenticação e Controle de Acesso
 
 - [x] **RF-049** O sistema deve suportar login com usuário e senha com autenticação JWT
-- [x] **RF-050** O sistema deve implementar controle de acesso baseado em papéis (RBAC): Admin, Médico, Enfermeiro, Auditor
-- [x] **RF-051** O sistema deve registrar log de auditoria detalhado (usuário/data/recurso/operação) em todos os acessos e ações
+- [x] **RF-050** O sistema deve implementar controle de acesso baseado em papéis (RBAC - IAM Role mappings): Admin, Médico, Enfermeiro, Auditor
+- [x] **RF-051** O sistema deve registrar log de auditoria detalhado (usuário/data/recurso/operação) em todos os acessos e ações via Amazon CloudWatch
 - [x] **RF-052** O sistema deve encerrar sessões inativas após 30 minutos
 - [ ] **RF-053** O sistema deve mascarar dados sensíveis de pacientes (anonimização: ex. Maria Silva → PACIENTE_001) com base no perfil de acesso
-- [ ] **RF-054** O sistema deve rotear toda comunicação de mídia com a nuvem pelo Cloud Integration Domain para garantir conformidade
+- [ ] **RF-054** O sistema deve rotear toda comunicação de mídia com a nuvem pelo AWS Integration Domain para garantir conformidade
 
 ---
 
@@ -124,21 +124,21 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RNF-001** Performance: O sistema deve processar um vídeo de 30 minutos em no máximo 15 minutos
 - [ ] **RNF-002** Performance: A API Gateway deve responder em menos de 500ms para requisições síncronas
 - [ ] **RNF-003** Performance: O dashboard deve carregar em menos de 3 segundos
-- [ ] **RNF-004** Disponibilidade: O sistema deve ter disponibilidade mínima de 99% em ambiente de produção
-- [ ] **RNF-005** Escalabilidade: Cada serviço de domínio deve escalar horizontalmente de forma independente
-- [ ] **RNF-006** Segurança: Todos os dados em trânsito devem ser criptografados via TLS 1.3
-- [ ] **RNF-007** Segurança: Dados de pacientes devem ser criptografados em repouso com algoritmo AES-256
-- [ ] **RNF-008** Segurança: A Gestão de Segredos e credenciais deve ser feita exclusivamente via Azure Key Vault
-- [ ] **RNF-009** Segurança: O sistema deve estar em estrita conformidade com a LGPD (Lei 13.709/2018), garantindo minimização e privacidade por design
+- [ ] **RNF-004** Disponibilidade: O sistema deve ter disponibilidade mínima de 99% em ambiente de produção na nuvem (PRD)
+- [ ] **RNF-005** Escalabilidade: Cada serviço de domínio deve escalar horizontalmente de forma independente no ECS Fargate (em HML/PRD)
+- [ ] **RNF-006** Segurança (Trânsito): Todos os dados em trânsito devem ser criptografados via HTTPS/TLS 1.3
+- [ ] **RNF-007** Segurança (Repouso): Dados de pacientes e mídias devem ser criptografados em repouso com algoritmo AES-256 (via Amazon S3 Encryption e DB Encryption)
+- [ ] **RNF-008** Segurança (Identidade): A Gestão de Segredos e credenciais deve ser feita exclusivamente via AWS Secrets Manager e IAM policies
+- [ ] **RNF-009** Segurança (LGPD): O sistema deve estar em estrita conformidade com a LGPD (Lei 13.709/2018), garantindo minimização, anonimização e privacidade por design
 - [x] **RNF-010** Qualidade: A cobertura de testes unitários deve ser ≥ 80% por serviço
 - [ ] **RNF-011** Qualidade: O código deve passar no linting (ruff/flake8) sem erros
-- [x] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON
+- [x] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON para envio ao Amazon CloudWatch Logs
 - [ ] **RNF-013** Observabilidade: O sistema deve expor métricas de saúde via `/health` endpoint
 - [ ] **RNF-014** Manutenibilidade: Toda API deve ter documentação OpenAPI/Swagger atualizada
-- [x] **RNF-015** Portabilidade: O sistema deve ser executável integralmente de forma local via Docker Compose (foco em demonstração do Tech Challenge, sem exigência de CI/CD remota)
+- [x] **RNF-015** Flexibilidade e Deploy: O sistema deve suportar uma evolução de 4 ambientes (LOCAL, DEV, HML, PRD). O MVP executará 100% via Docker Compose local, com os demais ambientes suportando CI/CD na infraestrutura AWS
 - [ ] **RNF-016** Interoperabilidade: As APIs devem seguir padrão REST com retorno JSON
 - [ ] **RNF-017** Usabilidade: O dashboard deve ser responsivo e funcionar em resolução mínima de 1280x720
-- [ ] **RNF-018** Auditabilidade: Todo acesso a dados de pacientes deve ser registrado em log imutável
+- [ ] **RNF-018** Auditabilidade: Todo acesso a dados de pacientes deve ser registrado em log imutável no CloudWatch Logs
 
 ---
 
@@ -150,7 +150,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RN-004** Alertas: Alertas de nível Crítico (IRA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável
 - [ ] **RN-005** Alertas: Um alerta não pode ser descartado sem que o responsável registre uma justificativa
 - [ ] **RN-006** Sessões: Uma sessão clínica não pode ter mais de 3 arquivos de vídeo, 3 de áudio e 10 de documentos
-- [ ] **RN-007** LGPD: Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita (mecanismo de consentimento dinâmico)
+- [ ] **RN-007** LGPD: Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita (mecanismo de consentimento dinâmico e IAM)
 - [ ] **RN-008** LGPD: Dados de pacientes devem ser completamente anonimizados/pseudo-anonimizados nas bases analíticas e mantidos em segredo de acordo com o CFM
 - [ ] **RN-009** Documentos: O consentimento informado deve ser verificado antes do processamento de qualquer mídia
 - [ ] **RN-010** Vídeo: A análise de vídeo deve ser realizada apenas em arquivos previamente autorizados pelo consentimento verificado
@@ -158,4 +158,4 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RN-012** Papéis: Médicos e Enfermeiros podem criar sessões e visualizar seus pacientes; Auditores e Admins podem acessar logs e relatórios anonimizados
 - [ ] **RN-013** Relatórios: Relatórios de auditoria são imutáveis após geração e devem ter hash SHA-256 registrado
 - [ ] **RN-014** Processamento: O processamento de vídeo e áudio deve ser realizado em background sem bloquear a submissão de novas sessões
-- [ ] **RN-015** Retenção: Logs de sistema devem ser retidos por no mínimo 1 ano
+- [ ] **RN-015** Retenção: Logs de sistema e dados de auditoria devem ser retidos no CloudWatch Logs/S3 por no mínimo 1 ano
