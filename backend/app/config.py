@@ -28,9 +28,9 @@ class Settings(BaseSettings):
     RISK_SERVICE_URL: str = "http://risk-service:8004"
     REPORT_SERVICE_URL: str = "http://report-service:8005"
 
-    # Azure
-    AZURE_BLOB_CONNECTION_STRING: str = ""
-    AZURE_BLOB_CONTAINER_MEDIA: str = "guardia-media"
+    # AWS S3
+    AWS_REGION: str = "us-east-1"
+    MEDIA_BUCKET_NAME: str = "guardia-media"
 
     # Notifications
     SMTP_HOST: str = ""

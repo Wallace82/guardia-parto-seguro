@@ -15,8 +15,8 @@ gantt
     API Gateway + Auth               :done, a2, after a1, 7d
     Sessões + Orquestração           :done, a3, after a2, 7d
     Motor de Alertas                 :done, a4, after a3, 7d
-    Security Domain (LGPD/Audit)     :active, a5, after a4, 7d
-    AWS Domain (AWS Gateway)         :a6, after a5, 7d
+    Security Domain (LGPD/Audit)     :done, a5, after a4, 7d
+    AWS Domain (AWS Gateway)         :active, a6, after a5, 7d
 
     section Paulo Roberto Gonçalves (Dev 2)
     Video Service Base               :done, b1, 2024-01-15, 7d

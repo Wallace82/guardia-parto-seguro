@@ -99,15 +99,15 @@
 - Observabilidade, monitoramento e gestão de segredos.
 
 #### Backlog Completo (Sprints AWS)
-- [ ] **AWS Foundation**: Criação da conta AWS, configuração da VPC, Subnets e Security Groups.
-- [ ] **IAM**: Configuração de roles, policies e least-privilege access para ECS e desenvolvedores.
-- [ ] **Secrets Manager**: Migração de `.env` sensíveis para AWS Secrets Manager.
-- [ ] **S3 Storage**: Configuração de buckets para mídias e relatórios, com S3 Encryption (KMS) e pre-signed URLs.
+- [x] **AWS Foundation**: Criação da conta AWS, configuração da VPC, Subnets e Security Groups.
+- [x] **IAM**: Configuração de roles, policies e least-privilege access para ECS e desenvolvedores.
+- [x] **Secrets Manager**: Migração de `.env` sensíveis para AWS Secrets Manager (Desativado no MVP/Local).
+- [x] **S3 Storage**: Configuração de buckets para mídias e relatórios, com S3 Encryption (KMS) e pre-signed URLs.
 - [ ] **Amazon Transcribe**: Implementação do módulo de transcrição e diarização de áudio (`aws-domain`).
 - [ ] **Amazon Comprehend**: Implementação de extração de sentimento, entidades e detecção de PII (`aws-domain`).
 - [ ] **Amazon Textract**: Implementação do módulo OCR para prontuários e documentos manuscritos (`aws-domain`).
 - [ ] **CloudWatch & Observability**: Configurar envio centralizado de logs (JSON structlog) e criação de dashboards de auditoria (LGPD).
-- [ ] **Security & Anonimização**: Implementar serviço de pseudo-anonimização/mascaramento de dados e encriptação AES-256 no `security-domain`.
+- [x] **Security & Anonimização**: Implementar serviço de pseudo-anonimização/mascaramento de dados e encriptação AES-256 no `security-domain`.
 - [ ] **Deploy HML/PRD**: Criar scripts IaC (Terraform/CloudFormation) para implantação no Amazon ECS Fargate e Amazon RDS PostgreSQL.
 
 ---

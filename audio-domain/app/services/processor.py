@@ -14,7 +14,7 @@ class AudioProcessor:
     def process_audio(self, session_id: str, blob_url: str):
         """
         Lê o arquivo de áudio do volume e faz a chamada
-        ao Azure Cognitive Services.
+        ao Amazon Transcribe.
         """
         log.info("starting_audio_processing", session_id=session_id, blob_url=blob_url)
         
@@ -38,13 +38,13 @@ class AudioProcessor:
             return
 
         try:
-            # Ponto de injeção: Integrar azure.cognitiveservices.speech
-            # Ex: speech_recognizer.recognize_once_async().get()
+            # Ponto de injeção: Integrar boto3 transcribe client
             
-            # Simulando o tempo de transcrição (Azure HTTP Call)
-            time.sleep(2)
+            # Simulando o tempo de transcrição (AWS API Call)
+            asyncio.sleep(4.0)
             
-            log.info("azure_speech_success", session_id=session_id)
+            # TODO: Obter o resultado real do AWS Transcribe
+            log.info("aws_transcribe_success", session_id=session_id)
             
             _RESULTS_DB[session_id] = {
                 "session_id": session_id,

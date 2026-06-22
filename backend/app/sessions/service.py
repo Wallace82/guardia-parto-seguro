@@ -134,24 +134,6 @@ class SessionService:
         """Adiciona um arquivo de mídia à sessão."""
         session = await self.get_by_id(session_id, user_id, user_role)
         
-        # Salva o arquivo localmente ou no Azure Blob
-        blob_url = None
-        file_size = len(file_content)
-        
-        if settings.AZURE_BLOB_CONNECTION_STRING:
-            try:
-                from azure.storage.blob import BlobServiceClient
-                blob_service_client = BlobServiceClient.from_connection_string(
-                    settings.AZURE_BLOB_CONNECTION_STRING
-                )
-                container_name = settings.AZURE_BLOB_CONTAINER_MEDIA
-                blob_client = blob_service_client.get_blob_client(container=container_name, blob=f"sessions/{session_id}/{media_type}/{filename}")
-                blob_client.upload_blob(file_content, overwrite=True)
-                blob_url = blob_client.url
-            except Exception as e:
-                # Fallback para gravação local
-                pass
-        
         if not blob_url:
             # Salvar localmente
             import os

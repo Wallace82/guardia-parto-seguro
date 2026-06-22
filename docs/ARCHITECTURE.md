@@ -398,3 +398,8 @@ O MVP será desenvolvido com foco nos ambientes LOCAL e DEV para agilidade e con
 ### ADR-006: IRA como Score Composto
 **Decisão:** O IRA é calculado pelo Risk Service com base em pesos ponderados das contribuições de vídeo (40%), áudio (35%) e documentos (25%).  
 **Justificativa:** Pesos baseados na literatura de detecção de violência obstétrica.
+
+### ADR-007: Gerenciamento de Segredos (AWS Secrets Manager vs .env)
+**Decisão:** O MVP e ambiente de desenvolvimento local (LOCAL/DEV) farão a injeção de segredos estritamente utilizando arquivos `.env`. O uso do AWS Secrets Manager será prorrogado e exigido apenas para ambientes gerenciados (HML e PRD).
+**Justificativa:** Reduzir os custos recorrentes na AWS. O Secrets Manager cobra por segredo persistido mensalmente além de custo por requisições na API. Para um projeto acadêmico o balanço custo vs benefício não justifica usá-lo ativamente em Dev.
+**Consequências:** O código IaC (Terraform) para os segredos existe mas está comentado ("documentado") na base até o momento do deploy em HML. Os desenvolvedores devem garantir que o `.env` jamais seja "commitado" no Git.

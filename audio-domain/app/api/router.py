@@ -27,7 +27,7 @@ async def analyze(data: AudioAnalyzeRequest, background_tasks: BackgroundTasks):
     return AudioAnalyzeResponse(
         job_id=data.session_id,
         status="processing",
-        message="Processamento de áudio com Azure iniciado em background"
+        message="Processamento de áudio com AWS iniciado em background"
     )
 
 @router.get("/results/{session_id}", status_code=status.HTTP_200_OK)

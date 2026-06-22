@@ -4,10 +4,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "GuardIA - Audio Domain"
     SHARED_MEDIA_DIR: str = "/shared_media"
     
-    # Azure Configuration
-    AZURE_SPEECH_KEY: str = ""
-    AZURE_SPEECH_REGION: str = "brazilsouth"
-    AZURE_SPEECH_LANGUAGE: str = "pt-BR"
+    # AWS Configuration
+    AWS_REGION: str = "us-east-1"
     
     class Config:
         env_file = ".env"

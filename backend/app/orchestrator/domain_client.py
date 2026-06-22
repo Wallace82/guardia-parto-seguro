@@ -52,7 +52,6 @@ class DomainClient:
             "session_id": str(session_id),
             "media_id": str(media_id),
             "blob_url": blob_url,
-            "language": settings.AZURE_SPEECH_LANGUAGE,
             "options": {
                 "speaker_diarization": True,
                 "sentiment_analysis": True,

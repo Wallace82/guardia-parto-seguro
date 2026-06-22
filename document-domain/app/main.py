@@ -1,11 +1,9 @@
 """
-GuardIA — Document Domain Service (Azure Integration)
+GuardIA — Document Domain Service (AWS Integration)
 """
-import os
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.documentintelligence import DocumentIntelligenceClient
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
+import os
 from dotenv import load_dotenv
 
 # Load env variables from root .env
@@ -19,24 +17,9 @@ class DocumentAnalyzeRequest(BaseModel):
 class DocumentAnalyzeResponse(BaseModel):
     diagnosticos: list[str]
 
-def analyze_document_with_azure(file_path: str):
-    endpoint = os.environ.get("AZURE_DOC_INTELLIGENCE_ENDPOINT")
-    key = os.environ.get("AZURE_DOC_INTELLIGENCE_KEY")
-
-    if not all([endpoint, key]):
-        raise HTTPException(status_code=500, detail="Azure credentials missing in .env")
-
-    document_intelligence_client = DocumentIntelligenceClient(
-        endpoint=endpoint, credential=AzureKeyCredential(key)
-    )
-
-    with open(file_path, "rb") as f:
-        poller = document_intelligence_client.begin_analyze_document(
-            "prebuilt-document", analyze_request=f, content_type="application/octet-stream"
-        )
-    result = poller.result()
-
-    diagnosticos = []
+def analyze_document_with_aws(file_path: str):
+    # TODO: Initialize boto3 textract client
+    # textract = boto3.client('textract')
     
     # Busca por pares chave-valor que remetam a um diagnóstico
     if result.key_value_pairs:
@@ -58,7 +41,7 @@ async def health():
 
 @app.post("/api/v1/documents/analyze", status_code=status.HTTP_200_OK, response_model=DocumentAnalyzeResponse)
 async def analyze(data: DocumentAnalyzeRequest):
-    result = analyze_document_with_azure(data.file_path)
+    result = analyze_document_with_aws(data.file_path)
     return DocumentAnalyzeResponse(
         diagnosticos=result["diagnosticos"]
     )

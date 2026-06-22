@@ -177,11 +177,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/audio_db
       SERVICE_PORT: "8002"
-      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
-      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-brazilsouth}
-      AZURE_SPEECH_LANGUAGE: ${AZURE_SPEECH_LANGUAGE:-pt-BR}
-      AZURE_LANGUAGE_ENDPOINT: ${AZURE_LANGUAGE_ENDPOINT:-}
-      AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
       SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../audio-domain:/app
@@ -214,8 +212,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/document_db
       SERVICE_PORT: "8003"
-      AZURE_DOC_INTELLIGENCE_ENDPOINT: ${AZURE_DOC_INTELLIGENCE_ENDPOINT:-}
-      AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
       SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../document-domain:/app
@@ -283,8 +282,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/report_db
       SERVICE_PORT: "8005"
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING:-}
-      AZURE_BLOB_CONTAINER_REPORTS: ${AZURE_BLOB_CONTAINER_REPORTS:-guardia-reports}
+      # Configurações AWS S3 (Mídias e Relatórios)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
     volumes:
       - ../report-domain:/app
     ports:
