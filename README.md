@@ -58,46 +58,82 @@ Veja a documentação completa em [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## 🚀 Início Rápido
 
+Siga os passos abaixo para preparar e executar o projeto na sua máquina pela primeira vez.
+
 ### Pré-requisitos
 
 - Docker Desktop (inclui Docker Compose)
 - Git
-- Conta AWS e Credenciais configuradas (`~/.aws/credentials`)
+- Python 3.11+ instalado
+- Conta AWS (Free Tier) com Usuário IAM criado contendo `AdministratorAccess` (ou acesso full a S3, Textract e Transcribe)
+- Access Key e Secret Access Key geradas no IAM.
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-org/guardia-parto-seguro.git
+git clone https://github.com/Wallace82/guardia-parto-seguro.git
 cd guardia-parto-seguro
 ```
 
-### 2. Inicie o projeto
+### 2. Configuração de Variáveis de Ambiente (.env)
 
-> O script de startup configura o `.env`, aguarda os bancos ficarem saudáveis e sobe todos os containers automaticamente para o ambiente LOCAL.
+O projeto requer credenciais da AWS para funcionar (armazenamento e IA).
+
+1. Crie uma cópia do arquivo de exemplo:
+   ```bash
+   cp .env.example .env
+   ```
+2. Abra o arquivo `.env` gerado.
+3. Localize o bloco `============ AWS CONFIGURATION ============` e preencha com as chaves que você gerou no console da AWS:
+   ```env
+   AWS_ACCESS_KEY_ID=AKIA...
+   AWS_SECRET_ACCESS_KEY=Uhf...
+   AWS_REGION=us-east-1
+   ```
+
+### 3. Provisionamento da Infraestrutura AWS (S3)
+
+Nós utilizamos buckets S3 reais para armazenar mídias e relatórios. Execute o script Python para criá-los automaticamente na sua conta AWS:
+
+```bash
+# Crie um ambiente virtual (recomendado) e instale o boto3
+pip install boto3 python-dotenv
+
+# Rode o script de provisionamento
+python setup_buckets.py
+```
+> Se der sucesso, o terminal informará que os buckets foram criados e o seu `.env` será preenchido com os nomes corretos dos buckets (`MEDIA_BUCKET_NAME` e `REPORTS_BUCKET_NAME`).
+
+### 4. Inicie o projeto
+
+O script de startup faz o build das imagens Docker, sobe os bancos de dados (PostgreSQL/Redis) e todos os microsserviços do ambiente LOCAL.
 
 **Windows (PowerShell):**
 ```powershell
-.\start.ps1
+.\start.ps1 -Build
 ```
 
 **Linux / macOS:**
 ```bash
 chmod +x start.sh
-./start.sh
+./start.sh --build
 ```
 
-### 3. Acesse os serviços
+### 5. Acesse e Teste os Serviços
 
 | Serviço | URL | Descrição |
 |---|---|---|
-| **Dashboard** | http://localhost:8501 | Streamlit frontend |
+| **Dashboard** | http://localhost:8501 | Interface Frontend principal (Streamlit) |
 | **API Gateway** | http://localhost:8000 | FastAPI backend principal |
-| **Swagger UI** | http://localhost:8000/docs | Documentação interativa da API |
-| Video Service | http://localhost:8001 | Análise de vídeo (OpenCV/DeepFace) |
-| Audio Service | http://localhost:8002 | Análise de áudio (Amazon Transcribe) |
-| Document Service | http://localhost:8003 | OCR e análise documental (Amazon Textract) |
-| Risk Service | http://localhost:8004 | Cálculo do IRA |
-| Report Service | http://localhost:8005 | Geração de PDF/Excel |
+| **AWS Domain** | http://localhost:8007 | IA da AWS (S3, Textract, etc) |
+| **Swagger UI** | http://localhost:8007/docs | Documentação interativa da API AWS |
+
+#### 🧪 Testando a Inteligência Artificial na Prática (Postman)
+
+Como o frontend ainda está em construção, você pode testar o fluxo completo de extração de textos médicos via PDF usando nossa Collection do Postman:
+1. Abra o Postman.
+2. Importe o arquivo na raiz do projeto: `docs/postman/GuardIA_AWS_Domain.postman_collection.json`.
+3. Siga o passo a passo das requisições na ordem (Gerar URL -> Fazer Upload do PDF -> Analisar no Textract -> Obter Resultados).
 
 ---
 

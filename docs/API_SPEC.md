@@ -540,40 +540,75 @@ Recupera o log de auditoria imutável (requer role `auditor` ou `admin`).
 
 ## 8. AWS Integration API — Porta 8007
 
-#### POST `/api/v1/storage/upload`
-Faz upload seguro mascarado (anonimizado) de mídias direto para o Amazon S3.
+#### POST `/api/v1/s3/upload-url`
+Retorna uma Pre-signed URL para fazer upload direto e seguro para o Amazon S3.
 
-**Request:** `multipart/form-data`
-```
-file: <arquivo_binário>
-media_type: "video" | "audio" | "document"
-```
-
-**Response 202:**
+**Request:**
 ```json
 {
-  "media_id": "550e8400-e29b-41d4-a716-446655440010",
-  "status": "uploaded_to_s3",
-  "blob_url": "s3://guardia-parto-seguro/media/anon/arquivo.mp4"
+  "file_name": "prontuario_teste.pdf",
+  "bucket_type": "media",
+  "expiration_seconds": 3600,
+  "content_type": "application/pdf"
+}
+```
+
+**Response 200:**
+```json
+{
+  "url": "https://guardia-parto-seguro-media-dev.s3.amazonaws.com/prontuario_teste.pdf?X-Amz-Signature=...",
+  "file_name": "prontuario_teste.pdf",
+  "expiration_seconds": 3600
 }
 ```
 
 ---
 
-#### GET `/api/v1/aws-processing-history`
-Recupera o histórico de chamadas ao AWS AI Services e métricas de consumo de cota.
+#### POST `/api/v1/textract/analyze`
+Inicia a análise de extração de texto (OCR assíncrono) de um documento já armazenado no S3.
+
+**Request:**
+```json
+{
+  "file_name": "prontuario_teste.pdf",
+  "bucket_type": "media"
+}
+```
 
 **Response 200:**
 ```json
 {
-  "total_calls_today": 45,
-  "history": [
+  "job_id": "b1b2c3d4-e5f6...",
+  "status": "IN_PROGRESS"
+}
+```
+
+---
+
+#### GET `/api/v1/textract/results/{job_id}`
+Recupera o status e o resultado do job de análise do Textract.
+
+**Response 200 (Em progresso):**
+```json
+{
+  "job_id": "b1b2c3d4-e5f6...",
+  "status": "IN_PROGRESS",
+  "extracted_text": null,
+  "blocks": null
+}
+```
+
+**Response 200 (Concluído):**
+```json
+{
+  "job_id": "b1b2c3d4-e5f6...",
+  "status": "SUCCEEDED",
+  "extracted_text": "Texto extraído do documento médico...\nLinha 2...\n",
+  "blocks": [
     {
-      "service": "Amazon Transcribe",
-      "timestamp": "2024-01-15T10:35:00-03:00",
-      "status": "success",
-      "duration_ms": 1240,
-      "cost_estimate_usd": 0.05
+      "block_type": "LINE",
+      "text": "Texto extraído do documento médico...",
+      "confidence": 99.8
     }
   ]
 }
