@@ -17,7 +17,8 @@ async def get_presigned_upload_url(request: PresignedUrlRequest):
             client_method='put_object',
             file_name=request.file_name,
             bucket_type=request.bucket_type,
-            expiration=request.expiration_seconds
+            expiration=request.expiration_seconds,
+            content_type=request.content_type
         )
         return PresignedUrlResponse(
             url=url,

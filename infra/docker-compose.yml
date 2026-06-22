@@ -177,9 +177,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/audio_db
       SERVICE_PORT: "8002"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
       SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../audio-domain:/app
@@ -212,9 +209,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/document_db
       SERVICE_PORT: "8003"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
       SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../document-domain:/app
@@ -282,10 +276,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/report_db
       SERVICE_PORT: "8005"
-      # Configurações AWS S3 (Mídias e Relatórios)
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
     volumes:
       - ../report-domain:/app
     ports:
@@ -297,6 +287,34 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # =====================================================
+  # AWS DOMAIN (Wallace Gomes - Dev 5) — aws-domain/
+  # =====================================================
+  aws-service:
+    build:
+      context: ../aws-domain
+      dockerfile: Dockerfile
+      target: development
+    container_name: guardia-aws-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      SERVICE_PORT: "8007"
+      MEDIA_BUCKET_NAME: ${MEDIA_BUCKET_NAME:-guardia-parto-seguro-media-dev}
+      REPORTS_BUCKET_NAME: ${REPORTS_BUCKET_NAME:-guardia-parto-seguro-reports-dev}
+    volumes:
+      - ../aws-domain:/app
+    ports:
+      - "8007:8007"
+    networks:
+      - guardia_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
       interval: 15s
       timeout: 5s
       retries: 5

@@ -9,6 +9,7 @@ class PresignedUrlRequest(BaseModel):
     file_name: str = Field(..., description="Nome do arquivo ou caminho dentro do bucket (ex: sessao_123/video.mp4)")
     bucket_type: S3BucketType = Field(default=S3BucketType.media, description="Tipo de bucket: media ou reports")
     expiration_seconds: int = Field(default=3600, description="Tempo de expiração da URL em segundos (padrão 1 hora)")
+    content_type: str = Field(default=None, description="MIME Type do arquivo (obrigatório para envios corretos via PUT)")
 
 class PresignedUrlResponse(BaseModel):
     url: str
