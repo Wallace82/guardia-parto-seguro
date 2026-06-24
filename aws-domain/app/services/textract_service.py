@@ -22,6 +22,10 @@ class TextractService:
         """
         Inicia a análise de um documento de forma assíncrona. Retorna o JobId.
         """
+        if settings.MOCK_AWS:
+            await logger.ainfo("textract_job_started_mock", file=file_name)
+            return "mock-job-id-textract-12345"
+
         bucket_name = self._get_bucket_name(bucket_type)
         try:
             response = self.textract_client.start_document_text_detection(
@@ -43,6 +47,11 @@ class TextractService:
         """
         Consulta o status do Job. Se estiver concluído, retorna (status, full_text, blocks).
         """
+        if settings.MOCK_AWS:
+            await logger.ainfo("textract_job_succeeded_mock", job_id=job_id)
+            blocks_mock = [{'block_type': 'LINE', 'text': 'RELATÓRIO MÉDICO SIMULADO (MOCK)', 'confidence': 99.9}]
+            return 'SUCCEEDED', 'RELATÓRIO MÉDICO SIMULADO (MOCK)', blocks_mock
+
         try:
             response = self.textract_client.get_document_text_detection(JobId=job_id)
             status = response['JobStatus']

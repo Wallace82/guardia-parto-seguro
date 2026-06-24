@@ -27,15 +27,15 @@ def create_buckets():
         # Criação do Media Bucket
         print(f"Criando bucket de mídia: {media_bucket}...")
         s3.create_bucket(Bucket=media_bucket, **create_kwargs)
-        print("✅ Bucket de mídias criado com sucesso!")
+        print("Bucket de mídias criado com sucesso!")
 
         # Criação do Reports Bucket
         print(f"Criando bucket de relatórios: {reports_bucket}...")
         s3.create_bucket(Bucket=reports_bucket, **create_kwargs)
-        print("✅ Bucket de relatórios criado com sucesso!")
+        print("Bucket de relatórios criado com sucesso!")
 
     except Exception as e:
-        print(f"❌ Erro ao criar buckets: {e}")
+        print(f"Erro ao criar buckets: {e}")
 
 if __name__ == "__main__":
     create_buckets()

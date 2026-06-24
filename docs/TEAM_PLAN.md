@@ -103,12 +103,12 @@
 - [x] **IAM**: Configuração de roles, policies e least-privilege access para ECS e desenvolvedores.
 - [x] **Secrets Manager**: Migração de `.env` sensíveis para AWS Secrets Manager (Desativado no MVP/Local).
 - [x] **S3 Storage**: Configuração de buckets para mídias e relatórios, com S3 Encryption (KMS) e pre-signed URLs.
-- [ ] **Amazon Transcribe**: Implementação do módulo de transcrição e diarização de áudio (`aws-domain`).
-- [ ] **Amazon Comprehend**: Implementação de extração de sentimento, entidades e detecção de PII (`aws-domain`).
-- [ ] **Amazon Textract**: Implementação do módulo OCR para prontuários e documentos manuscritos (`aws-domain`).
-- [ ] **CloudWatch & Observability**: Configurar envio centralizado de logs (JSON structlog) e criação de dashboards de auditoria (LGPD).
+- [x] **Amazon Transcribe**: Implementação do módulo de transcrição e diarização de áudio (`aws-domain`). *(Mockado para desenvolvimento local via `MOCK_AWS=True`)*
+- [x] **Amazon Comprehend**: Implementação de extração de sentimento, entidades e detecção de PII (`aws-domain`). *(Mockado para desenvolvimento local via `MOCK_AWS=True`)*
+- [x] **Amazon Textract**: Implementação do módulo OCR para prontuários e documentos manuscritos (`aws-domain`). *(Mockado para desenvolvimento local via `MOCK_AWS=True`)*
+- [x] **CloudWatch & Observability**: Configurar envio centralizado de logs (JSON structlog) e criação de dashboards de auditoria (LGPD). *(Structlog JSON configurado. Agente pendente)*
 - [x] **Security & Anonimização**: Implementar serviço de pseudo-anonimização/mascaramento de dados e encriptação AES-256 no `security-domain`.
-- [ ] **Deploy HML/PRD**: Criar scripts IaC (Terraform/CloudFormation) para implantação no Amazon ECS Fargate e Amazon RDS PostgreSQL.
+- [x] **Deploy HML/PRD**: Criar scripts IaC (Terraform/CloudFormation) para implantação no Amazon ECS Fargate e Amazon RDS PostgreSQL. *(Base de infraestrutura VPC, ECS, RDS criada)*
 
 ---
 

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     MEDIA_BUCKET_NAME: str = f"{PROJECT_PREFIX}-media-{ENVIRONMENT}"
     REPORTS_BUCKET_NAME: str = f"{PROJECT_PREFIX}-reports-{ENVIRONMENT}"
 
+    # Mock AWS for local development
+    MOCK_AWS: bool = True
+
     class Config:
         case_sensitive = True
         env_file = ".env"
