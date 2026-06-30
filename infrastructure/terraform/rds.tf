@@ -1,3 +1,12 @@
+resource "aws_db_subnet_group" "postgres" {
+  name       = "${var.project_prefix}-db-subnet-group-${var.environment}"
+  subnet_ids = module.vpc.private_subnets
+
+  tags = {
+    Name = "${var.project_prefix}-db-subnet-group-${var.environment}"
+  }
+}
+
 resource "aws_db_instance" "postgres" {
   identifier           = "guardia-db-${var.environment}"
   engine               = "postgres"
@@ -11,9 +20,10 @@ resource "aws_db_instance" "postgres" {
   # In a real environment, the password should be fetched from AWS Secrets Manager
   password             = "guardia_temporary_pass"
   
-  vpc_security_group_ids = [] # To be associated with VPC module output
-  db_subnet_group_name   = "" # To be associated with VPC private subnets
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name   = aws_db_subnet_group.postgres.name
   
   skip_final_snapshot    = true
   publicly_accessible    = false
 }
+

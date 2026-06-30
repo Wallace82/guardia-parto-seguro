@@ -15,3 +15,16 @@ variable "project_prefix" {
   type        = string
   default     = "guardia-parto-seguro"
 }
+
+variable "core_api_image" {
+  description = "URI da imagem Docker para o Core API"
+  type        = string
+  default     = "568137441171.dkr.ecr.us-east-1.amazonaws.com/guardia-core-api:latest"
+}
+
+variable "aws_service_image" {
+  description = "URI da imagem Docker para o AWS Domain Service"
+  type        = string
+  default     = "568137441171.dkr.ecr.us-east-1.amazonaws.com/guardia-aws-service:latest"
+}
+
