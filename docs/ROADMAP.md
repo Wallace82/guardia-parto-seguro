@@ -16,31 +16,31 @@ gantt
     Sessões + Orquestração           :done, a3, after a2, 7d
     Motor de Alertas                 :done, a4, after a3, 7d
     Security Domain (LGPD/Audit)     :done, a5, after a4, 7d
-    AWS Domain (AWS Gateway)         :active, a6, after a5, 7d
+    AWS Domain (AWS Gateway)         :done, a6, after a5, 7d
 
     section Paulo Roberto Gonçalves (Dev 2)
     Video Service Base               :done, b1, 2024-01-15, 7d
-    DeepFace + MediaPipe             :active, b2, after b1, 7d
-    YOLOv8 + Sangramento             :b3, after b2, 7d
-    Audio Service + Amazon Transcribe:b4, 2024-01-22, 7d
-    Amazon Comprehend + NER          :b5, after b4, 7d
-    Scorers IRA                      :b6, 2024-02-12, 7d
+    DeepFace + MediaPipe             :done, b2, after b1, 7d
+    YOLOv8 + Sangramento             :done, b3, after b2, 7d
+    Audio Service + Amazon Transcribe:done, b4, 2024-01-22, 7d
+    Amazon Comprehend + NER          :done, b5, after b4, 7d
+    Scorers IRA                      :done, b6, 2024-02-12, 7d
 
     section Evandro Rosa Sampaio (Dev 3)
     Document Service Base            :done, c1, 2024-01-15, 7d
-    Amazon Textract                  :active, c2, after c1, 7d
-    Validações e Consistência        :c3, after c2, 7d
-    Risk Service + IRA Básico        :c4, 2024-01-22, 7d
-    IRA Composto + Tendências        :c5, after c4, 14d
-    Justificativas Textuais          :c6, 2024-02-12, 7d
+    Amazon Textract                  :done, c2, after c1, 7d
+    Validações e Consistência        :done, c3, after c2, 7d
+    Risk Service + IRA Básico        :done, c4, 2024-01-22, 7d
+    IRA Composto + Tendências        :done, c5, after c4, 14d
+    Justificativas Textuais          :done, c6, 2024-02-12, 7d
 
     section Gustavo Octaviano (Dev 4)
     Dashboard Base + Login           :done, d1, 2024-01-15, 7d
-    Upload + Status de Sessão        :active, d2, after d1, 7d
-    IRA Gauge + Alertas              :d3, after d2, 7d
-    Report Service + PDF             :d4, 2024-01-29, 7d
-    Excel + Auditoria                :d5, after d4, 7d
-    Dashboard Histórico Completo     :d6, 2024-02-12, 14d
+    Upload + Status de Sessão        :done, d2, after d1, 7d
+    IRA Gauge + Alertas              :done, d3, after d2, 7d
+    Report Service + PDF             :done, d4, 2024-01-29, 7d
+    Excel + Auditoria                :done, d5, after d4, 7d
+    Dashboard Histórico Completo     :done, d6, 2024-02-12, 14d
 ```
 
 <style>
@@ -89,7 +89,7 @@ gantt
 ### Critérios de Aceite da Semana
 - [x] `docker-compose up` funciona sem erros
 - [x] Todos os 6 serviços respondem no healthcheck
-- [ ] README com instruções de setup local testadas por todos
+- [x] README com instruções de setup local testadas por todos
 
 ---
 
@@ -261,10 +261,10 @@ gantt
 ## Definição de Pronto (DoD)
 
 Uma funcionalidade está **PRONTA** quando:
-- [ ] Implementada e testada localmente
-- [ ] Testes unitários escritos (cobertura ≥ 80%)
-- [ ] Lint passando (ruff + black)
-- [ ] PR aberto, revisado e aprovado por ≥ 1 colega
-- [ ] CI/CD passando no GitHub Actions
-- [ ] Merged na `main`
-- [ ] Documentação atualizada (se necessário)
+- [x] Implementada e testada localmente
+- [x] Testes unitários escritos (cobertura ≥ 80%)
+- [x] Lint passando (ruff + black)
+- [x] PR aberto, revisado e aprovado por ≥ 1 colega
+- [x] CI/CD passando no GitHub Actions
+- [x] Merged na `main`
+- [x] Documentação atualizada (se necessário)
