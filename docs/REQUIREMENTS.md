@@ -28,9 +28,9 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 > Acompanhamento dinâmico das entregas com base nos checklists deste documento.
 
-- **Requisitos Funcionais (RF):** 7 / 54 `[█░░░░░░░░░] 13%`
-- **Requisitos Não Funcionais (RNF):** 1 / 18 `[░░░░░░░░░░]  5%`
-- **Regras de Negócio (RN):** 0 / 15 `[░░░░░░░░░░]  0%`
+- **Requisitos Funcionais (RF):** 30 / 54 `[█████░░░░░] 55%`
+- **Requisitos Não Funcionais (RNF):** 5 / 18 `[███░░░░░░░] 27%`
+- **Regras de Negócio (RN):** 4 / 15 `[██░░░░░░░░] 26%`
 
 ---
 
@@ -41,8 +41,8 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RF-001** O sistema deve permitir o cadastro de sessões clínicas associadas a uma paciente e a um profissional de saúde
 - [ ] **RF-002** O sistema deve aceitar upload de arquivo de vídeo (MP4, AVI, MOV) com tamanho máximo de 2 GB
 - [ ] **RF-003** O sistema deve aceitar upload de arquivo de áudio (MP3, WAV, OGG) com tamanho máximo de 500 MB
-- [ ] **RF-004** O sistema deve aceitar upload de documentos (PDF, DOCX, PNG, JPG) com tamanho máximo de 50 MB por arquivo
-- [ ] **RF-005** O sistema deve associar múltiplas mídias a uma única sessão clínica
+- [x] **RF-004** O sistema deve aceitar upload de documentos (PDF, DOCX, PNG, JPG) com tamanho máximo de 50 MB por arquivo
+- [x] **RF-005** O sistema deve associar múltiplas mídias a uma única sessão clínica
 - [x] **RF-006** O sistema deve registrar metadados da sessão: data, hora, profissional, tipo de atendimento e unidade de saúde
 
 ### 1.2 Análise de Vídeo (Processamento Local)
@@ -58,30 +58,30 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 ### 1.3 Análise de Áudio (Processamento via Nuvem - Amazon Web Services)
 
-- [ ] **RF-015** O sistema deve transcrever o áudio da consulta para texto utilizando Amazon Transcribe
+- [x] **RF-015** O sistema deve transcrever o áudio da consulta para texto utilizando Amazon Transcribe
 - [ ] **RF-016** O sistema deve detectar o idioma predominante no áudio automaticamente
-- [ ] **RF-017** O sistema deve identificar múltiplos falantes na transcrição (speaker diarization)
-- [ ] **RF-018** O sistema deve analisar o sentimento do texto transcrito (positivo/negativo/neutro) utilizando Amazon Comprehend
+- [x] **RF-017** O sistema deve identificar múltiplos falantes na transcrição (speaker diarization)
+- [x] **RF-018** O sistema deve analisar o sentimento do texto transcrito (positivo/negativo/neutro) utilizando Amazon Comprehend
 - [ ] **RF-019** O sistema deve identificar entidades clínicas relevantes no texto (NER): diagnósticos, medicamentos, procedimentos via Amazon Comprehend
 - [ ] **RF-020** O sistema deve detectar verbalizações de dor, medo, ameaça ou constrangimento
 - [ ] **RF-021** O sistema deve analisar o tom de voz e indicadores prosódicos de sofrimento
-- [ ] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IRA (0–100)
+- [x] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IRA (0–100)
 
 ### 1.4 Análise de Documentos (Processamento via Nuvem - Amazon Web Services)
 
-- [ ] **RF-023** O sistema deve extrair texto de documentos médicos via OCR Inteligente (Amazon Textract)
-- [ ] **RF-024** O sistema deve identificar campos-chave em prontuários: diagnóstico, medicamentos, procedimentos, datas
+- [x] **RF-023** O sistema deve extrair texto de documentos médicos via OCR Inteligente (Amazon Textract)
+- [x] **RF-024** O sistema deve identificar campos-chave em prontuários: diagnóstico, medicamentos, procedimentos, datas
 - [ ] **RF-025** O sistema deve detectar inconsistências entre o prontuário e os dados da consulta (áudio/vídeo)
-- [ ] **RF-026** O sistema deve identificar ausência de consentimento informado documentado
-- [ ] **RF-027** O sistema deve validar completude do prontuário conforme checklist obstétrico
-- [ ] **RF-028** O sistema deve gerar um score de contribuição documental para o IRA (0–100)
+- [x] **RF-026** O sistema deve identificar ausência de consentimento informado documentado
+- [x] **RF-027** O sistema deve validar completude do prontuário conforme checklist obstétrico
+- [x] **RF-028** O sistema deve gerar um score de contribuição documental para o IRA (0–100)
 
 ### 1.5 Cálculo do IRA (Índice de Risco Assistencial)
 
-- [ ] **RF-029** O sistema deve calcular o IRA como score composto ponderado: vídeo (40%) + áudio (35%) + documento (25%)
-- [ ] **RF-030** O sistema deve classificar o IRA em três níveis: Baixo (0–39), Moderado (40–69), Crítico (70–100)
-- [ ] **RF-031** O sistema deve gerar justificativas textuais para cada componente do IRA
-- [ ] **RF-032** O sistema deve armazenar o histórico de IRA por paciente e por sessão
+- [x] **RF-029** O sistema deve calcular o IRA como score composto ponderado: vídeo (40%) + áudio (35%) + documento (25%)
+- [x] **RF-030** O sistema deve classificar o IRA em três níveis: Baixo (0–39), Moderado (40–69), Crítico (70–100)
+- [x] **RF-031** O sistema deve gerar justificativas textuais para cada componente do IRA
+- [x] **RF-032** O sistema deve armazenar o histórico de IRA por paciente e por sessão
 - [ ] **RF-033** O sistema deve calcular tendências do IRA ao longo do tempo para uma mesma paciente
 
 ### 1.6 Alertas e Notificações
@@ -90,22 +90,22 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RF-035** O sistema deve enviar notificações por e-mail para o gestor responsável em casos de IRA Crítico
 - [ ] **RF-036** O sistema deve exibir alertas em tempo real no dashboard durante o processamento
 - [ ] **RF-037** O sistema deve registrar todos os alertas com timestamp, responsável e ação tomada
-- [ ] **RF-038** O sistema deve permitir que profissionais reconheçam e comentem os alertas
+- [x] **RF-038** O sistema deve permitir que profissionais reconheçam e comentem os alertas
 
 ### 1.7 Relatórios
 
-- [ ] **RF-039** O sistema deve gerar relatório completo de sessão em formato PDF
-- [ ] **RF-040** O sistema deve gerar relatório executivo de IRA em formato Excel
-- [ ] **RF-041** O sistema deve gerar relatório de auditoria para ouvidoria
+- [x] **RF-039** O sistema deve gerar relatório completo de sessão em formato PDF
+- [x] **RF-040** O sistema deve gerar relatório executivo de IRA em formato Excel
+- [x] **RF-041** O sistema deve gerar relatório de auditoria para ouvidoria
 - [ ] **RF-042** O sistema deve suportar filtros de período, profissional, unidade e nível de risco nos relatórios
 - [ ] **RF-043** O sistema deve incluir imagens-chave do vídeo e trechos da transcrição nos relatórios
 
 ### 1.8 Dashboard
 
-- [ ] **RF-044** O sistema deve exibir dashboard multimodal com visão consolidada da sessão
+- [x] **RF-044** O sistema deve exibir dashboard multimodal com visão consolidada da sessão
 - [ ] **RF-045** O sistema deve exibir mapa de calor temporal do IRA durante o vídeo
 - [ ] **RF-046** O sistema deve exibir gráfico de tendência histórica do IRA por paciente
-- [ ] **RF-047** O sistema deve exibir lista de alertas ativos com filtros por severidade
+- [x] **RF-047** O sistema deve exibir lista de alertas ativos com filtros por severidade
 - [ ] **RF-048** O sistema deve exibir transcrição sincronizada com o vídeo
 
 ### 1.9 Autenticação e Controle de Acesso
@@ -133,10 +133,10 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RNF-010** Qualidade: A cobertura de testes unitários deve ser ≥ 80% por serviço
 - [ ] **RNF-011** Qualidade: O código deve passar no linting (ruff/flake8) sem erros
 - [x] **RNF-012** Observabilidade: Todos os serviços devem emitir logs estruturados em JSON para envio ao Amazon CloudWatch Logs
-- [ ] **RNF-013** Observabilidade: O sistema deve expor métricas de saúde via `/health` endpoint
+- [x] **RNF-013** Observabilidade: O sistema deve expor métricas de saúde via `/health` endpoint
 - [ ] **RNF-014** Manutenibilidade: Toda API deve ter documentação OpenAPI/Swagger atualizada
 - [x] **RNF-015** Flexibilidade e Deploy: O sistema deve suportar uma evolução de 4 ambientes (LOCAL, DEV, HML, PRD). O MVP executará 100% via Docker Compose local, com os demais ambientes suportando CI/CD na infraestrutura AWS
-- [ ] **RNF-016** Interoperabilidade: As APIs devem seguir padrão REST com retorno JSON
+- [x] **RNF-016** Interoperabilidade: As APIs devem seguir padrão REST com retorno JSON
 - [ ] **RNF-017** Usabilidade: O dashboard deve ser responsivo e funcionar em resolução mínima de 1280x720
 - [ ] **RNF-018** Auditabilidade: Todo acesso a dados de pacientes deve ser registrado em log imutável no CloudWatch Logs
 
@@ -144,10 +144,10 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 ## 3. Regras de Negócio
 
-- [ ] **RN-001** IRA: O IRA deve ser calculado somente quando ao menos um tipo de análise (vídeo, áudio ou documento) for concluído
-- [ ] **RN-002** IRA: Os pesos do IRA são: vídeo=0.40, áudio=0.35, documento=0.25. A soma sempre deve ser 1.0
-- [ ] **RN-003** IRA: Se apenas um tipo de análise estiver disponível, o IRA deve ser normalizado para 100% daquele tipo
-- [ ] **RN-004** Alertas: Alertas de nível Crítico (IRA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável
+- [x] **RN-001** IRA: O IRA deve ser calculado somente quando ao menos um tipo de análise (vídeo, áudio ou documento) for concluído
+- [x] **RN-002** IRA: Os pesos do IRA são: vídeo=0.40, áudio=0.35, documento=0.25. A soma sempre deve ser 1.0
+- [x] **RN-003** IRA: Se apenas um tipo de análise estiver disponível, o IRA deve ser normalizado para 100% daquele tipo
+- [x] **RN-004** Alertas: Alertas de nível Crítico (IRA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável
 - [ ] **RN-005** Alertas: Um alerta não pode ser descartado sem que o responsável registre uma justificativa
 - [ ] **RN-006** Sessões: Uma sessão clínica não pode ter mais de 3 arquivos de vídeo, 3 de áudio e 10 de documentos
 - [ ] **RN-007** LGPD: Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita (mecanismo de consentimento dinâmico e IAM)
@@ -156,6 +156,6 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [ ] **RN-010** Vídeo: A análise de vídeo deve ser realizada apenas em arquivos previamente autorizados pelo consentimento verificado
 - [ ] **RN-011** Áudio: A gravação de consultas requer consentimento explícito documentado e registrado no sistema
 - [ ] **RN-012** Papéis: Médicos e Enfermeiros podem criar sessões e visualizar seus pacientes; Auditores e Admins podem acessar logs e relatórios anonimizados
-- [ ] **RN-013** Relatórios: Relatórios de auditoria são imutáveis após geração e devem ter hash SHA-256 registrado
+- [x] **RN-013** Relatórios: Relatórios de auditoria são imutáveis após geração e devem ter hash SHA-256 registrado
 - [ ] **RN-014** Processamento: O processamento de vídeo e áudio deve ser realizado em background sem bloquear a submissão de novas sessões
 - [ ] **RN-015** Retenção: Logs de sistema e dados de auditoria devem ser retidos no CloudWatch Logs/S3 por no mínimo 1 ano
