@@ -9,14 +9,14 @@ class Settings(BaseSettings):
     PROJECT_PREFIX: str = "guardia-parto-seguro"
     
     # S3 Buckets
-    MEDIA_BUCKET_NAME: str = f"{PROJECT_PREFIX}-media-{ENVIRONMENT}"
-    REPORTS_BUCKET_NAME: str = f"{PROJECT_PREFIX}-reports-{ENVIRONMENT}"
+    MEDIA_BUCKET_NAME: str = "guardia-parto-seguro-media-dev-foton"
+    REPORTS_BUCKET_NAME: str = "guardia-parto-seguro-reports-dev-foton"
 
     # Mock AWS for local development
     MOCK_AWS: bool = True
 
     class Config:
         case_sensitive = True
-        env_file = ".env"
+        env_file = (".env", "../.env")
 
 settings = Settings()

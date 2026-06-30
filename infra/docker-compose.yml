@@ -305,8 +305,8 @@ services:
     env_file: ../.env
     environment:
       SERVICE_PORT: "8007"
-      MEDIA_BUCKET_NAME: ${MEDIA_BUCKET_NAME:-guardia-parto-seguro-media-dev}
-      REPORTS_BUCKET_NAME: ${REPORTS_BUCKET_NAME:-guardia-parto-seguro-reports-dev}
+      MEDIA_BUCKET_NAME: ${MEDIA_BUCKET_NAME:-guardia-parto-seguro-media-dev-foton}
+      REPORTS_BUCKET_NAME: ${REPORTS_BUCKET_NAME:-guardia-parto-seguro-reports-dev-foton}
     volumes:
       - ../aws-domain:/app
     ports:
