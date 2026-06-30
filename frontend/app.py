@@ -185,16 +185,7 @@ if not st.session_state.access_token:
         st.markdown("<div style='text-align: center; color: #64748B; font-size: 0.85rem; margin-top: 1.5rem;'>Mantenha suas credenciais confidenciais. Em conformidade com a LGPD.</div>", unsafe_allow_html=True)
     st.stop()
 
-# ============ NAVEGAÇÃO MULTIPÁGINA (Com st.Page) ============
-# Definindo as páginas para a barra lateral
-dashboard_page = st.Page("views/dashboard.py", title="Dashboard Geral", icon="📊", default=True)
-sessions_page = st.Page("views/sessions.py", title="Sessões Clínicas", icon="🏥")
-alerts_page = st.Page("views/alerts.py", title="Central de Alertas", icon="🚨")
-reports_page = st.Page("views/reports.py", title="Relatórios e Auditoria", icon="📄")
-
-# Configura as páginas disponíveis
-pages = [dashboard_page, sessions_page, alerts_page, reports_page]
-pg = st.navigation(pages)
+# ============ NAVEGAÇÃO MULTIPÁGINA (Com st.Page ou Fallback) ============
 
 # Customização da barra lateral superior (Perfil do Usuário)
 with st.sidebar:
@@ -213,8 +204,35 @@ with st.sidebar:
         st.markdown(f"📧 `{user.get('email')}`")
     st.markdown("---")
 
-# Executa a página ativa
-pg.run()
+if hasattr(st, "Page") and hasattr(st, "navigation"):
+    # Definindo as páginas para a barra lateral usando a API moderna do Streamlit
+    dashboard_page = st.Page("views/dashboard.py", title="Dashboard Geral", icon="📊", default=True)
+    sessions_page = st.Page("views/sessions.py", title="Sessões Clínicas", icon="🏥")
+    alerts_page = st.Page("views/alerts.py", title="Central de Alertas", icon="🚨")
+    reports_page = st.Page("views/reports.py", title="Relatórios e Auditoria", icon="📄")
+    
+    # Configura as páginas disponíveis
+    pages = [dashboard_page, sessions_page, alerts_page, reports_page]
+    pg = st.navigation(pages)
+    pg.run()
+else:
+    # Fallback para versões mais antigas do Streamlit (< 1.35.0)
+    page_options = {
+        "📊 Dashboard Geral": "views/dashboard.py",
+        "🏥 Sessões Clínicas": "views/sessions.py",
+        "🚨 Central de Alertas": "views/alerts.py",
+        "📄 Relatórios e Auditoria": "views/reports.py"
+    }
+    
+    with st.sidebar:
+        selected_page_name = st.radio("Menu de Navegação", list(page_options.keys()))
+        
+    page_file = page_options[selected_page_name]
+    
+    # Executa o arquivo da view selecionada no contexto global
+    with open(page_file, "r", encoding="utf-8") as f:
+        code = compile(f.read(), page_file, "exec")
+        exec(code, globals())
 
 # Rodapé da barra lateral com botão Sair
 with st.sidebar:
