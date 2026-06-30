@@ -35,18 +35,18 @@
 **Video Domain (MVP Local):**
 - [x] Configurar serviço FastAPI de vídeo
 - [x] Implementar pipeline de extração de frames (OpenCV)
-- [ ] Integrar DeepFace para análise de emoções
-- [ ] Integrar MediaPipe para pose estimation
-- [ ] Integrar YOLOv8 para detecção de objetos
-- [ ] Implementar detecção de sangramento (OpenCV HSV)
-- [ ] Implementar IRA scorer de vídeo
+- [x] Integrar DeepFace para análise de emoções
+- [x] Integrar MediaPipe para pose estimation
+- [x] Integrar YOLOv8 para detecção de objetos
+- [x] Implementar detecção de sangramento (OpenCV HSV)
+- [x] Implementar IRA scorer de vídeo
 
 **Audio Domain (Integração AWS):**
-- [ ] Configurar serviço FastAPI de áudio
-- [ ] Integrar com `aws-domain` para Amazon Transcribe (STT + diarization)
-- [ ] Integrar com `aws-domain` para Amazon Comprehend (sentimento + NER)
-- [ ] Implementar detecção de keywords de risco
-- [ ] Implementar IRA scorer de áudio
+- [x] Configurar serviço FastAPI de áudio
+- [x] Integrar com `aws-domain` para Amazon Transcribe (STT + diarization)
+- [x] Integrar com `aws-domain` para Amazon Comprehend (sentimento + NER)
+- [x] Implementar detecção de keywords de risco
+- [x] Implementar IRA scorer de áudio
 
 ---
 
@@ -57,16 +57,16 @@
 #### Tarefas
 
 **Document Domain:**
-- [ ] Configurar serviço FastAPI de documentos
-- [ ] Integrar com `aws-domain` para Amazon Textract (OCR)
-- [ ] Implementar extrator de campos obstétricos
-- [ ] Implementar verificador de consistência e validador de consentimento
-- [ ] Implementar IRA scorer documental
+- [x] Configurar serviço FastAPI de documentos
+- [x] Integrar com `aws-domain` para Amazon Textract (OCR)
+- [x] Implementar extrator de campos obstétricos
+- [x] Implementar verificador de consistência e validador de consentimento
+- [x] Implementar IRA scorer documental
 
 **Risk Domain:**
-- [ ] Configurar serviço FastAPI de risco
-- [ ] Implementar motor de correlação multimodal e calculadora do IRA
-- [ ] Implementar analisador de tendências temporais e gerar justificativas
+- [x] Configurar serviço FastAPI de risco
+- [x] Implementar motor de correlação multimodal e calculadora do IRA
+- [x] Implementar analisador de tendências temporais e gerar justificativas
 
 ---
 
@@ -77,13 +77,13 @@
 #### Tarefas
 
 **Dashboard (Streamlit):**
-- [ ] Configurar aplicação Streamlit multipage (Dashboard, Login, Sessões)
-- [ ] Implementar mapa de calor temporal do IRA e sincronização
-- [ ] Implementar central de alertas
+- [x] Configurar aplicação Streamlit multipage (Dashboard, Login, Sessões)
+- [x] Implementar mapa de calor temporal do IRA e sincronização
+- [x] Implementar central de alertas
 
 **Report Domain:**
-- [ ] Configurar serviço FastAPI de relatórios
-- [ ] Implementar gerador de PDF e Excel
+- [x] Configurar serviço FastAPI de relatórios
+- [x] Implementar gerador de PDF e Excel
 - [x] Implementar gerador de relatório de auditoria e logs imutáveis
 
 ---
