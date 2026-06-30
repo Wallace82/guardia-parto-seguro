@@ -8,6 +8,7 @@ CREATE DATABASE audio_db;
 CREATE DATABASE document_db;
 CREATE DATABASE risk_db;
 CREATE DATABASE report_db;
+CREATE DATABASE security_db;
 
 -- Garante privilégios do usuário guardia em todos os bancos
 \connect audio_db
@@ -21,3 +22,7 @@ GRANT ALL PRIVILEGES ON DATABASE risk_db TO guardia;
 
 \connect report_db
 GRANT ALL PRIVILEGES ON DATABASE report_db TO guardia;
+
+\connect security_db
+GRANT ALL PRIVILEGES ON DATABASE security_db TO guardia;
+
