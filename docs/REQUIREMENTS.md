@@ -30,7 +30,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 - **Requisitos Funcionais (RF):** 54 / 54 `[██████████] 100%`
 - **Requisitos Não Funcionais (RNF):** 18 / 18 `[██████████] 100%`
-- **Regras de Negócio (RN):** 15 / 15 `[██████████] 100%`
+- **Regras de Negócio (RN):** 17 / 17 `[██████████] 100%`
 
 ---
 
@@ -159,3 +159,5 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RN-013** Relatórios: Relatórios de auditoria são imutáveis após geração e devem ter hash SHA-256 registrado
 - [x] **RN-014** Processamento: O processamento de vídeo e áudio deve ser realizado em background sem bloquear a submissão de novas sessões
 - [x] **RN-015** Retenção: Logs de sistema e dados de auditoria devem ser retidos no CloudWatch Logs/S3 por no mínimo 1 ano
+- [x] **RN-016** Alertas e Login: Para o ambiente local de demonstração e homologação do MVP, as restrições estritas de perfil (RBAC) na tela inicial de login devem ser flexibilizadas para permitir o acesso rápido de avaliadores a todas as áreas de testes do Dashboard
+- [x] **RN-017** Modo Mock / Offline: O sistema deve permitir a alternância de comportamento dos serviços cognitivos via variável de ambiente (`MOCK_AWS=True`), permitindo simular respostas estruturadas e completas do Amazon Textract, Transcribe e Comprehend sem custos de nuvem ou dependência de conectividade

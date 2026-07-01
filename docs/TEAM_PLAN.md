@@ -47,6 +47,7 @@
 - [x] Integrar com `aws-domain` para Amazon Comprehend (sentimento + NER)
 - [x] Implementar detecção de keywords de risco
 - [x] Implementar IRA scorer de áudio
+- [x] Configurar rastreamento Git LFS (Large File Storage) para modelos de IA (.pt) e mídias de teste (.mp4)
 
 ---
 
