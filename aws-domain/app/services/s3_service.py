@@ -1,4 +1,4 @@
-import boto3
+import aioboto3
 from botocore.exceptions import ClientError
 import structlog
 from app.core.config import settings
@@ -8,8 +8,7 @@ logger = structlog.get_logger()
 
 class S3Service:
     def __init__(self):
-        # Como o SDK procura por AWS_ACCESS_KEY_ID implicitamente, inicializar o cliente é simples
-        self.s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
+        self.session = aioboto3.Session()
 
     def _get_bucket_name(self, bucket_type: S3BucketType) -> str:
         if bucket_type == S3BucketType.media:
@@ -33,11 +32,12 @@ class S3Service:
             params['ContentType'] = content_type
 
         try:
-            url = self.s3_client.generate_presigned_url(
-                ClientMethod=client_method,
-                Params=params,
-                ExpiresIn=expiration
-            )
+            async with self.session.client('s3', region_name=settings.AWS_REGION) as s3_client:
+                url = await s3_client.generate_presigned_url(
+                    ClientMethod=client_method,
+                    Params=params,
+                    ExpiresIn=expiration
+                )
             await logger.ainfo("presigned_url_generated", method=client_method, bucket=bucket_name, file=file_name)
             return url
         except ClientError as e:

@@ -1,4 +1,4 @@
-import boto3
+import aioboto3
 from botocore.exceptions import ClientError
 import structlog
 from typing import Tuple, Optional
@@ -9,7 +9,7 @@ logger = structlog.get_logger()
 
 class TranscribeService:
     def __init__(self):
-        self.transcribe_client = boto3.client('transcribe', region_name=settings.AWS_REGION)
+        self.session = aioboto3.Session()
 
     def _get_bucket_name(self, bucket_type: S3BucketType) -> str:
         if bucket_type == S3BucketType.media:
@@ -32,18 +32,19 @@ class TranscribeService:
         media_uri = f"s3://{bucket_name}/{file_name}"
         
         try:
-            response = self.transcribe_client.start_transcription_job(
-                TranscriptionJobName=job_name,
-                LanguageCode=language_code,
-                MediaFormat='mp4', # Assumindo mp4/mp3
-                Media={
-                    'MediaFileUri': media_uri
-                },
-                Settings={
-                    'ShowSpeakerLabels': True,
-                    'MaxSpeakerLabels': 2
-                }
-            )
+            async with self.session.client('transcribe', region_name=settings.AWS_REGION) as transcribe_client:
+                response = await transcribe_client.start_transcription_job(
+                    TranscriptionJobName=job_name,
+                    LanguageCode=language_code,
+                    MediaFormat='mp4', # Assumindo mp4/mp3
+                    Media={
+                        'MediaFileUri': media_uri
+                    },
+                    Settings={
+                        'ShowSpeakerLabels': True,
+                        'MaxSpeakerLabels': 2
+                    }
+                )
             started_job_name = response['TranscriptionJob']['TranscriptionJobName']
             await logger.ainfo("transcribe_job_started", job_name=started_job_name, file=file_name)
             return started_job_name
@@ -60,7 +61,8 @@ class TranscribeService:
             return 'COMPLETED', 'https://mock-s3-url.com/transcript.json'
 
         try:
-            response = self.transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
+            async with self.session.client('transcribe', region_name=settings.AWS_REGION) as transcribe_client:
+                response = await transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
             status = response['TranscriptionJob']['TranscriptionJobStatus']
             
             if status != 'COMPLETED':

@@ -1,4 +1,4 @@
-import boto3
+import aioboto3
 from botocore.exceptions import ClientError
 import structlog
 from typing import List, Dict
@@ -8,8 +8,7 @@ logger = structlog.get_logger()
 
 class ComprehendService:
     def __init__(self):
-        self.comprehend_client = boto3.client('comprehend', region_name=settings.AWS_REGION)
-        self.comprehend_medical = boto3.client('comprehendmedical', region_name=settings.AWS_REGION)
+        self.session = aioboto3.Session()
 
     async def detect_sentiment(self, text: str, language_code: str = 'pt') -> str:
         """
@@ -21,10 +20,11 @@ class ComprehendService:
             
         try:
             # Amazon Comprehend suporta 'pt'
-            response = self.comprehend_client.detect_sentiment(
-                Text=text,
-                LanguageCode=language_code
-            )
+            async with self.session.client('comprehend', region_name=settings.AWS_REGION) as comprehend_client:
+                response = await comprehend_client.detect_sentiment(
+                    Text=text,
+                    LanguageCode=language_code
+                )
             sentiment = response['Sentiment']
             await logger.ainfo("comprehend_sentiment_success", sentiment=sentiment)
             return sentiment
@@ -46,7 +46,8 @@ class ComprehendService:
             ]
             
         try:
-            response = self.comprehend_medical.detect_entities_v2(Text=text)
+            async with self.session.client('comprehendmedical', region_name=settings.AWS_REGION) as comprehend_medical:
+                response = await comprehend_medical.detect_entities_v2(Text=text)
             entities = response.get('Entities', [])
             await logger.ainfo("comprehend_medical_success", entities_count=len(entities))
             return entities
