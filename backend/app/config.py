@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     DOCUMENT_SERVICE_URL: str = "http://document-service:8003"
     RISK_SERVICE_URL: str = "http://risk-service:8004"
     REPORT_SERVICE_URL: str = "http://report-service:8005"
+    VIDEO_FRAME_SAMPLE_RATE: float = 1.0
 
     # AWS S3
     AWS_REGION: str = "us-east-1"

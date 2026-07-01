@@ -3,114 +3,167 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 
-# Recuperar cliente de API e token
+# Recuperar cliente de API, token e dados do usuário
 api_client = st.session_state.api_client
 token = st.session_state.access_token
 user = st.session_state.user
 
-st.markdown("<h1 class='main-title'>🏥 Sessões de Monitoramento</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Crie, envie mídias e visualize a análise multimodal de cada parto ou consulta</p>", unsafe_allow_html=True)
+# ============ HEADER PREMIUM ============
+st.markdown("""
+<div style="margin-bottom: 1.5rem;">
+    <div style="font-size: 0.8rem; color: #8B5CF6; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.3rem;">Plataforma GuardIA</div>
+    <h1 style="margin: 0; font-size: 2.3rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.04rem;">Auditoria de Sessões Clínicas</h1>
+    <p style="margin: 0.2rem 0 0 0; color: #94A3B8; font-size: 0.95rem;">Monitoramento multimodal de segurança assistencial e detecção de riscos em tempo real</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Tabs principais
-tab_list, tab_create = st.tabs(["📋 Listagem e Detalhes", "➕ Nova Sessão"])
-
-# Buscar sessões
+# Buscar sessões da API
 sessions = api_client.get_sessions(token, role=user.get("role"))
+
+# Abas principais
+tab_list, tab_create = st.tabs(["📋 Listagem e Detalhes", "➕ Nova Sessão"])
 
 # ============ TAB 1: LISTAGEM E DETALHES ============
 with tab_list:
     if not sessions:
-        st.info("Nenhuma sessão de monitoramento cadastrada no momento.")
+        st.markdown("""
+        <div class="glass-card" style="text-align: center; padding: 3rem 1.5rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">📋</div>
+            <h4 style="color: #FFFFFF; margin: 0;">Nenhuma sessão de monitoramento cadastrada</h4>
+            <p style="color: #94A3B8; font-size: 0.9rem; margin-top: 0.4rem;">Crie uma nova sessão clínica utilizando a aba ao lado para iniciar a auditoria.</p>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        # Criar opções de seleção para a caixa de listagem
+        # Seletor de Sessões minimalista
         session_options = {f"#{s['id']} — {s['title']} ({s['patient_code']})": s['id'] for s in sessions}
         selected_label = st.selectbox("Selecione a Sessão para detalhamento:", list(session_options.keys()))
         selected_id = session_options[selected_label]
         
-        # Obter detalhes completos da sessão
+        # Buscar detalhes reais
         session = api_client.get_session_details(token, selected_id)
         
         if session:
-            # Header da sessão
-            status_color = {
-                "created": "#A78BFA",
-                "processing": "#F59E0B",
-                "completed": "#10B981",
-                "failed": "#EF4444"
-            }.get(session["status"], "#94A3B8")
+            # Status e Cores
+            status_map = {
+                "created": {"color": "#8B5CF6", "label": "Pendente", "badge": "badge-primary", "step": 1},
+                "processing": {"color": "#F59E0B", "label": "Em Processamento", "badge": "badge-warning", "step": 2},
+                "completed": {"color": "#22C55E", "label": "Concluído", "badge": "badge-success", "step": 3},
+                "failed": {"color": "#EF4444", "label": "Falha na Análise", "badge": "badge-danger", "step": 0}
+            }
+            curr_status = status_map.get(session["status"], {"color": "#94A3B8", "label": session["status"].upper(), "badge": "badge-primary", "step": 0})
+            
+            # Header do Card de Detalhes
+            created_date = datetime.fromisoformat(session['created_at'].replace("Z", "+00:00")).strftime("%d/%m/%Y às %H:%M")
             
             st.markdown(f"""
-            <div class="glass-card" style="margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
                     <div>
-                        <h3 style="margin: 0; color: #F1F5F9;">{session['title']}</h3>
-                        <span style="color: #94A3B8; font-size: 0.9rem;">Paciente: <b>{session['patient_code']}</b> | Criada em: {datetime.fromisoformat(session['created_at'].replace("Z", "+00:00")).strftime("%d/%m/%Y às %H:%M")}</span>
+                        <div style="font-size: 0.75rem; color: #94A3B8; font-weight: 600; margin-bottom: 0.2rem;">Identificador da Sessão: #{session['id']}</div>
+                        <h3 style="margin: 0; color: #FFFFFF; font-size: 1.4rem; font-weight: 700;">{session['title']}</h3>
+                        <div style="margin-top: 0.3rem; font-size: 0.85rem; color: #94A3B8;">
+                            Código Paciente: <b style="color: #FFFFFF;">{session['patient_code']}</b> | Criada em: {created_date}
+                        </div>
                     </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 0.85rem; background: {status_color}22; color: {status_color}; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; border: 1px solid {status_color}44;">
-                            Status: {session['status'].upper()}
-                        </span>
+                    <div>
+                        <span class="badge-capsule {curr_status['badge']}">{curr_status['label']}</span>
                     </div>
                 </div>
-                <div style="margin-top: 1rem; font-size: 0.95rem; color: #CBD5E1; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.8rem;">
-                    <b>Notas Clínicas:</b> {session['notes'] or 'Nenhuma nota adicionada.'}
+                <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.9rem; color: #E2E8F0;">
+                    <span style="color: #94A3B8; font-weight: 600;">Notas Clínicas:</span> {session['notes'] or 'Nenhuma nota clínica registrada.'}
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Layout de Detalhes em Colunas
-            col_left, col_right = st.columns([1.2, 1.8])
+            # Colunas Principais: Esquerda (Metadados e Ações), Direita (Arquivos e Resultados)
+            col_left, col_right = st.columns([1.1, 1.9], gap="medium")
             
+            # ============ COLUNA ESQUERDA ============
             with col_left:
-                # CARD DO IRA DA SESSÃO
+                # 1. Composição do Risco (IRA)
                 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-                st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Composição do Risco (IRA)</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin-top:0; color:#8B5CF6; font-size: 1.1rem; font-weight: 700;'>Índice de Risco Assistencial (IRA)</h4>", unsafe_allow_html=True)
                 
                 if session["status"] == "completed" and session["ira_score"] is not None:
-                    ira_level = session["ira_level"] or "baixo"
-                    ira_class = f"ira-{ira_level}"
+                    score = session["ira_score"]
+                    lvl = session["ira_level"] or "baixo"
+                    color = "#22C55E" if lvl == "baixo" else "#F59E0B" if lvl == "moderado" else "#EF4444"
+                    
+                    # Circular Gauge SVG
                     st.markdown(f"""
-                    <div class="ira-gauge-container">
-                        <span class="{ira_class} ira-score-display">{session['ira_score']:.1f}%</span>
-                        <span style="text-transform: uppercase; font-weight: 700; color: #94A3B8; font-size: 0.9rem; letter-spacing: 1px;">Classificação: <span class="{ira_class}">{ira_level} risco</span></span>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0 1rem 0;">
+                        <svg width="130" height="130" viewBox="0 0 150 150">
+                            <circle cx="75" cy="75" r="60" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="12"></circle>
+                            <circle cx="75" cy="75" r="60" fill="none" stroke="{color}" stroke-width="12"
+                                    stroke-dasharray="376.99" stroke-dashoffset="{376.99 * (1 - score / 100)}"
+                                    stroke-linecap="round" transform="rotate(-90 75 75)" style="transition: stroke-dashoffset 0.8s ease-in-out;"></svg>
+                            <text x="75" y="83" text-anchor="middle" font-size="28" font-weight="800" fill="#FFFFFF" font-family="'Outfit', sans-serif">{score:.1f}%</text>
+                        </svg>
+                        <div style="margin-top: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; color: #94A3B8; font-weight: 700;">
+                            Risco Classificado: <span style="color: {color}; font-weight: 800;">{lvl}</span>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    st.markdown("---")
-                    # Mostrar sub-scores
-                    st.markdown(f"🎥 **Pontuação Vídeo (Visão):** `{session['score_video'] or 0.0}%`")
-                    st.markdown(f"🎙️ **Pontuação Áudio (Linguagem):** `{session['score_audio'] or 0.0}%`")
-                    st.markdown(f"📄 **Pontuação Documento (OCR):** `{session['score_document'] or 0.0}%`")
+                    # Sub-scores com barras de progresso
+                    scores_data = [
+                        {"label": "🎥 Vídeo Clínico", "val": session["score_video"] or 0.0, "color": "#8B5CF6"},
+                        {"label": "🎙️ Áudio da Consulta", "val": session["score_audio"] or 0.0, "color": "#3B82F6"},
+                        {"label": "📄 Prontuário Clínico", "val": session["score_document"] or 0.0, "color": "#EC4899"}
+                    ]
+                    for sd in scores_data:
+                        st.markdown(f"""
+                        <div style="margin-bottom: 0.8rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #E2E8F0;">
+                                <span>{sd['label']}</span>
+                                <span style="font-weight: 600;">{sd['val']:.1f}%</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill" style="width: {sd['val']}%; background: {sd['color']};"></div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
                 elif session["status"] == "processing":
                     st.markdown("""
-                    <div style="text-align: center; padding: 2rem 0;">
-                        <div class="ira-moderado" style="font-size: 2.5rem; font-weight:800;">PROCESSANDO...</div>
-                        <p style="color: #94A3B8; font-size:0.9rem; margin-top:0.5rem;">Os modelos de IA estão analisando os vídeos, áudios e prontuários. Por favor, aguarde alguns instantes.</p>
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <div style="font-size: 2.5rem; animation: pulse 2s infinite;" class="ira-moderado">⚙️</div>
+                        <h5 style="color: #FFFFFF; margin: 0.8rem 0 0.3rem 0;">Processando Análise</h5>
+                        <p style="color: #94A3B8; font-size: 0.8rem; margin: 0;">As engines de IA estão analisando os arquivos clínicos anexados.</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    if st.button("🔄 Atualizar Status", use_container_width=True):
+                    if st.button("🔄 Atualizar Resultados", use_container_width=True):
                         st.rerun()
                 else:
                     st.markdown("""
-                    <div style="text-align: center; padding: 2rem 0; color: #94A3B8;">
-                        <span style="font-size: 3rem;">📥</span>
-                        <p style="font-size:0.95rem; margin-top:0.5rem;">Aguardando envio de mídias para iniciar o cálculo do risco assistencial.</p>
+                    <div style="text-align: center; padding: 2rem 1rem; color: #94A3B8;">
+                        <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📥</div>
+                        <h5 style="color: #FFFFFF; margin: 0.5rem 0 0.2rem 0;">Aguardando Mídias</h5>
+                        <p style="font-size: 0.8rem; margin: 0;">Envie arquivos no módulo abaixo para calcular o Risco Assistencial.</p>
                     </div>
                     """, unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-                # UPLOAD DE ARQUIVOS PARA A SESSÃO
+                # 2. Upload de Arquivos
                 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-                st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Enviar Mídia para Análise</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin-top:0; color:#8B5CF6; font-size: 1.1rem; font-weight: 700;'>Anexar Arquivo Clínico</h4>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <div style="border: 2px dashed rgba(139, 92, 246, 0.25); border-radius: 10px; padding: 1.2rem; text-align: center; background: rgba(139, 92, 246, 0.02); margin-bottom: 0.8rem;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">📥</div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #FFFFFF;">Selecione mídias médicas</div>
+                    <div style="font-size: 0.7rem; color: #94A3B8; margin-top: 0.1rem;">MP4, WAV, MP3 ou PDFs de Prontuário</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 with st.form("upload_media_form"):
                     media_type = st.selectbox(
-                        "Tipo de Mídia",
+                        "Tipo de Arquivo",
                         ["video", "audio", "document"],
-                        format_func=lambda x: {"video": "🎥 Vídeo Clínico", "audio": "🎙️ Áudio da Consulta", "document": "📄 Prontuário PDF"}[x]
+                        format_func=lambda x: {"video": "🎥 Vídeo do Parto", "audio": "🎙️ Áudio da Consulta", "document": "📄 Prontuário PDF"}[x]
                     )
-                    uploaded_file = st.file_uploader("Selecione o arquivo", type=["mp4", "wav", "mp3", "pdf", "jpg", "png"])
-                    upload_submitted = st.form_submit_button("Enviar e Iniciar IA", use_container_width=True)
+                    uploaded_file = st.file_uploader("Selecionar Arquivo", type=["mp4", "wav", "mp3", "pdf", "jpg", "png"], label_visibility="collapsed")
+                    upload_submitted = st.form_submit_button("Submeter para IA", use_container_width=True)
                     
                     if upload_submitted:
                         if uploaded_file is not None:
@@ -118,63 +171,106 @@ with tab_list:
                             with st.spinner("Efetuando upload seguro..."):
                                 res = api_client.upload_media(token, session["id"], uploaded_file.name, file_bytes, media_type)
                                 if res:
-                                    st.success(f"✅ Arquivo enviado! Análise de {media_type} iniciada.")
-                                    # Simula transição de status para fins de demonstração local
+                                    st.success(f"✅ Enviado com sucesso! Iniciando processamento.")
                                     if session["status"] == "created":
                                         session["status"] = "processing"
                                     st.rerun()
                                 else:
-                                    st.error("Erro ao enviar o arquivo. Verifique sua conexão.")
+                                    st.error("Erro ao enviar arquivo.")
                         else:
-                            st.warning("Selecione um arquivo válido.")
+                            st.warning("Nenhum arquivo selecionado.")
                 st.markdown("</div>", unsafe_allow_html=True)
-            
+
+            # ============ COLUNA DIREITA ============
             with col_right:
-                # ARQUIVOS ENVIADOS
+                # 1. Timeline do Processamento
                 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-                st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Arquivos na Sessão</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin-top:0; color:#8B5CF6; font-size: 1.1rem; font-weight: 700;'>Linha do Tempo da Auditoria</h4>", unsafe_allow_html=True)
+                
+                step = curr_status["step"]
+                st.markdown(f"""
+                <div class="timeline-container">
+                    <div class="timeline-item {'success' if step >= 1 else 'active' if step == 0 else ''}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Criação da Sessão</div>
+                        <div class="timeline-desc">Sessão cadastrada e autorizada no banco central.</div>
+                    </div>
+                    <div class="timeline-item {'success' if step >= 3 else 'active' if step == 2 else ''}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Processamento Multimodal</div>
+                        <div class="timeline-desc">Extração de sentimentos por áudio, OCR de prontuário e análises do OpenCV.</div>
+                    </div>
+                    <div class="timeline-item {'success' if step >= 3 else ''}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Cálculo de Risco Consolidado (IRA)</div>
+                        <div class="timeline-desc">Auditoria finalizada. Recomendações e scores clínicos gerados.</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                # 2. Lista de Arquivos (Cards)
+                st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin-top:0; color:#8B5CF6; font-size: 1.1rem; font-weight: 700;'>Arquivos Anexados</h4>", unsafe_allow_html=True)
                 
                 if not session["media_files"]:
-                    st.info("Nenhum arquivo de mídia associado a esta sessão.")
+                    st.markdown("""
+                    <div style="text-align: center; padding: 1rem 0; color: #94A3B8; font-size: 0.85rem;">
+                        Nenhum arquivo anexado a esta sessão.
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
-                    media_data = []
                     for m in session["media_files"]:
-                        media_data.append({
-                            "Tipo": "🎥 Vídeo" if m["media_type"] == "video" else "🎙️ Áudio" if m["media_type"] == "audio" else "📄 Prontuário",
-                            "Arquivo": m["filename"],
-                            "Tamanho": f"{m['file_size_bytes'] / (1024*1024):.1f} MB" if m["file_size_bytes"] else "N/A",
-                            "Status": m["status"].upper(),
-                            "Score": f"{m['analysis_score']:.1f}%" if m["analysis_score"] is not None else "—"
-                        })
-                    st.table(pd.DataFrame(media_data))
+                        m_type = m["media_type"]
+                        icon = "🎥" if m_type == "video" else "🎙️" if m_type == "audio" else "📄"
+                        size_mb = f"{m['file_size_bytes'] / (1024*1024):.1f} MB" if m["file_size_bytes"] else "N/A"
+                        status_lbl = m["status"].upper()
+                        
+                        badge_cls = "badge-success" if status_lbl == "ANALYZED" else "badge-warning" if status_lbl == "PROCESSING" else "badge-danger" if status_lbl == "ERROR" else "badge-primary"
+                        score_txt = f"<span style='font-weight: 700; color: #8B5CF6; font-size: 0.85rem; margin-left: 1rem;'>{m['analysis_score']:.1f}%</span>" if m["analysis_score"] is not None else ""
+                        
+                        st.markdown(f"""
+                        <div class="media-card">
+                            <div class="media-card-info">
+                                <div class="media-card-icon">{icon}</div>
+                                <div>
+                                    <div class="media-card-name">{m['filename']}</div>
+                                    <div class="media-card-meta">{size_mb} | Tipo: {m_type.upper()}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span class="badge-capsule {badge_cls}" style="font-size: 0.7rem;">{status_lbl}</span>
+                                {score_txt}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-                # SEÇÃO DE DETALHAMENTO DE IA (SE COMPLETADO)
+                # 3. Seções de Detalhamento de IA
                 if session["status"] == "completed":
-                    # Obter análise detalhada real do backend
+                    # Obter dados de análise do backend
                     analysis_data = api_client.get_session_analysis(token, session["id"])
                     
                     transcription = analysis_data.get("transcription") if analysis_data else None
                     risk_details = analysis_data.get("risk_details") if analysis_data else None
                     video_findings = analysis_data.get("video_findings") if analysis_data else []
                     
-                    # Aba interna para dividir as análises
                     sub_tab_audio, sub_tab_video, sub_tab_doc = st.tabs([
-                        "🎙️ Análise de Áudio (Transcrição)", 
-                        "🎥 Análise de Vídeo", 
-                        "📄 Análise do Prontuário"
+                        "🎙️ Transcrição do Diálogo", 
+                        "🎥 Visão Computacional", 
+                        "📄 Prontuário & Conformidade"
                     ])
                     
+                    # --- ABA ÁUDIO ---
                     with sub_tab_audio:
                         if not transcription:
-                            st.info("Nenhuma análise de áudio/transcrição disponível para esta sessão.")
+                            st.info("Nenhuma análise de transcrição disponível.")
                         else:
-                            st.markdown(f"<b>Texto Completo:</b> *\"{transcription['full_text']}\"*", unsafe_allow_html=True)
-                            st.markdown("---")
-                            st.markdown("<b>Segmentos por Speaker e Sentimento:</b>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='margin-bottom: 1rem; font-style: italic; font-size: 0.9rem; color: #FFFFFF;'>Texto Completo: \"{transcription['full_text']}\"</div>", unsafe_allow_html=True)
                             
                             for seg in transcription["segments"]:
-                                role_color = "#3B82F6" if seg["role"] == "profissional" else "#EC4899"
+                                is_prof = seg["role"] == "profissional"
+                                speaker_color = "#8B5CF6" if is_prof else "#EC4899"
                                 sentiment_badge = {
                                     "positive": "🟢 Positivo",
                                     "neutral": "⚪ Neutro",
@@ -182,105 +278,96 @@ with tab_list:
                                 }.get(seg["sentiment"], "⚪ Neutro")
                                 
                                 st.markdown(f"""
-                                <div style="margin-bottom:0.8rem; padding:0.6rem; border-radius:6px; background:rgba(255,255,255,0.02); border-left: 3px solid {role_color};">
-                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#94A3B8;">
-                                        <span style="font-weight:700; color:{role_color};">{seg['speaker']} ({seg['role'].upper()})</span>
-                                        <span>[{seg['start']}s - {seg['end']}s] | Sentimento: {sentiment_badge} ({seg['sentiment_confidence']:.2f})</span>
+                                <div style="margin-bottom:0.8rem; padding:0.8rem; border-radius:10px; background:rgba(20,27,45,0.4); border-left: 4px solid {speaker_color};">
+                                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#94A3B8; margin-bottom: 0.2rem;">
+                                        <span style="font-weight:700; color:{speaker_color};">{seg['speaker'].upper()}</span>
+                                        <span>[{seg['start']}s - {seg['end']}s] | {sentiment_badge}</span>
                                     </div>
-                                    <div style="margin-top:0.3rem; font-size:0.92rem; color:#E2E8F0;">
+                                    <div style="font-size:0.9rem; color:#FFFFFF;">
                                         {seg['text']}
                                     </div>
                                 </div>
                                 """, unsafe_allow_html=True)
                                 
-                            # Recomendações do áudio
                             if risk_details and "audio" in risk_details:
-                                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
                                 st.markdown(f"""
-                                <div class="alert-card alert-moderate" style="margin-bottom: 0;">
-                                    <b>Recomendação Assistencial (Voz/Áudio):</b><br/>
-                                    {risk_details['audio']['recommendation']}
+                                <div class="alert-card alert-moderate" style="margin-top: 1rem; margin-bottom: 0;">
+                                    <b style="color: #F59E0B;">Recomendação Assistencial:</b><br/>
+                                    <span style="font-size: 0.85rem;">{risk_details['audio']['recommendation']}</span>
                                 </div>
                                 """, unsafe_allow_html=True)
                                 
+                    # --- ABA VÍDEO ---
                     with sub_tab_video:
                         if not risk_details or "video" not in risk_details:
-                            st.info("Nenhuma análise detalhada de vídeo disponível para esta sessão.")
+                            st.info("Nenhuma análise de vídeo disponível.")
                         else:
-                            st.markdown(f"<b>Resumo da Visão Computacional:</b>", unsafe_allow_html=True)
-                            st.markdown(f"*{risk_details['video']['text']}*")
-                            
-                            if risk_details['video']['key_indicators']:
-                                st.markdown("<b>Indicadores Identificados:</b>", unsafe_allow_html=True)
-                                for ind in risk_details['video']['key_indicators']:
-                                    st.markdown(f"- `{ind}`")
+                            st.markdown(f"<p style='font-size:0.9rem; color:#E2E8F0; margin-bottom: 1rem;'>{risk_details['video']['text']}</p>", unsafe_allow_html=True)
                             
                             if video_findings:
-                                st.markdown("<b>Ocorrências de Vídeo Identificadas (IA):</b>", unsafe_allow_html=True)
-                                for finding in video_findings:
-                                    st.markdown(f"- **{finding.get('type', '').title()}**: {finding.get('description')} (Confiança: {finding.get('confidence', 0.0):.2%})")
-
-                            # Heatmap do IRA ao longo do tempo do vídeo (exemplo mock)
-                            st.markdown("<b>Mapa de Calor Temporal do Risco no Vídeo:</b>", unsafe_allow_html=True)
+                                st.markdown("<b style='font-size:0.85rem; color:#8B5CF6;'>Ocorrências de IA no Vídeo:</b>", unsafe_allow_html=True)
+                                for f in video_findings:
+                                    st.markdown(f"- **{f.get('type','').title()}**: {f.get('description')} (Confiança: {f.get('confidence',0.0):.1%})")
+                            
+                            # Heatmap Temporal
+                            st.markdown("<b style='font-size:0.85rem; color:#8B5CF6; display:block; margin-top: 1rem; margin-bottom: 0.5rem;'>Evolução de Risco no Tempo (Vídeo):</b>", unsafe_allow_html=True)
                             df_heat = pd.DataFrame({
                                 "Tempo (minutos)": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                                 "Nível de Risco (%)": [15, 20, 18, 55, 78, 82, 75, 40, 22, 19]
                             })
                             fig_heat = px.bar(df_heat, x="Tempo (minutos)", y="Nível de Risco (%)", color="Nível de Risco (%)",
-                                             color_continuous_scale=["#10B981", "#F59E0B", "#EF4444"])
-                            fig_heat.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                             color_continuous_scale=["#22C55E", "#F59E0B", "#EF4444"])
+                            fig_heat.update_layout(height=180, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                                                   margin=dict(l=0, r=0, t=10, b=10), font=dict(color="#94A3B8"))
                             st.plotly_chart(fig_heat, use_container_width=True)
- 
+                            
                             st.markdown(f"""
-                            <div class="alert-card alert-critical" style="margin-bottom: 0;">
-                                <b>Recomendação Assistencial (Visão/Vídeo):</b><br/>
-                                {risk_details['video']['recommendation']}
+                            <div class="alert-card alert-critical" style="margin-top: 1rem; margin-bottom: 0;">
+                                <b style="color: #EF4444;">Recomendação Assistencial:</b><br/>
+                                <span style="font-size: 0.85rem;">{risk_details['video']['recommendation']}</span>
                             </div>
                             """, unsafe_allow_html=True)
                             
+                    # --- ABA PRONTUÁRIO ---
                     with sub_tab_doc:
                         if not risk_details or "document" not in risk_details:
-                            st.info("Nenhuma análise detalhada de prontuário disponível para esta sessão.")
+                            st.info("Nenhuma análise documental disponível.")
                         else:
-                            st.markdown(f"<b>Resumo do Processamento Documental (OCR):</b>", unsafe_allow_html=True)
-                            st.markdown(f"*{risk_details['document']['text']}*")
+                            st.markdown(f"<p style='font-size:0.9rem; color:#E2E8F0; margin-bottom: 1rem;'>{risk_details['document']['text']}</p>", unsafe_allow_html=True)
                             
-                            # Mostrar checklist de conformidade do prontuário
-                            st.markdown("<b>Checklist de Conformidade (LGPD/Clínico):</b>", unsafe_allow_html=True)
-                            
+                            # Checklist de Conformidade
+                            st.markdown("<b style='font-size:0.85rem; color:#8B5CF6; display:block; margin-bottom: 0.5rem;'>Checklist de Conformidade Documental (LGPD):</b>", unsafe_allow_html=True)
                             consent_present = "consentimento_ausente" not in risk_details["document"].get("key_indicators", [])
                             
                             checklist = [
-                                {"Item": "Identificação Completa da Paciente", "Verificado": True, "Severidade": "none"},
-                                {"Item": "Assinatura do Profissional e CRM", "Verificado": True, "Severidade": "none"},
-                                {"Item": "Posologia de Medicamentos", "Verificado": True, "Severidade": "none"},
-                                {"Item": "Termo de Consentimento para Procedimentos Invasivos", "Verificado": consent_present, "Severidade": "none" if consent_present else "high"}
+                                {"Item": "Identificação Completa da Paciente", "Verificado": True},
+                                {"Item": "Assinatura do Profissional e CRM", "Verificado": True},
+                                {"Item": "Posologia de Medicamentos", "Verificado": True},
+                                {"Item": "Termo de Consentimento para Procedimentos Invasivos", "Verificado": consent_present}
                             ]
-                            
-                            for item in checklist:
-                                icon = "✅" if item["Verificado"] else "❌"
-                                style = "color: #EF4444; font-weight:600;" if not item["Verificado"] else "color: #10B981;"
-                                st.markdown(f"<span style='{style}'>{icon} {item['Item']}</span>", unsafe_allow_html=True)
+                            for c in checklist:
+                                icon = "✅" if c["Verificado"] else "❌"
+                                style = "color: #22C55E;" if c["Verificado"] else "color: #EF4444; font-weight:600;"
+                                st.markdown(f"<div style='margin-bottom:0.4rem; font-size:0.85rem; {style}'>{icon} {c['Item']}</div>", unsafe_allow_html=True)
                                 
                             st.markdown(f"""
                             <div class="alert-card alert-moderate" style="margin-top: 1rem; margin-bottom: 0;">
-                                <b>Recomendação Assistencial (Documentação):</b><br/>
-                                {risk_details['document']['recommendation']}
+                                <b style="color: #F59E0B;">Recomendação Assistencial:</b><br/>
+                                <span style="font-size: 0.85rem;">{risk_details['document']['recommendation']}</span>
                             </div>
                             """, unsafe_allow_html=True)
 
 # ============ TAB 2: NOVA SESSÃO ============
 with tab_create:
-    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Cadastrar Nova Sessão Clínica</h4>", unsafe_allow_html=True)
+    st.markdown("<div class='glass-card' style='padding: 2rem;'>", unsafe_allow_html=True)
+    st.markdown("<h4 style='margin-top:0; color:#8B5CF6; font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;'>Cadastrar Nova Sessão Clínica</h4>", unsafe_allow_html=True)
     
     with st.form("create_session_form"):
-        title = st.text_input("Título da Sessão", placeholder="Ex: Parto Normal — Gestante Amanda Reis")
-        patient_code = st.text_input("Código Anonimizado da Paciente", placeholder="Ex: PAC-2026-902 (Não use nome real)")
-        notes = st.text_area("Notas Clínicas Iniciais", placeholder="Inserir observações sobre histórico de risco, idade gestacional, etc.")
+        title = st.text_input("Título da Sessão", placeholder="Ex: Parto Normal — Amanda Reis")
+        patient_code = st.text_input("Código Anonimizado da Paciente (LGPD)", placeholder="Ex: PAC-2026-902 (Nunca utilize o nome real)")
+        notes = st.text_area("Notas Clínicas Iniciais", placeholder="Digite observações importantes sobre histórico de risco, idade gestacional, etc.")
         
-        create_submitted = st.form_submit_button("Salvar e Criar", use_container_width=True)
+        create_submitted = st.form_submit_button("Salvar e Criar Sessão", use_container_width=True)
         
         if create_submitted:
             if title and patient_code:
@@ -292,5 +379,5 @@ with tab_create:
                     else:
                         st.error("Erro ao criar sessão. Tente novamente.")
             else:
-                st.warning("Por favor, preencha o Título e o Código da Paciente.")
+                st.warning("Preencha o título e o código da paciente.")
     st.markdown("</div>", unsafe_allow_html=True)

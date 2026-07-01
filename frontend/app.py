@@ -34,7 +34,7 @@ st.markdown("""
 
     /* Cores principais do tema */
     :root {
-        --primary-color: #7C3AED;      /* Roxo violeta */
+        --primary-color: #8B5CF6;      /* Roxo violeta vibrante */
         --secondary-color: #EC4899;    /* Rosa escuro */
         --success-color: #10B981;      /* Verde esmeralda */
         --warning-color: #F59E0B;      /* Âmbar */
@@ -42,14 +42,71 @@ st.markdown("""
         --background: #0B0F19;         /* Azul escuro profundo */
         --surface: #1E293B;            /* Azul ardósia médio */
         --surface-hover: #334155;
-        --text: #F1F5F9;
-        --text-muted: #94A3B8;
+        --text: #FFFFFF;               /* Branco puro para melhor contraste */
+        --text-muted: #E2E8F0;         /* Cinza muito claro */
     }
 
     /* Fundo da aplicação com gradiente radial e profundo */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090d16 60%, #020617 100%) !important;
-        color: var(--text);
+        color: var(--text) !important;
+    }
+
+    /* Alto contraste global de textos */
+    body, p, span, label, li, td, th, div, small, [data-testid="stMarkdown"] p {
+        color: #FFFFFF !important;
+    }
+
+    /* Ajuste específico para subtítulos e descrições secundárias */
+    .subtitle {
+        font-size: 1.15rem;
+        font-weight: 400;
+        color: #E2E8F0 !important;
+        margin-bottom: 2rem;
+    }
+
+    /* Streamlit widgets labels (Labels de Inputs) */
+    div[data-testid="stWidgetLabel"] p, label, .stSelectbox label, .stTextInput label, .stTextArea label {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    /* Tabelas em alto contraste */
+    div[data-testid="stTable"] table, table {
+        color: #FFFFFF !important;
+        background-color: rgba(15, 23, 42, 0.6) !important;
+        border-collapse: collapse;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th {
+        background-color: rgba(124, 58, 237, 0.2) !important;
+        color: #C084FC !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
+        border-bottom: 2px solid rgba(124, 58, 237, 0.4) !important;
+    }
+    td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Tabs (Abas) estilo premium com alto contraste */
+    button[data-baseweb="tab"] {
+        color: #E2E8F0 !important;
+        font-size: 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #FFFFFF !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #C084FC !important;
+        font-weight: 700 !important;
+        border-bottom-color: #8B5CF6 !important;
     }
 
     /* Scrollbar customizado */
@@ -61,11 +118,11 @@ st.markdown("""
         background: rgba(11, 15, 25, 0.5);
     }
     ::-webkit-scrollbar-thumb {
-        background: rgba(124, 58, 237, 0.3);
+        background: rgba(124, 58, 237, 0.4);
         border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(124, 58, 237, 0.6);
+        background: rgba(124, 58, 237, 0.7);
     }
 
     /* Efeito de surgimento (Fade In) */
@@ -82,22 +139,22 @@ st.markdown("""
 
     /* Cards e Containers com efeito Glassmorphism */
     .glass-card {
-        background: rgba(15, 23, 42, 0.45) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background: rgba(15, 23, 42, 0.55) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(16px) !important;
         -webkit-backdrop-filter: blur(16px) !important;
         border-radius: 16px !important;
         padding: 1.5rem !important;
         margin-bottom: 1.2rem !important;
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7) !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.75) !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both !important;
     }
     
     .glass-card:hover {
         transform: translateY(-4px) !important;
-        border-color: rgba(124, 58, 237, 0.35) !important;
-        box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+        border-color: rgba(139, 92, 246, 0.5) !important;
+        box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.2), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* Glows customizados para cartões */
@@ -106,7 +163,7 @@ st.markdown("""
     }
     .glow-red:hover {
         border-color: var(--danger-color) !important;
-        box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.25), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
     }
 
     .glow-yellow {
@@ -114,7 +171,7 @@ st.markdown("""
     }
     .glow-yellow:hover {
         border-color: var(--warning-color) !important;
-        box-shadow: 0 15px 35px -5px rgba(245, 158, 11, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 15px 35px -5px rgba(245, 158, 11, 0.25), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
     }
 
     .glow-green {
@@ -122,7 +179,7 @@ st.markdown("""
     }
     .glow-green:hover {
         border-color: var(--success-color) !important;
-        box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.25), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
     }
 
     .glow-purple {
@@ -130,46 +187,46 @@ st.markdown("""
     }
     .glow-purple:hover {
         border-color: var(--primary-color) !important;
-        box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.2), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.3), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* Customização do Sidebar */
     section[data-testid="stSidebar"] {
-        background: rgba(8, 10, 18, 0.7) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
+        background: rgba(8, 10, 18, 0.85) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(24px) !important;
+        -webkit-backdrop-filter: blur(24px) !important;
     }
 
     /* Botões personalizados */
     div.stButton > button:first-child {
-        background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%) !important;
-        color: #F8FAFC !important;
+        background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%) !important;
+        color: #FFFFFF !important;
         border: none !important;
         border-radius: 10px !important;
         padding: 0.6rem 1.6rem !important;
         font-weight: 600 !important;
-        box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.3) !important;
+        box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.4) !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     
     div.stButton > button:first-child:hover {
-        background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%) !important;
-        box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.5) !important;
+        background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%) !important;
+        box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.6) !important;
         transform: translateY(-2px) !important;
     }
 
     /* Estilo dos inputs e seletores da Streamlit */
     div[data-baseweb="input"], div[data-baseweb="select"], div[data-baseweb="textarea"] {
-        background-color: rgba(15, 23, 42, 0.5) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background-color: rgba(15, 23, 42, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 10px !important;
         transition: all 0.25s ease !important;
-        color: #F1F5F9 !important;
+        color: #FFFFFF !important;
     }
     div[data-baseweb="input"]:focus-within, div[data-baseweb="select"]:focus-within {
-        border-color: rgba(124, 58, 237, 0.5) !important;
-        box-shadow: 0 0 12px rgba(124, 58, 237, 0.2) !important;
+        border-color: rgba(139, 92, 246, 0.6) !important;
+        box-shadow: 0 0 12px rgba(139, 92, 246, 0.3) !important;
     }
 
     /* Customização dos Títulos e Divisores */
@@ -181,13 +238,6 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.2rem;
-    }
-    
-    .subtitle {
-        font-size: 1.15rem;
-        font-weight: 400;
-        color: var(--text-muted);
-        margin-bottom: 2rem;
     }
 
     /* Indicadores de Risco (IRA) */
@@ -206,9 +256,9 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
 
-    .ira-baixo { color: #10B981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); font-weight: 800; }
-    .ira-moderado { color: #F59E0B; text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); font-weight: 800; }
-    .ira-critico { color: #EF4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.4); font-weight: 800; }
+    .ira-baixo { color: #10B981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.5); font-weight: 800; }
+    .ira-moderado { color: #F59E0B; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5); font-weight: 800; }
+    .ira-critico { color: #EF4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.5); font-weight: 800; }
 
     /* Estilos dos Alertas */
     .alert-card {
@@ -216,39 +266,175 @@ st.markdown("""
         border-radius: 12px;
         padding: 1.2rem;
         margin-bottom: 1rem;
-        background: rgba(15, 23, 42, 0.4);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.03);
+        background: rgba(15, 23, 42, 0.55);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     .alert-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
     }
     .alert-critical {
         border-left-color: #EF4444;
-        background: rgba(239, 68, 68, 0.05);
-        border: 1px solid rgba(239, 68, 68, 0.1);
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.15);
     }
     .alert-critical:hover {
-        border-color: rgba(239, 68, 68, 0.3);
+        border-color: rgba(239, 68, 68, 0.45);
     }
     .alert-moderate {
         border-left-color: #F59E0B;
-        background: rgba(245, 158, 11, 0.05);
-        border: 1px solid rgba(245, 158, 11, 0.1);
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.15);
     }
     .alert-moderate:hover {
-        border-color: rgba(245, 158, 11, 0.3);
+        border-color: rgba(245, 158, 11, 0.45);
     }
     .alert-low {
         border-left-color: #10B981;
-        background: rgba(16, 185, 129, 0.05);
-        border: 1px solid rgba(16, 185, 129, 0.1);
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.15);
     }
     .alert-low:hover {
-        border-color: rgba(16, 185, 129, 0.3);
+        border-color: rgba(16, 185, 129, 0.45);
+    }
+
+    /* CSS Timeline */
+    .timeline-container {
+        position: relative;
+        margin-top: 1.2rem;
+        padding-left: 24px;
+        border-left: 2px solid rgba(255, 255, 255, 0.08);
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -31px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #1e293b;
+        border: 2px solid rgba(255,255,255,0.15);
+        transition: all 0.3s ease;
+    }
+    .timeline-item.active .timeline-dot {
+        background: #7C4DFF !important;
+        border-color: #0b1020 !important;
+        box-shadow: 0 0 10px #7C4DFF;
+    }
+    .timeline-item.success .timeline-dot {
+        background: #22C55E !important;
+        border-color: #0b1020 !important;
+        box-shadow: 0 0 10px #22C55E;
+    }
+    .timeline-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #FFFFFF !important;
+    }
+    .timeline-desc {
+        font-size: 0.8rem;
+        color: #94A3B8 !important;
+    }
+
+    /* Cards dos Arquivos */
+    .media-card {
+        background: rgba(20, 27, 45, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        margin-bottom: 0.8rem !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .media-card:hover {
+        background: rgba(28, 37, 64, 0.7) !important;
+        border-color: rgba(124, 77, 255, 0.4) !important;
+        transform: translateY(-2px);
+    }
+    .media-card-info {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .media-card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: rgba(124, 77, 255, 0.15);
+        border: 1px solid rgba(124, 77, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .media-card-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #FFFFFF !important;
+    }
+    .media-card-meta {
+        font-size: 0.75rem;
+        color: #94A3B8 !important;
+    }
+
+    /* Barras de Score / Sub-scores */
+    .score-bar-bg {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        height: 8px;
+        width: 100%;
+        margin-top: 0.3rem;
+        overflow: hidden;
+    }
+    .score-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Perfil do Usuário na Sidebar */
+    .sidebar-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(20, 27, 45, 0.5);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .sidebar-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7C4DFF 0%, #EC4899 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .sidebar-profile-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #FFFFFF !important;
+        line-height: 1.2;
+    }
+    .sidebar-profile-role {
+        font-size: 0.75rem;
+        color: #94A3B8 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -299,15 +485,22 @@ with st.sidebar:
     st.markdown("---")
     user = st.session_state.user
     if user:
-        st.markdown(f"👤 **{user.get('full_name')}**")
         role_label = {
-            "admin": "⚙️ Administrador",
-            "gestor": "📈 Gestor Hospitalar",
-            "profissional": "🩺 Profissional de Saúde",
-            "auditor": "🔍 Auditor Clínico"
+            "admin": "Administrador",
+            "gestor": "Gestor Hospitalar",
+            "profissional": "Profissional de Saúde",
+            "auditor": "Auditor Clínico"
         }.get(user.get("role"), user.get("role"))
-        st.markdown(f"**Papel:** `{role_label}`")
-        st.markdown(f"📧 `{user.get('email')}`")
+        initials = "".join([n[0] for n in user.get('full_name', 'U').split()[:2]]).upper()
+        st.markdown(f"""
+        <div class="sidebar-profile">
+            <div class="sidebar-avatar">{initials}</div>
+            <div>
+                <div class="sidebar-profile-name">{user.get('full_name')}</div>
+                <div class="sidebar-profile-role">{role_label}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     st.markdown("---")
 
 if hasattr(st, "Page") and hasattr(st, "navigation"):
