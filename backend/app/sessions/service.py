@@ -29,6 +29,7 @@ class SessionService:
         )
         self.db.add(session)
         await self.db.flush()
+        session.media_files = []
         return session
 
     async def get_by_id(self, session_id: int, user_id: int, user_role: str) -> Session:

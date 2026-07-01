@@ -149,7 +149,9 @@ with tab_list:
                     st.table(pd.DataFrame(media_data))
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-                            # Obter análise detalhada real do backend
+                # SEÇÃO DE DETALHAMENTO DE IA (SE COMPLETADO)
+                if session["status"] == "completed":
+                    # Obter análise detalhada real do backend
                     analysis_data = api_client.get_session_analysis(token, session["id"])
                     
                     transcription = analysis_data.get("transcription") if analysis_data else None

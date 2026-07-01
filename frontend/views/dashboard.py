@@ -32,7 +32,7 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown(f"""
-    <div class="glass-card" style="text-align: center;">
+    <div class="glass-card glow-purple" style="text-align: center;">
         <span style="font-size: 0.9rem; color: #94A3B8; font-weight: 600;">🏥 Sessões Monitoradas</span>
         <h2 style="font-size: 2.3rem; margin: 0.4rem 0; color: #F1F5F9;">{total_sessions}</h2>
         <span style="font-size: 0.8rem; color: #10B981;">+12% vs. semana anterior</span>
@@ -41,7 +41,7 @@ with col1:
 
 with col2:
     st.markdown(f"""
-    <div class="glass-card" style="text-align: center;">
+    <div class="glass-card glow-red" style="text-align: center;">
         <span style="font-size: 0.9rem; color: #94A3B8; font-weight: 600;">🚨 Alertas Críticos Ativos</span>
         <h2 style="font-size: 2.3rem; margin: 0.4rem 0; color: #EF4444;">{active_critical}</h2>
         <span style="font-size: 0.8rem; color: #EF4444;">Ação imediata necessária</span>
@@ -50,7 +50,7 @@ with col2:
 
 with col3:
     st.markdown(f"""
-    <div class="glass-card" style="text-align: center;">
+    <div class="glass-card glow-yellow" style="text-align: center;">
         <span style="font-size: 0.9rem; color: #94A3B8; font-weight: 600;">⚠️ Alertas Moderados</span>
         <h2 style="font-size: 2.3rem; margin: 0.4rem 0; color: #F59E0B;">{active_moderate}</h2>
         <span style="font-size: 0.8rem; color: #F59E0B;">Acompanhamento preventivo</span>
@@ -59,8 +59,9 @@ with col3:
 
 with col4:
     ira_class = "ira-baixo" if avg_ira < 40 else "ira-moderado" if avg_ira < 70 else "ira-critico"
+    glow_class = "glow-green" if avg_ira < 40 else "glow-yellow" if avg_ira < 70 else "glow-red"
     st.markdown(f"""
-    <div class="glass-card" style="text-align: center;">
+    <div class="glass-card {glow_class}" style="text-align: center;">
         <span style="font-size: 0.9rem; color: #94A3B8; font-weight: 600;">✅ IRA Médio</span>
         <h2 class="{ira_class}" style="font-size: 2.3rem; margin: 0.4rem 0;">{avg_ira:.1f}</h2>
         <span style="font-size: 0.8rem; color: #94A3B8;">Meta assistencial &lt; 40.0</span>

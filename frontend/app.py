@@ -26,7 +26,7 @@ if "api_client" not in st.session_state:
 st.markdown("""
 <style>
     /* Estilos globais e customização de fontes */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Outfit', sans-serif;
@@ -46,60 +46,146 @@ st.markdown("""
         --text-muted: #94A3B8;
     }
 
-    /* Fundo da aplicação */
+    /* Fundo da aplicação com gradiente radial e profundo */
     .stApp {
-        background: linear-gradient(135deg, #090D16 0%, #111827 100%);
+        background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090d16 60%, #020617 100%) !important;
         color: var(--text);
+    }
+
+    /* Scrollbar customizado */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: rgba(11, 15, 25, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(124, 58, 237, 0.3);
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(124, 58, 237, 0.6);
+    }
+
+    /* Efeito de surgimento (Fade In) */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Cards e Containers com efeito Glassmorphism */
     .glass-card {
-        background: rgba(30, 41, 59, 0.45);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.2rem;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        background: rgba(15, 23, 42, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border-radius: 16px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1.2rem !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both !important;
     }
     
     .glass-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(124, 58, 237, 0.3);
+        transform: translateY(-4px) !important;
+        border-color: rgba(124, 58, 237, 0.35) !important;
+        box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Glows customizados para cartões */
+    .glow-red {
+        border-left: 4px solid var(--danger-color) !important;
+    }
+    .glow-red:hover {
+        border-color: var(--danger-color) !important;
+        box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .glow-yellow {
+        border-left: 4px solid var(--warning-color) !important;
+    }
+    .glow-yellow:hover {
+        border-color: var(--warning-color) !important;
+        box-shadow: 0 15px 35px -5px rgba(245, 158, 11, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .glow-green {
+        border-left: 4px solid var(--success-color) !important;
+    }
+    .glow-green:hover {
+        border-color: var(--success-color) !important;
+        box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .glow-purple {
+        border-left: 4px solid var(--primary-color) !important;
+    }
+    .glow-purple:hover {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 15px 35px -5px rgba(124, 58, 237, 0.2), 0 5px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Customização do Sidebar */
+    section[data-testid="stSidebar"] {
+        background: rgba(8, 10, 18, 0.7) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
     }
 
     /* Botões personalizados */
     div.stButton > button:first-child {
-        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 1.5rem;
-        font-weight: 600;
-        box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
-        transition: all 0.2s ease;
+        background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%) !important;
+        color: #F8FAFC !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 0.6rem 1.6rem !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.3) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     
     div.stButton > button:first-child:hover {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-        box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
-        transform: translateY(-1px);
+        background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%) !important;
+        box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.5) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    /* Estilo dos inputs e seletores da Streamlit */
+    div[data-baseweb="input"], div[data-baseweb="select"], div[data-baseweb="textarea"] {
+        background-color: rgba(15, 23, 42, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px !important;
+        transition: all 0.25s ease !important;
+        color: #F1F5F9 !important;
+    }
+    div[data-baseweb="input"]:focus-within, div[data-baseweb="select"]:focus-within {
+        border-color: rgba(124, 58, 237, 0.5) !important;
+        box-shadow: 0 0 12px rgba(124, 58, 237, 0.2) !important;
     }
 
     /* Customização dos Títulos e Divisores */
     .main-title {
         font-size: 2.8rem;
         font-weight: 800;
-        background: linear-gradient(to right, #A78BFA, #EC4899);
+        letter-spacing: -0.05rem;
+        background: linear-gradient(135deg, #C084FC 0%, #F472B6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.2rem;
     }
     
     .subtitle {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        font-weight: 400;
         color: var(--text-muted);
         margin-bottom: 2rem;
     }
@@ -120,29 +206,49 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
 
-    .ira-baixo { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
-    .ira-moderado { color: #F59E0B; text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-    .ira-critico { color: #EF4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    .ira-baixo { color: #10B981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); font-weight: 800; }
+    .ira-moderado { color: #F59E0B; text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); font-weight: 800; }
+    .ira-critico { color: #EF4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.4); font-weight: 800; }
 
     /* Estilos dos Alertas */
     .alert-card {
         border-left: 5px solid;
-        border-radius: 0px 10px 10px 0px;
+        border-radius: 12px;
         padding: 1.2rem;
         margin-bottom: 1rem;
-        background: rgba(30, 41, 59, 0.3);
+        background: rgba(15, 23, 42, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
     }
     .alert-critical {
         border-left-color: #EF4444;
         background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.1);
+    }
+    .alert-critical:hover {
+        border-color: rgba(239, 68, 68, 0.3);
     }
     .alert-moderate {
         border-left-color: #F59E0B;
         background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.1);
+    }
+    .alert-moderate:hover {
+        border-color: rgba(245, 158, 11, 0.3);
     }
     .alert-low {
         border-left-color: #10B981;
         background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+    .alert-low:hover {
+        border-color: rgba(16, 185, 129, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
