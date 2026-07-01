@@ -208,13 +208,13 @@ sentiment = comprehend_client.detect_sentiment(Text=text, LanguageCode='pt')
 
 ## Checklist de Preparação para Apresentação
 
-- [ ] Dataset de demonstração pronto (3 sessões com diferentes IRAs)
-- [ ] Vídeo de demo pré-processado carregado no sistema
-- [ ] Áudio de demo pré-transcrito carregado
-- [ ] Prontuário PDF de demo carregado
-- [ ] Sistema rodando estável em ambiente de demonstração
-- [ ] URL pública ou acesso local funcionando
-- [ ] Slides preparados com dados e diagramas
-- [ ] Roteiro ensaiado (ao menos 1 vez completo)
-- [ ] Backup: screenshots de todos os estados críticos
-- [ ] Backup: vídeo pré-gravado do fluxo completo (caso falha ao vivo)
+- [x] Dataset de demonstração pronto (3 sessões com diferentes IRAs)
+- [x] Vídeo de demo pré-processado carregado no sistema
+- [x] Áudio de demo pré-transcrito carregado
+- [x] Prontuário PDF de demo carregado
+- [x] Sistema rodando estável em ambiente de demonstração
+- [x] URL pública ou acesso local funcionando
+- [x] Slides preparados com dados e diagramas
+- [x] Roteiro ensaiado (ao menos 1 vez completo)
+- [x] Backup: screenshots de todos os estados críticos
+- [x] Backup: vídeo pré-gravado do fluxo completo (caso falha ao vivo)

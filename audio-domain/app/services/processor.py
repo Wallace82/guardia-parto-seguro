@@ -41,7 +41,7 @@ class AudioProcessor:
             # Ponto de injeção: Integrar boto3 transcribe client
             
             # Simulando o tempo de transcrição (AWS API Call)
-            asyncio.sleep(4.0)
+            time.sleep(4.0)
             
             # TODO: Obter o resultado real do AWS Transcribe
             log.info("aws_transcribe_success", session_id=session_id)

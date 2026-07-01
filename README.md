@@ -128,9 +128,9 @@ chmod +x start.sh
 | **AWS Domain** | http://localhost:8007 | IA da AWS (S3, Textract, etc) |
 | **Swagger UI** | http://localhost:8007/docs | Documentação interativa da API AWS |
 
-#### 🧪 Testando a Inteligência Artificial na Prática (Postman)
+#### 🧪 Testando a Inteligência Artificial na Prática (Dashboard & Postman)
 
-Como o frontend ainda está em construção, você pode testar o fluxo completo de extração de textos médicos via PDF usando nossa Collection do Postman:
+O fluxo completo de upload e análise multimodal pode ser operado de forma simples e visual diretamente pelo **Dashboard Streamlit**. Caso prefira testar os endpoints de integração individualmente, disponibilizamos nossa Collection do Postman:
 1. Abra o Postman.
 2. Importe o arquivo na raiz do projeto: `docs/postman/GuardIA_AWS_Domain.postman_collection.json`.
 3. Siga o passo a passo das requisições na ordem (Gerar URL -> Fazer Upload do PDF -> Analisar no Textract -> Obter Resultados).

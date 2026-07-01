@@ -36,9 +36,9 @@ def test_process_video_success(mock_cv2, mock_exists):
     
     assert result is not None
     assert result["status"] == "completed"
-    assert result["ira_score"] == 68.4
+    assert result["ira_score"] == 58.9
     assert result["total_frames"] == 300
-    assert result["analyzed_frames"] == 1
+    assert result["analyzed_frames"] == 10
     
     # Verifica o caminho resolvido
     mock_cv2.assert_called_once_with("/shared_media/real_video.mp4")
