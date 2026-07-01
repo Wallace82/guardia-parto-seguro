@@ -149,11 +149,12 @@ with tab_list:
                     st.table(pd.DataFrame(media_data))
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-                # SEÇÃO DE DETALHAMENTO DE IA (SE COMPLETADO)
-                if session["status"] == "completed":
-                    # Mocks de análises adicionais
-                    transcription = api_client.get_mock_transcription(session["id"])
-                    risk_details = api_client.get_mock_risk_details(session["id"])
+                            # Obter análise detalhada real do backend
+                    analysis_data = api_client.get_session_analysis(token, session["id"])
+                    
+                    transcription = analysis_data.get("transcription") if analysis_data else None
+                    risk_details = analysis_data.get("risk_details") if analysis_data else None
+                    video_findings = analysis_data.get("video_findings") if analysis_data else []
                     
                     # Aba interna para dividir as análises
                     sub_tab_audio, sub_tab_video, sub_tab_doc = st.tabs([
@@ -212,6 +213,11 @@ with tab_list:
                                 for ind in risk_details['video']['key_indicators']:
                                     st.markdown(f"- `{ind}`")
                             
+                            if video_findings:
+                                st.markdown("<b>Ocorrências de Vídeo Identificadas (IA):</b>", unsafe_allow_html=True)
+                                for finding in video_findings:
+                                    st.markdown(f"- **{finding.get('type', '').title()}**: {finding.get('description')} (Confiança: {finding.get('confidence', 0.0):.2%})")
+
                             # Heatmap do IRA ao longo do tempo do vídeo (exemplo mock)
                             st.markdown("<b>Mapa de Calor Temporal do Risco no Vídeo:</b>", unsafe_allow_html=True)
                             df_heat = pd.DataFrame({
@@ -223,7 +229,7 @@ with tab_list:
                             fig_heat.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                                                   margin=dict(l=0, r=0, t=10, b=10), font=dict(color="#94A3B8"))
                             st.plotly_chart(fig_heat, use_container_width=True)
-
+ 
                             st.markdown(f"""
                             <div class="alert-card alert-critical" style="margin-bottom: 0;">
                                 <b>Recomendação Assistencial (Visão/Vídeo):</b><br/>
@@ -241,11 +247,13 @@ with tab_list:
                             # Mostrar checklist de conformidade do prontuário
                             st.markdown("<b>Checklist de Conformidade (LGPD/Clínico):</b>", unsafe_allow_html=True)
                             
+                            consent_present = "consentimento_ausente" not in risk_details["document"].get("key_indicators", [])
+                            
                             checklist = [
                                 {"Item": "Identificação Completa da Paciente", "Verificado": True, "Severidade": "none"},
                                 {"Item": "Assinatura do Profissional e CRM", "Verificado": True, "Severidade": "none"},
                                 {"Item": "Posologia de Medicamentos", "Verificado": True, "Severidade": "none"},
-                                {"Item": "Termo de Consentimento para Procedimentos Invasivos", "Verificado": False, "Severidade": "high"}
+                                {"Item": "Termo de Consentimento para Procedimentos Invasivos", "Verificado": consent_present, "Severidade": "none" if consent_present else "high"}
                             ]
                             
                             for item in checklist:

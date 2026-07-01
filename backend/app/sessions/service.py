@@ -134,6 +134,9 @@ class SessionService:
         """Adiciona um arquivo de mídia à sessão."""
         session = await self.get_by_id(session_id, user_id, user_role)
         
+        blob_url = None
+        file_size = len(file_content)
+        
         if not blob_url:
             # Salvar localmente
             import os
