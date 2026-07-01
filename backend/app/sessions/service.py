@@ -120,7 +120,7 @@ class SessionService:
                 detail="Apenas admins e gestores podem excluir sessões",
             )
         session = await self.get_by_id(session_id, user_id, user_role)
-        await self.db.delete(session)
+        self.db.delete(session)
 
     async def add_media_file(
         self,
@@ -198,5 +198,5 @@ class SessionService:
                 pass
                 
         # Remover do banco
-        await self.db.delete(media_file)
+        self.db.delete(media_file)
         await self.db.commit()

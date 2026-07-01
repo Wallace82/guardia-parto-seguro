@@ -465,10 +465,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============ VERIFICAÇÃO DE AUTENTICAÇÃO ============
-if "access_token" not in st.session_state:
-    st.session_state.access_token = None
-if "user" not in st.session_state:
-    st.session_state.user = None
+if "access_token" not in st.session_state or not st.session_state.access_token:
+    if "token" in st.query_params:
+        token_val = st.query_params["token"]
+        user_info = st.session_state.api_client.get_me(token_val)
+        if user_info:
+            st.session_state.access_token = token_val
+            st.session_state.user = user_info
+        else:
+            st.session_state.access_token = None
+            st.session_state.user = None
+            st.query_params.clear()
+    else:
+        st.session_state.access_token = None
+        st.session_state.user = None
+else:
+    if "user" not in st.session_state:
+        st.session_state.user = None
 
 if not st.session_state.access_token:
     # Tela de Login Centrada e Elegante
@@ -491,6 +504,7 @@ if not st.session_state.access_token:
                         if result:
                             st.session_state.access_token = result["access_token"]
                             st.session_state.user = result["user"]
+                            st.query_params["token"] = result["access_token"]
                             st.success("✅ Autenticado com sucesso!")
                             st.rerun()
                         else:
@@ -564,4 +578,5 @@ with st.sidebar:
     if st.button("🚪 Encerrar Sessão", use_container_width=True, type="secondary"):
         st.session_state.access_token = None
         st.session_state.user = None
+        st.query_params.clear()
         st.rerun()
