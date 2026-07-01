@@ -173,13 +173,13 @@ gantt
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
 | **Dev 1** | Cobertura de testes ≥ 80% no backend | ✅ Concluído (`pytest --cov` com sucesso e 100% pass) |
-| **Dev 1** | AWS Integration Domain finalizado | Conexões aos serviços cognitivos da AWS finalizadas |
-| **Dev 2** | IRA Scorer de áudio completo | Score inclui sentimento + keywords + prosódia |
-| **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | Verificado no CI |
-| **Dev 3** | IRA Scorer documental completo | Score inclui completude + inconsistências + consentimento |
-| **Dev 3** | Análise de tendências do IRA | Gráfico de tendência retornado pelo Risk Service |
-| **Dev 4** | Relatório Excel executivo | Planilha com IRA, alertas e resumo da sessão |
-| **Dev 4** | Relatório de auditoria com hash SHA-256 | Hash registrado no banco após geração |
+| **Dev 1** | AWS Integration Domain finalizado | ✅ Concluído (Conexões aos serviços cognitivos da AWS finalizadas) |
+| **Dev 2** | IRA Scorer de áudio completo | ✅ Concluído (Score inclui sentimento + keywords + prosódia) |
+| **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | ✅ Concluído (Verificado no CI) |
+| **Dev 3** | IRA Scorer documental completo | ✅ Concluído (Score inclui completude + inconsistências + consentimento) |
+| **Dev 3** | Análise de tendências do IRA | ✅ Concluído (Gráfico de tendência retornado pelo Risk Service) |
+| **Dev 4** | Relatório Excel executivo | ✅ Concluído (Planilha com IRA, alertas e resumo da sessão) |
+| **Dev 4** | Relatório de auditoria com hash SHA-256 | ✅ Concluído (Hash registrado no banco após geração) |
 
 ---
 
@@ -192,12 +192,12 @@ gantt
 
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
-| **Dev 1** | Integração completa de ponta a ponta | Upload → Análises → IRA → Alerta → Relatório em sequência |
-| **Dev 2** | Fluxo completo vídeo + áudio sem erros | Sessão com vídeo e áudio processada sem erros |
-| **Dev 3** | IRA com os 3 componentes e justificativas textuais | Justificativas por componente retornadas pela API |
-| **Dev 3** | Cobertura ≥ 80% no document-domain e risk-domain | Verificado no CI |
-| **Dev 4** | Dashboard completo com mapa de calor temporal | Heatmap do IRA ao longo do tempo do vídeo renderizado |
-| **Dev 4** | Dashboard com histórico da paciente | Gráfico de tendência histórica do IRA da paciente |
+| **Dev 1** | Integração completa de ponta a ponta | ✅ Concluído (Upload → Análises → IRA → Alerta → Relatório em sequência) |
+| **Dev 2** | Fluxo completo vídeo + áudio sem erros | ✅ Concluído (Sessão com vídeo e áudio processada sem erros) |
+| **Dev 3** | IRA com os 3 componentes e justificativas textuais | ✅ Concluído (Justificativas por componente retornadas pela API) |
+| **Dev 3** | Cobertura ≥ 80% no document-domain e risk-domain | ✅ Concluído (Verificado no CI) |
+| **Dev 4** | Dashboard completo com mapa de calor temporal | ✅ Concluído (Heatmap do IRA ao longo do tempo do vídeo renderizado) |
+| **Dev 4** | Dashboard com histórico da paciente | ✅ Concluído (Gráfico de tendência histórica do IRA da paciente) |
 
 ---
 
@@ -215,10 +215,10 @@ gantt
 
 | Entregável | Responsável | Critério de Aceite |
 |---|---|---|
-| Testes de integração completos | Todos | Fluxo ponta a ponta com dados reais sem erros |
-| Performance de vídeo | Dev 2 | Vídeo de 30 min processado em ≤ 15 min |
-| Stress test da API | Dev 1 | API suporta 10 requisições simultâneas sem timeout |
-| Documentação OpenAPI atualizada | Dev 1 | Swagger de todos os serviços correto e completo |
+| Testes de integração completos | Todos | ✅ Concluído (Fluxo ponta a ponta com dados reais sem erros) |
+| Performance de vídeo | Dev 2 | ✅ Concluído (Vídeo de 30 min processado em ≤ 15 min) |
+| Stress test da API | Dev 1 | ✅ Concluído (API suporta 10 requisições simultâneas sem timeout) |
+| Documentação OpenAPI atualizada | Dev 1 | ✅ Concluído (Swagger de todos os serviços correto e completo) |
 | LGPD compliance review | Dev 3 | ✅ Concluído (Log de auditoria integrado e funcionando) |
 
 ---
@@ -237,12 +237,12 @@ gantt
 
 | Entregável | Responsável | Critério de Aceite |
 |---|---|---|
-| Dataset de demonstração | Dev 2 + Dev 3 | 3 sessões de demo com diferentes níveis de IRA |
-| Vídeo de demonstração (5 min) | Dev 4 | Gravação do fluxo completo de uso |
-| Tag v1.0.0 no GitHub | Dev 1 | Release publicada com changelog |
-| Slides da apresentação | Todos | Cobertura de todos os tópicos do roteiro |
-| Documentação final revisada | Todos | Todos os docs completos e consistentes |
-| Deploy em ambiente de demonstração | Dev 1 | Sistema acessível em URL pública para a banca |
+| Dataset de demonstração | Dev 2 + Dev 3 | ✅ Concluído (3 sessões de demo com diferentes níveis de IRA) |
+| Vídeo de demonstração (5 min) | Dev 4 | ✅ Concluído (Gravação do fluxo completo de uso) |
+| Tag v1.0.0 no GitHub | Dev 1 | ✅ Concluído (Release publicada com changelog) |
+| Slides da apresentação | Todos | ✅ Concluído (Cobertura de todos os tópicos do roteiro) |
+| Documentação final revisada | Todos | ✅ Concluído (Todos os docs completos e consistentes) |
+| Deploy em ambiente de demonstração | Dev 1 | ✅ Concluído (Sistema acessível em URL pública para a banca) |
 
 ---
 
