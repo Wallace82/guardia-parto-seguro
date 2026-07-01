@@ -122,6 +122,20 @@ async def delete_session(
     await AuditService.log_action(db, action="delete_session", resource=f"session_{session_id}", user_id=current_user.id)
 
 
+@router.delete(
+    "/media/{media_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir arquivo de mídia de uma sessão",
+)
+async def delete_media_file(
+    media_id: int,
+    current_user: CurrentUser,
+    db: DB,
+):
+    await SessionService(db).delete_media_file(media_id, current_user.id, current_user.role)
+    await AuditService.log_action(db, action="delete_media_file", resource=f"media_{media_id}", user_id=current_user.id)
+
+
 @router.post(
     "/{session_id}/media",
     response_model=MediaFileOut,

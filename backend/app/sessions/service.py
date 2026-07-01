@@ -166,3 +166,37 @@ class SessionService:
         session.status = SessionStatus.processing
         
         return media_file
+
+    async def delete_media_file(
+        self,
+        media_id: int,
+        user_id: int,
+        user_role: str,
+    ) -> None:
+        """Exclui um arquivo de mídia pelo ID."""
+        query = select(MediaFile).where(MediaFile.id == media_id)
+        result = await self.db.execute(query)
+        media_file = result.scalar_one_or_none()
+        
+        if not media_file:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Arquivo de mídia não encontrado",
+            )
+            
+        # Buscar sessão associada para verificar permissões de acesso
+        session = await self.get_by_id(media_file.session_id, user_id, user_role)
+        
+        # Deletar arquivo físico se existir
+        import os
+        uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
+        file_path = os.path.join(uploads_dir, f"{session.id}_{media_file.media_type}_{media_file.filename}")
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+                
+        # Remover do banco
+        await self.db.delete(media_file)
+        await self.db.commit()

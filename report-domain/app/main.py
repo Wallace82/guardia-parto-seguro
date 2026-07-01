@@ -107,8 +107,7 @@ async def generate(data: ReportGenerateRequest, db: DB):
         # 4. Upload para armazenamento (Azure Blob com fallback para local/static)
         download_url = upload_report_to_storage(filename, file_bytes)
         
-        # 5. Salvar registro no banco de dados de relatórios
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         report_record = Report(
             report_id=report_id,
             session_id=data.session_id,

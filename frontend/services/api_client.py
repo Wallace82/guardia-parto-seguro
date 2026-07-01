@@ -226,3 +226,16 @@ class APIClient:
         except Exception as e:
             log.error("api_client.get_session_analysis.failed", error=str(e))
         return None
+
+    def delete_media(self, token, media_id):
+        try:
+            response = httpx.delete(
+                f"{self.base_url}/api/v1/sessions/media/{media_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5.0
+            )
+            if response.status_code == 204:
+                return True
+        except Exception as e:
+            log.error("api_client.delete_media.failed", error=str(e))
+        return False

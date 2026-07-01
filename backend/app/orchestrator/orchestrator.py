@@ -98,12 +98,20 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     video_file.status = MediaStatus.error
                     video_file.error_message = str(video_res)
                 else:
-                    # Agora que a análise começou, no fluxo assíncrono nós obtemos os resultados (que no mock retorna imediatamente)
+                    # Polling para aguardar a conclusão do processamento assíncrono do vídeo
                     try:
-                        results_data = await client.get_video_results(session_id)
-                        video_score = results_data.get("ira_score")
-                        video_file.analysis_score = video_score
-                        video_file.status = MediaStatus.analyzed
+                        for _ in range(30):
+                            results_data = await client.get_video_results(session_id)
+                            if results_data.get("status") == "completed":
+                                video_score = results_data.get("ira_score")
+                                video_file.analysis_score = video_score
+                                video_file.status = MediaStatus.analyzed
+                                break
+                            elif results_data.get("status") == "error":
+                                raise Exception(results_data.get("message", "Video analysis error"))
+                            await asyncio.sleep(1.0)
+                        else:
+                            raise Exception("Timeout aguardando processamento do vídeo")
                     except Exception as e:
                         log.error("video_get_results_failed", session_id=session_id, error=str(e))
                         video_file.status = MediaStatus.error
@@ -117,11 +125,20 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     audio_file.status = MediaStatus.error
                     audio_file.error_message = str(audio_res)
                 else:
+                    # Polling para aguardar a conclusão do processamento assíncrono do áudio
                     try:
-                        results_data = await client.get_audio_results(session_id)
-                        audio_score = results_data.get("ira_score")
-                        audio_file.analysis_score = audio_score
-                        audio_file.status = MediaStatus.analyzed
+                        for _ in range(30):
+                            results_data = await client.get_audio_results(session_id)
+                            if results_data.get("status") == "completed":
+                                audio_score = results_data.get("ira_score")
+                                audio_file.analysis_score = audio_score
+                                audio_file.status = MediaStatus.analyzed
+                                break
+                            elif results_data.get("status") == "error":
+                                raise Exception(results_data.get("message", "Audio analysis error"))
+                            await asyncio.sleep(1.0)
+                        else:
+                            raise Exception("Timeout aguardando processamento do áudio")
                     except Exception as e:
                         log.error("audio_get_results_failed", session_id=session_id, error=str(e))
                         audio_file.status = MediaStatus.error

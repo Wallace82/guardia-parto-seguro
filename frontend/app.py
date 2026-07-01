@@ -229,6 +229,31 @@ st.markdown("""
         box-shadow: 0 0 12px rgba(139, 92, 246, 0.3) !important;
     }
 
+    /* Garante que o interior do selectbox e os textos fiquem escuros e legíveis */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(15, 23, 42, 0.9) !important;
+        color: #FFFFFF !important;
+    }
+    div[data-baseweb="select"] input {
+        color: #FFFFFF !important;
+    }
+
+    /* Estilização de Menus Dropdown, Popovers e Listbox (Itens de Seleção) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
+        background-color: #1E293B !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+    }
+    li[role="option"], [data-baseweb="menu"] li, [data-baseweb="popover"] li {
+        background-color: #1E293B !important;
+        color: #FFFFFF !important;
+        transition: background-color 0.15s ease !important;
+    }
+    li[role="option"]:hover, [data-baseweb="menu"] li:hover, [data-baseweb="popover"] li:hover {
+        background-color: #8B5CF6 !important;
+        color: #FFFFFF !important;
+    }
+
     /* Customização dos Títulos e Divisores */
     .main-title {
         font-size: 2.8rem;

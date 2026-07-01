@@ -62,32 +62,64 @@ class VideoProcessor:
             cap.release()
             
             # Aqui entraríamos com DeepFace/YOLO.
-            # Para manter a demonstração rápida, preenchemos resultados simulados.
-            # No futuro, um loop leria frame a frame (1 por segundo).
+            # Para manter a demonstração rápida, preenchemos resultados simulados de forma dinâmica.
+            # Determina o score baseado no hash do nome do arquivo para simular a unicidade da análise.
+            import hashlib
+            filename = os.path.basename(blob_url)
+            name_hash = int(hashlib.md5(filename.encode('utf-8')).hexdigest(), 16)
+            
+            # Gera um score entre 45.0 e 85.0 de forma determinística baseado no arquivo
+            dynamic_ira = round(45.0 + (name_hash % 401) / 10.0, 1)
+            
+            # Sub-scores baseados no hash do arquivo
+            emotion_score = round(30.0 + (name_hash % 501) / 10.0, 1)
+            pose_score = round(30.0 + ((name_hash // 2) % 501) / 10.0, 1)
+            object_risk_score = round(20.0 + ((name_hash // 3) % 401) / 10.0, 1)
+            bleeding_score = round(((name_hash // 4) % 151) / 10.0, 1) if "mov_bbb" not in filename else 0.0
             
             # Simula tempo de processamento de rede/IA
             time.sleep(2)
             
+            # Gerar achados de vídeo de forma condicional e dinâmica
+            if dynamic_ira >= 60.0:
+                confidence_val = round(0.80 + (name_hash % 15) / 100.0, 2)
+                key_findings = [
+                    {
+                        "type": "emotion",
+                        "timestamp_seconds": round(duration_seconds * 0.45, 1) if duration_seconds > 0 else 2.5,
+                        "description": f"Expressão de dor/sofrimento facial detectada com confiança {confidence_val}",
+                        "confidence": confidence_val
+                    },
+                    {
+                        "type": "object",
+                        "timestamp_seconds": round(duration_seconds * 0.72, 1) if duration_seconds > 0 else 5.2,
+                        "description": "Presença de fórceps ou instrumental cirúrgico na área de monitoramento",
+                        "confidence": round(0.85 + (name_hash % 10) / 100.0, 2)
+                    }
+                ]
+            else:
+                key_findings = [
+                    {
+                        "type": "emotion",
+                        "timestamp_seconds": round(duration_seconds * 0.3, 1) if duration_seconds > 0 else 1.5,
+                        "description": "Expressão facial estável e sem picos de dor aguda",
+                        "confidence": round(0.90 + (name_hash % 10) / 100.0, 2)
+                    }
+                ]
+
             _RESULTS_DB[session_id] = {
                 "session_id": session_id,
                 "status": "completed",
-                "ira_score": 68.4,
+                "ira_score": dynamic_ira,
                 "components": {
-                    "emotion_score": 75.2,
-                    "pose_score": 60.1,
-                    "object_risk_score": 45.0,
-                    "bleeding_score": 0.0
+                    "emotion_score": emotion_score,
+                    "pose_score": pose_score,
+                    "object_risk_score": object_risk_score,
+                    "bleeding_score": bleeding_score
                 },
                 "total_frames": total_frames,
-                "analyzed_frames": 1,
-                "key_findings": [
-                    {
-                        "type": "emotion",
-                        "timestamp_seconds": duration_seconds / 2 if duration_seconds > 0 else 0,
-                        "description": "Expressão de dor detectada com confiança 0.89",
-                        "confidence": 0.89
-                    }
-                ],
+                "analyzed_frames": min(total_frames, 10),
+                "key_findings": key_findings,
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }
             log.info("video_processing_completed", session_id=session_id)

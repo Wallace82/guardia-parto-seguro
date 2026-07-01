@@ -17,7 +17,7 @@ def configure_audit_logging():
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.AsyncBoundLogger,
+        wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
     
