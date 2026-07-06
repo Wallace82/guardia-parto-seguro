@@ -194,6 +194,7 @@ if st.session_state.session_view == "list":
             # ============ TABELA DE SESSÕES ============
             status_labels = {
                 "created": "Pendente",
+                "pending": "Pendente",
                 "processing": "Processando",
                 "completed": "Concluído",
                 "failed": "Falha"
@@ -239,66 +240,6 @@ if st.session_state.session_view == "list":
 <td style="padding: 0.8rem 1rem; text-align: center;">{action_cell}</td>
 </tr>"""
 
-            table_html = f"""<style>
-.custom-table {{
-width: 100%;
-border-collapse: collapse;
-background: #0f172a;
-border-radius: 8px;
-overflow: hidden;
-margin-bottom: 1rem;
-}}
-.custom-table th {{
-background: #1e293b;
-color: #94a3b8;
-font-size: 0.75rem;
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: 1px;
-padding: 0.8rem 1rem;
-text-align: left;
-border-bottom: 2px solid rgba(255,255,255,0.08);
-}}
-.table-action-btn {{
-display: inline-block;
-padding: 4px 10px;
-font-size: 0.78rem;
-font-weight: 600;
-border-radius: 4px;
-text-decoration: none;
-transition: all 0.2s;
-text-align: center;
-white-space: nowrap;
-}}
-.table-action-btn.select {{
-background: rgba(139, 92, 246, 0.2);
-color: #c084fc !important;
-border: 1px solid rgba(139, 92, 246, 0.4);
-}}
-.table-action-btn.select:hover {{
-background: #8b5cf6;
-color: #ffffff !important;
-box-shadow: 0 0 10px rgba(139,92,246,0.4);
-}}
-.table-action-btn.edit {{
-background: rgba(245, 158, 11, 0.15);
-color: #fbbf24 !important;
-border: 1px solid rgba(245, 158, 11, 0.3);
-}}
-.table-action-btn.edit:hover {{
-background: #f59e0b;
-color: #ffffff !important;
-box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-}}
-.table-action-btn.selected {{
-background: rgba(16, 185, 129, 0.15);
-color: #34d399 !important;
-border: 1px solid rgba(16, 185, 129, 0.3);
-cursor: default;
-}}
-.custom-table tbody tr:hover {{
-background: rgba(255,255,255,0.08) !important;
-}}
             # Gerar HTML de navegação
             prev_disabled = st.session_state.sessions_current_page == 1
             next_disabled = st.session_state.sessions_current_page == total_pages
