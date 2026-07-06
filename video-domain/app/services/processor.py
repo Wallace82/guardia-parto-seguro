@@ -12,12 +12,12 @@ _RESULTS_DB = {}
 
 class VideoProcessor:
     
-    def process_video(self, session_id: str, blob_url: str):
+    def process_video(self, session_id: str, media_id: str, blob_url: str):
         """
         Lê o arquivo do volume local (removendo file:///)
         e processa os frames.
         """
-        log.info("starting_video_processing", session_id=session_id, blob_url=blob_url)
+        log.info("starting_video_processing", session_id=session_id, media_id=media_id, blob_url=blob_url)
         
         # 1. Traduzir URL para caminho local
         file_path = blob_url
@@ -35,10 +35,12 @@ class VideoProcessor:
         # 2. Verificar se o arquivo existe
         if not os.path.exists(file_path):
             log.error("file_not_found", file_path=file_path)
-            _RESULTS_DB[session_id] = {
+            err_dict = {
                 "status": "failed",
                 "error": "Arquivo não encontrado no volume compartilhado"
             }
+            _RESULTS_DB[media_id] = err_dict
+            _RESULTS_DB[session_id] = err_dict
             return
 
         # 3. Processamento via OpenCV
@@ -107,7 +109,7 @@ class VideoProcessor:
                     }
                 ]
 
-            _RESULTS_DB[session_id] = {
+            result_dict = {
                 "session_id": session_id,
                 "status": "completed",
                 "ira_score": dynamic_ira,
@@ -122,14 +124,18 @@ class VideoProcessor:
                 "key_findings": key_findings,
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }
-            log.info("video_processing_completed", session_id=session_id)
+            _RESULTS_DB[media_id] = result_dict
+            _RESULTS_DB[session_id] = result_dict
+            log.info("video_processing_completed", session_id=session_id, media_id=media_id)
             
         except Exception as e:
             log.exception("video_processing_failed", session_id=session_id, error=str(e))
-            _RESULTS_DB[session_id] = {
+            err_dict = {
                 "status": "failed",
                 "error": str(e)
             }
+            _RESULTS_DB[media_id] = err_dict
+            _RESULTS_DB[session_id] = err_dict
 
-    def get_result(self, session_id: str):
-        return _RESULTS_DB.get(session_id)
+    def get_result(self, job_id: str):
+        return _RESULTS_DB.get(job_id)

@@ -116,6 +116,25 @@ class APIClient:
             log.error("api_client.create_session.failed", error=str(e))
         return None
 
+    def update_session(self, token, session_id, title=None, notes=None):
+        try:
+            data = {}
+            if title is not None:
+                data["title"] = title
+            if notes is not None:
+                data["notes"] = notes
+            response = httpx.patch(
+                f"{self.base_url}/api/v1/sessions/{session_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                json=data,
+                timeout=5.0
+            )
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            log.error("api_client.update_session.failed", error=str(e))
+        return None
+
     def upload_media(self, token, session_id, file_name, file_bytes, media_type):
         try:
             files = {"file": (file_name, file_bytes, "application/octet-stream")}

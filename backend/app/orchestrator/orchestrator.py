@@ -47,13 +47,13 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             await db.commit()
 
             # Separar arquivos de mídia por tipo
-            video_file = None
+            video_files = []
             audio_file = None
             doc_file = None
             
             for f in session.media_files:
                 if f.media_type == "video" and f.status == MediaStatus.uploaded:
-                    video_file = f
+                    video_files.append(f)
                 elif f.media_type == "audio" and f.status == MediaStatus.uploaded:
                     audio_file = f
                 elif f.media_type == "document" and f.status == MediaStatus.uploaded:
@@ -62,9 +62,9 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             # Tasks de análise em paralelo
             tasks = []
             
-            if video_file:
-                video_file.status = MediaStatus.processing
-                tasks.append(client.analyze_video(session_id, video_file.id, video_file.blob_url))
+            for vf in video_files:
+                vf.status = MediaStatus.processing
+                tasks.append(client.analyze_video(session_id, vf.id, vf.blob_url))
             if audio_file:
                 audio_file.status = MediaStatus.processing
                 tasks.append(client.analyze_audio(session_id, audio_file.id, audio_file.blob_url))
@@ -84,28 +84,23 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             analysis_results = await asyncio.gather(*tasks, return_exceptions=True)
             
             # Mapear os resultados de volta para os arquivos de mídia correspondentes
-            video_score = None
-            audio_score = None
-            document_score = None
-            
             result_idx = 0
             
-            if video_file:
+            for vf in video_files:
                 video_res = analysis_results[result_idx]
                 result_idx += 1
                 if isinstance(video_res, Exception):
-                    log.error("video_analysis_failed", session_id=session_id, error=str(video_res))
-                    video_file.status = MediaStatus.error
-                    video_file.error_message = str(video_res)
+                    log.error("video_analysis_failed", session_id=session_id, media_id=vf.id, error=str(video_res))
+                    vf.status = MediaStatus.error
+                    vf.error_message = str(video_res)
                 else:
                     # Polling para aguardar a conclusão do processamento assíncrono do vídeo
                     try:
                         for _ in range(30):
-                            results_data = await client.get_video_results(session_id)
+                            results_data = await client.get_video_results(vf.id)
                             if results_data.get("status") == "completed":
-                                video_score = results_data.get("ira_score")
-                                video_file.analysis_score = video_score
-                                video_file.status = MediaStatus.analyzed
+                                vf.analysis_score = results_data.get("ira_score")
+                                vf.status = MediaStatus.analyzed
                                 break
                             elif results_data.get("status") == "error":
                                 raise Exception(results_data.get("message", "Video analysis error"))
@@ -113,9 +108,9 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         else:
                             raise Exception("Timeout aguardando processamento do vídeo")
                     except Exception as e:
-                        log.error("video_get_results_failed", session_id=session_id, error=str(e))
-                        video_file.status = MediaStatus.error
-                        video_file.error_message = str(e)
+                        log.error("video_get_results_failed", session_id=session_id, media_id=vf.id, error=str(e))
+                        vf.status = MediaStatus.error
+                        vf.error_message = str(e)
 
             if audio_file:
                 audio_res = analysis_results[result_idx]
@@ -130,8 +125,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         for _ in range(30):
                             results_data = await client.get_audio_results(session_id)
                             if results_data.get("status") == "completed":
-                                audio_score = results_data.get("ira_score")
-                                audio_file.analysis_score = audio_score
+                                audio_file.analysis_score = results_data.get("ira_score")
                                 audio_file.status = MediaStatus.analyzed
                                 break
                             elif results_data.get("status") == "error":
@@ -152,23 +146,39 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     doc_file.status = MediaStatus.error
                     doc_file.error_message = str(doc_res)
                 else:
-                    document_score = doc_res.get("ira_score")
-                    doc_file.analysis_score = document_score
+                    doc_file.analysis_score = doc_res.get("ira_score")
                     doc_file.status = MediaStatus.analyzed
 
             await db.commit()
 
             # Se todos os arquivos de mídia deram erro, a sessão falha
-            any_success = (
-                (video_file and video_file.status == MediaStatus.analyzed) or
-                (audio_file and audio_file.status == MediaStatus.analyzed) or
-                (doc_file and doc_file.status == MediaStatus.analyzed)
+            any_success = any(
+                m.status == MediaStatus.analyzed for m in session.media_files
             )
             if not any_success:
                 session.status = SessionStatus.error
                 await db.commit()
                 log.error("orchestration_failed_all_media_errored", session_id=session_id)
                 return
+
+            # Calcular os scores de vídeo, áudio e documento consolidados da sessão
+            all_video_scores = [
+                m.analysis_score for m in session.media_files
+                if m.media_type == "video" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+            ]
+            video_score = max(all_video_scores) if all_video_scores else None
+
+            all_audio_scores = [
+                m.analysis_score for m in session.media_files
+                if m.media_type == "audio" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+            ]
+            audio_score = max(all_audio_scores) if all_audio_scores else None
+
+            all_doc_scores = [
+                m.analysis_score for m in session.media_files
+                if m.media_type == "document" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+            ]
+            document_score = max(all_doc_scores) if all_doc_scores else None
 
             # Chamar Risk Service para calcular o IRA
             log.info("correlating_risk", session_id=session_id, scores={

@@ -36,11 +36,11 @@ class DomainClient:
             response.raise_for_status()
             return response.json()
 
-    async def get_video_results(self, session_id: int) -> Dict[str, Any]:
+    async def get_video_results(self, job_id: str | int) -> Dict[str, Any]:
         """Obtém resultados da análise de vídeo."""
-        url = f"{settings.VIDEO_SERVICE_URL}/api/v1/video/results/{session_id}"
+        url = f"{settings.VIDEO_SERVICE_URL}/api/v1/video/results/{job_id}"
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            log.info("video_results_request", url=url, session_id=session_id)
+            log.info("video_results_request", url=url, job_id=job_id)
             response = await client.get(url)
             response.raise_for_status()
             return response.json()

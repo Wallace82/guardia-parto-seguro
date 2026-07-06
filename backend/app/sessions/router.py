@@ -254,13 +254,21 @@ async def get_session_analysis(
         import structlog
         structlog.get_logger(__name__).warning("get_session_analysis.audio_failed", session_id=session_id, error=str(e))
 
-    try:
-        video_res = await client.get_video_results(session_id)
-        if video_res and video_res.get("status") == "completed":
-            video_findings = video_res.get("key_findings", [])
-    except Exception as e:
-        import structlog
-        structlog.get_logger(__name__).warning("get_session_analysis.video_failed", session_id=session_id, error=str(e))
+    video_analyses = {}
+    video_findings = []
+    
+    for f in session.media_files:
+        if f.media_type == "video":
+            try:
+                res = await client.get_video_results(f.id)
+                if res and res.get("status") == "completed":
+                    video_analyses[str(f.id)] = res
+                    # Mantém video_findings preenchido com a primeira análise de vídeo concluída para compatibilidade
+                    if not video_findings:
+                        video_findings = res.get("key_findings", [])
+            except Exception as e:
+                import structlog
+                structlog.get_logger(__name__).warning("get_session_analysis.video_file_failed", media_id=f.id, error=str(e))
 
     try:
         risk_res = await client.correlate_risk(
@@ -300,5 +308,6 @@ async def get_session_analysis(
         "status": session.status,
         "transcription": transcription,
         "video_findings": video_findings,
+        "video_analyses": video_analyses,
         "risk_details": risk_details
     }

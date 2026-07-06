@@ -138,7 +138,7 @@ st.markdown("""
     }
 
     /* Cards e Containers com efeito Glassmorphism */
-    .glass-card {
+    .glass-card, div[data-testid="stVerticalBlockBorderWrapper"] {
         background: rgba(15, 23, 42, 0.55) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(16px) !important;
@@ -151,7 +151,7 @@ st.markdown("""
         animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both !important;
     }
     
-    .glass-card:hover {
+    .glass-card:hover, div[data-testid="stVerticalBlockBorderWrapper"]:hover {
         transform: translateY(-4px) !important;
         border-color: rgba(139, 92, 246, 0.5) !important;
         box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.2), 0 5px 15px -5px rgba(0, 0, 0, 0.6) !important;
@@ -206,6 +206,9 @@ st.markdown("""
         border-radius: 10px !important;
         padding: 0.6rem 1.6rem !important;
         font-weight: 600 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
         box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.4) !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
@@ -544,8 +547,9 @@ with st.sidebar:
 
 if hasattr(st, "Page") and hasattr(st, "navigation"):
     # Definindo as páginas para a barra lateral usando a API moderna do Streamlit
-    dashboard_page = st.Page("views/dashboard.py", title="Dashboard Geral", icon="📊", default=True)
-    sessions_page = st.Page("views/sessions.py", title="Sessões Clínicas", icon="🏥")
+    is_session_detail = "selected_session_id" in st.query_params or "edit_session_id" in st.query_params
+    dashboard_page = st.Page("views/dashboard.py", title="Dashboard Geral", icon="📊", default=not is_session_detail)
+    sessions_page = st.Page("views/sessions.py", title="Sessões Clínicas", icon="🏥", default=is_session_detail)
     alerts_page = st.Page("views/alerts.py", title="Central de Alertas", icon="🚨")
     reports_page = st.Page("views/reports.py", title="Relatórios e Auditoria", icon="📄")
     
@@ -562,8 +566,9 @@ else:
         "📄 Relatórios e Auditoria": "views/reports.py"
     }
     
+    default_index = 1 if ("selected_session_id" in st.query_params or "edit_session_id" in st.query_params) else 0
     with st.sidebar:
-        selected_page_name = st.radio("Menu de Navegação", list(page_options.keys()))
+        selected_page_name = st.radio("Menu de Navegação", list(page_options.keys()), index=default_index)
         
     page_file = page_options[selected_page_name]
     

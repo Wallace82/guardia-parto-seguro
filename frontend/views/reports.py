@@ -18,8 +18,8 @@ completed_sessions = [s for s in sessions if s["status"] == "completed"]
 if not completed_sessions:
     st.info("⚠️ É necessário ter ao menos uma sessão com análise COMPLETA para gerar relatórios.")
 else:
-    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Parâmetros de Geração</h4>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("<h4 style='margin-top:0; color:#A78BFA;'>Parâmetros de Geração</h4>", unsafe_allow_html=True)
     
     with st.form("generate_report_form"):
         # Seletor de sessão
@@ -51,14 +51,14 @@ else:
                 "inc_frames": inc_frames,
                 "step": "request"
             }
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.rerun()
 
     # Processamento de geração (Simulador visual e chamada à API)
     if "generating_report" in st.session_state:
         rep_config = st.session_state.generating_report
         
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        st.markdown(f"#### ⚙️ Processando geração para a Sessão #{rep_config['session_id']}...", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(f"#### ⚙️ Processando geração para a Sessão #{rep_config['session_id']}...", unsafe_allow_html=True)
         
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -151,8 +151,5 @@ else:
             
             # Limpar estado de geração
             del st.session_state.generating_report
-            
         else:
             st.error("Erro ao gerar relatório. O Report Service retornou uma falha.")
-            
-        st.markdown("</div>", unsafe_allow_html=True)

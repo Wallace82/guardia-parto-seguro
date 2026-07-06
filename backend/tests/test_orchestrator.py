@@ -32,10 +32,10 @@ async def test_orchestrate_session_analysis_success(
     
     # Mock das chamadas HTTP
     client_mock.analyze_video.return_value = {"job_id": "video-job", "status": "queued"}
-    client_mock.get_video_results.return_value = {"ira_score": 80.0}
+    client_mock.get_video_results.return_value = {"status": "completed", "ira_score": 80.0}
     
     client_mock.analyze_audio.return_value = {"job_id": "audio-job", "status": "queued"}
-    client_mock.get_audio_results.return_value = {"ira_score": 60.0}
+    client_mock.get_audio_results.return_value = {"status": "completed", "ira_score": 60.0}
     
     client_mock.analyze_document.return_value = {"ira_score": 40.0}
     

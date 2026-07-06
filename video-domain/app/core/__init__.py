@@ -1,0 +1,1 @@
+# GuardIA — Video Domain Core

@@ -74,8 +74,8 @@ st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
 g_col1, g_col2 = st.columns([1, 1.8])
 
 with g_col1:
-    st.markdown("<div class='glass-card' style='height: 480px;'>", unsafe_allow_html=True)
-    st.markdown("<h4 style='margin-top:0; margin-bottom:1.5rem; color:#A78BFA;'>Indicador de Risco (IRA Médio)</h4>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("<h4 style='margin-top:0; margin-bottom:1.5rem; color:#A78BFA;'>Indicador de Risco (IRA Médio)</h4>", unsafe_allow_html=True)
     
     # Criar Gauge Chart usando Plotly
     fig_gauge = go.Figure(go.Indicator(
@@ -117,11 +117,10 @@ with g_col1:
         st.markdown("<p style='text-align: center; color: #F59E0B;'>🟡 Risco moderado. Necessário reforçar verificação de conforto obstétrico.</p>", unsafe_allow_html=True)
     else:
         st.markdown("<p style='text-align: center; color: #EF4444;'>🔴 Risco assistencial alto! Auditoria urgente das sessões ativas recomendada.</p>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with g_col2:
-    st.markdown("<div class='glass-card' style='height: 480px;'>", unsafe_allow_html=True)
-    st.markdown("<h4 style='margin-top:0; margin-bottom:1rem; color:#A78BFA;'>Evolução Histórica do IRA</h4>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("<h4 style='margin-top:0; margin-bottom:1rem; color:#A78BFA;'>Evolução Histórica do IRA</h4>", unsafe_allow_html=True)
     
     # Criar dados de tendência histórica fictícios para plotar de acordo com as sessões existentes
     dates = []
@@ -166,7 +165,6 @@ with g_col2:
         height=350
     )
     st.plotly_chart(fig_trend, use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ============ ALERTAS EM DESTAQUE ============
 st.markdown("<h4 style='color: #F1F5F9; margin-bottom: 1rem;'>🚨 Alertas Críticos Recentes</h4>", unsafe_allow_html=True)
