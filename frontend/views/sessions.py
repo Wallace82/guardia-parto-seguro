@@ -26,13 +26,14 @@ if url_edit_id:
     except ValueError:
         pass
 
-# Ver se queremos uma página específica ou tamanho de página pela URL
+# Ver se queremos uma página específica ou tamanho de página pela URL (consumir uma vez e limpar)
 url_page = st.query_params.get("page")
 if url_page:
     try:
         st.session_state.sessions_current_page = int(url_page)
     except ValueError:
         pass
+    st.query_params.pop("page", None)
 
 url_page_size = st.query_params.get("page_size")
 if url_page_size:
@@ -40,6 +41,7 @@ if url_page_size:
         st.session_state.sessions_page_size_selector = int(url_page_size)
     except ValueError:
         pass
+    st.query_params.pop("page_size", None)
 
 # ============ HEADER PREMIUM ============
 st.markdown("""
@@ -95,14 +97,13 @@ if st.session_state.session_view == "list":
         </div>
         """, unsafe_allow_html=True)
 
-        col_search, col_date_start, col_date_end = st.columns([3, 1.5, 1.5])
+        col_search, col_date_start, col_date_end = st.columns([2, 1, 1])
 
         with col_search:
             search_query = st.text_input(
                 "Buscar por nome ou código",
                 placeholder="Digite o título da sessão ou código do paciente...",
-                key="session_search_query",
-                label_visibility="collapsed"
+                key="session_search_query"
             )
 
         with col_date_start:
@@ -244,34 +245,13 @@ if st.session_state.session_view == "list":
             prev_disabled = st.session_state.sessions_current_page == 1
             next_disabled = st.session_state.sessions_current_page == total_pages
 
-            # Função auxiliar para gerar URLs de paginação mantendo parâmetros atuais
-            def make_page_url(page_num):
-                params = dict(st.query_params)
-                params["page"] = str(page_num)
-                params["page_size"] = str(page_size)
-                from urllib.parse import urlencode
-                return "?" + urlencode(params)
-
-            prev_url = make_page_url(st.session_state.sessions_current_page - 1)
-            next_url = make_page_url(st.session_state.sessions_current_page + 1)
-
-            prev_link = f'<span class="table-action-btn disabled" style="opacity: 0.4; cursor: not-allowed; margin-right: 0.5rem; background: rgba(255,255,255,0.05); color: #94a3b8 !important; border: 1px solid rgba(255,255,255,0.1);">⬅️ Anterior</span>' if prev_disabled else f'<a href="{prev_url}" target="_self" class="table-action-btn select" style="margin-right: 0.5rem; text-decoration: none;">⬅️ Anterior</a>'
-            
-            next_link = f'<span class="table-action-btn disabled" style="opacity: 0.4; cursor: not-allowed; margin-left: 0.5rem; background: rgba(255,255,255,0.05); color: #94a3b8 !important; border: 1px solid rgba(255,255,255,0.1);">Próxima ➡️</span>' if next_disabled else f'<a href="{next_url}" target="_self" class="table-action-btn select" style="margin-left: 0.5rem; text-decoration: none;">Próxima ➡️</a>'
-
-            page_info = f'<span style="font-weight: 600; color: #ffffff; padding: 0 0.5rem; font-size: 0.82rem;">Página {st.session_state.sessions_current_page} de {total_pages}</span>'
-            nav_html = f"{prev_link}{page_info}{next_link}"
-
-            # Construir o rodapé (tfoot) integrado na tabela
+            # Construir o rodapé (tfoot) integrado na tabela — apenas informações
             tfoot_html = f"""<tfoot>
 <tr style="background: #1e293b; border-top: 1px solid rgba(255,255,255,0.08);">
-<td colspan="2" style="padding: 0.8rem 1rem; color: #94a3b8; font-size: 0.8rem; font-weight: 500; text-align: left; vertical-align: middle;">
+<td colspan="3" style="padding: 0.8rem 1rem; color: #94a3b8; font-size: 0.8rem; font-weight: 500; text-align: left; vertical-align: middle;">
     Exibindo <b>{start_idx + 1}-{end_idx}</b> de <b>{filtered_count}</b> sessões
 </td>
-<td colspan="2" style="padding: 0.8rem 1rem; text-align: center; color: #CBD5E1; font-size: 0.8rem; vertical-align: middle;">
-    {nav_html}
-</td>
-<td colspan="2" style="padding: 0.8rem 1rem; text-align: right; color: #94a3b8; font-size: 0.8rem; font-weight: 500; vertical-align: middle;">
+<td colspan="3" style="padding: 0.8rem 1rem; text-align: right; color: #94a3b8; font-size: 0.8rem; font-weight: 500; vertical-align: middle;">
     Registros por página: 
     <select onchange="const params = new URLSearchParams(window.location.search); params.set('page_size', this.value); params.set('page', '1'); window.location.href = window.location.pathname + '?' + params.toString();" style="background: #0f172a; color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem; cursor: pointer; outline: none; margin-left: 0.4rem;">
         <option value="5" {"selected" if page_size == 5 else ""}>5</option>
@@ -370,6 +350,23 @@ background: rgba(255,255,255,0.08) !important;
 </div>"""
 
             st.markdown(table_html, unsafe_allow_html=True)
+
+            # ============ CONTROLES DE PAGINAÇÃO (Streamlit nativo) ============
+            def go_prev_page():
+                st.session_state.sessions_current_page = max(1, st.session_state.sessions_current_page - 1)
+
+            def go_next_page():
+                st.session_state.sessions_current_page = min(total_pages, st.session_state.sessions_current_page + 1)
+
+            if total_pages > 1:
+                col_prev, col_page_info, col_next = st.columns([1, 2, 1])
+                with col_prev:
+                    st.button("⬅️ Anterior", disabled=prev_disabled, use_container_width=True, key="btn_prev_page", on_click=go_prev_page)
+                with col_page_info:
+                    st.markdown(f"<div style='text-align: center; padding: 0.5rem 0; font-weight: 600; color: #ffffff; font-size: 0.85rem;'>Página {st.session_state.sessions_current_page} de {total_pages}</div>", unsafe_allow_html=True)
+                with col_next:
+                    st.button("Próxima ➡️", disabled=next_disabled, use_container_width=True, key="btn_next_page", on_click=go_next_page)
+
             st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
             # ============ DETALHAMENTO DA SESSÃO SELECIONADA ============
