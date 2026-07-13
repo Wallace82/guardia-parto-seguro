@@ -117,6 +117,8 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
               [scoreAudio]="activeSession()!.score_audio"
               [scoreDocument]="activeSession()!.score_document"
               [iraScore]="activeSession()!.ira_score"
+              [emotionScore]="emotionScore()"
+              [poseScore]="poseScore()"
             />
 
             <!-- Timeline + IA Summary -->
@@ -179,6 +181,8 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
   timelineEvents = signal<TimelineEvent[]>([]);
   loading = signal(false);
   loadingSessionDetails = signal(false);
+  emotionScore = signal<number | null>(null);
+  poseScore = signal<number | null>(null);
 
   ngOnInit() {
     this.loadRecentSessions();
@@ -217,6 +221,9 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     
     this.activeSession.set(session);
     this.timelineEvents.set([]);
+    this.emotionScore.set(null);
+    this.poseScore.set(null);
+    this.analysis.set(null);
     
     if (session.status === 'completed') {
       this.loadAnalysis(session.id);
@@ -232,11 +239,25 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
       next: (analysis) => {
         this.analysis.set(analysis);
         this.buildTimelineFromAnalysis(analysis);
+        this.extractScoresFromAnalysis(analysis);
       },
       error: () => {
         // Mock data
       }
     });
+  }
+  
+  private extractScoresFromAnalysis(analysis: SessionAnalysisOut) {
+    if (analysis.video_analyses) {
+      const keys = Object.keys(analysis.video_analyses);
+      if (keys.length > 0) {
+        const vidRes = analysis.video_analyses[keys[0]];
+        if (vidRes && vidRes.components) {
+          this.emotionScore.set(vidRes.components.emotion_score || 0);
+          this.poseScore.set(vidRes.components.pose_score || 0);
+        }
+      }
+    }
   }
 
   getIraColor(level: string | null | undefined): string {

@@ -65,22 +65,42 @@ export class RealtimeIndicatorsComponent {
   scoreAudio = input<number | null>(null);
   scoreDocument = input<number | null>(null);
   iraScore = input<number | null>(null);
+  
+  // Real specific AI components
+  emotionScore = input<number | null>(null);
+  poseScore = input<number | null>(null);
 
   indicators = computed<IndicatorData[]>(() => {
     const video = this.scoreVideo();
     const audio = this.scoreAudio();
     const doc = this.scoreDocument();
-    const ira = this.iraScore();
+    
+    // Check if we have detailed analysis available
+    const hasEmotion = this.emotionScore() !== null && this.emotionScore() !== undefined;
+    const hasPose = this.poseScore() !== null && this.poseScore() !== undefined;
 
-    // For positive metrics (emotional, communication, body language): higher = better (green)
-    // For risk metrics (anxiety/vocal): lower = better (green)
     const hasVideo = video !== null && video !== undefined;
     const hasAudio = audio !== null && audio !== undefined;
     const hasDoc = doc !== null && doc !== undefined;
 
-    const emotionalValue = hasVideo ? Math.round(100 - video!) : 0;
+    // Use detailed scores if available, otherwise fallback to the old calculation or 0
+    let emotionalValue = 0;
+    if (hasEmotion) {
+       // O emotion_score do backend representa "risco de dor/medo". Para o visual ser positivo (confiança): 100 - risco
+       emotionalValue = Math.round(100 - this.emotionScore()!);
+    } else if (hasVideo) {
+       emotionalValue = Math.round(100 - video!);
+    }
+    
+    let bodyValue = 0;
+    if (hasPose) {
+       // O pose_score do backend representa "risco postural". Para o visual ser positivo: 100 - risco
+       bodyValue = Math.round(100 - this.poseScore()!);
+    } else if (hasVideo) {
+       bodyValue = Math.round(100 - video! * 0.7);
+    }
+
     const commValue = hasDoc ? Math.round(100 - doc!) : 0;
-    const bodyValue = hasVideo ? Math.round(100 - video! * 0.7) : 0;
     const anxietyValue = hasAudio ? Math.round(audio!) : 0;
 
     return [
@@ -90,9 +110,9 @@ export class RealtimeIndicatorsComponent {
         title: 'Estado emocional',
         subtitle: 'Confiança',
         value: emotionalValue,
-        level: hasVideo ? this.getPositiveLevel(emotionalValue) : 'Aguardando',
-        description: hasVideo ? this.getPositiveDescription(emotionalValue, 'emocional') : 'Sem dados de vídeo',
-        color: hasVideo ? this.getPositiveColor(emotionalValue) : '#4b5563',
+        level: (hasEmotion || hasVideo) ? this.getPositiveLevel(emotionalValue) : 'Aguardando',
+        description: (hasEmotion || hasVideo) ? this.getPositiveDescription(emotionalValue, 'emocional') : 'Sem dados de vídeo',
+        color: (hasEmotion || hasVideo) ? this.getPositiveColor(emotionalValue) : '#4b5563',
       },
       {
         icon: 'forum',
@@ -110,9 +130,9 @@ export class RealtimeIndicatorsComponent {
         title: 'Linguagem corporal',
         subtitle: 'Postura positiva',
         value: bodyValue,
-        level: hasVideo ? this.getPositiveLevel(bodyValue) : 'Aguardando',
-        description: hasVideo ? this.getPositiveDescription(bodyValue, 'corporal') : 'Sem dados de vídeo',
-        color: hasVideo ? this.getPositiveColor(bodyValue) : '#4b5563',
+        level: (hasPose || hasVideo) ? this.getPositiveLevel(bodyValue) : 'Aguardando',
+        description: (hasPose || hasVideo) ? this.getPositiveDescription(bodyValue, 'corporal') : 'Sem dados de vídeo',
+        color: (hasPose || hasVideo) ? this.getPositiveColor(bodyValue) : '#4b5563',
       },
       {
         icon: 'mic',
