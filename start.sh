@@ -114,7 +114,6 @@ show_urls() {
   echo -e "${GREEN}  ==========================================${NC}"
   echo -e "${GREEN}   Serviços disponíveis:${NC}"
   echo -e "${GREEN}  ==========================================${NC}"
-  echo    "   Dashboard       -> http://localhost:8501"
   echo    "   API Gateway     -> http://localhost:8000"
   echo    "   Swagger UI      -> http://localhost:8000/docs"
   echo -e "${GRAY}   Video Service   -> http://localhost:8001${NC}"

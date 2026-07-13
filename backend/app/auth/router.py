@@ -108,3 +108,19 @@ async def create_user(
     """
     user = await AuthService(db).create_user(data, current_user.role)
     return UserCreatedResponse(user=UserOut.model_validate(user))
+
+@router.get(
+    "/users",
+    response_model=list[UserOut],
+    summary="Listar todos os usuários (admin/gestor)",
+)
+async def list_users(
+    current_user: GestorOrAdmin,
+    db: DB,
+):
+    """
+    Lista todos os usuários da plataforma.
+    Acesso restrito a gestores e administradores.
+    """
+    users = await AuthService(db).list_users()
+    return [UserOut.model_validate(u) for u in users]

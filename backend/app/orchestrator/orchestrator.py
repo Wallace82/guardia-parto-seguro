@@ -96,15 +96,15 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                 else:
                     # Polling para aguardar a conclusão do processamento assíncrono do vídeo
                     try:
-                        for _ in range(30):
+                        for _ in range(120):
                             results_data = await client.get_video_results(vf.id)
                             if results_data.get("status") == "completed":
                                 vf.analysis_score = results_data.get("ira_score")
                                 vf.status = MediaStatus.analyzed
                                 break
-                            elif results_data.get("status") == "error":
-                                raise Exception(results_data.get("message", "Video analysis error"))
-                            await asyncio.sleep(1.0)
+                            elif results_data.get("status") in ["error", "failed"]:
+                                raise Exception(results_data.get("message") or results_data.get("error", "Video analysis error"))
+                            await asyncio.sleep(5.0)
                         else:
                             raise Exception("Timeout aguardando processamento do vídeo")
                     except Exception as e:
@@ -122,15 +122,15 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                 else:
                     # Polling para aguardar a conclusão do processamento assíncrono do áudio
                     try:
-                        for _ in range(30):
+                        for _ in range(120):
                             results_data = await client.get_audio_results(session_id)
                             if results_data.get("status") == "completed":
                                 audio_file.analysis_score = results_data.get("ira_score")
                                 audio_file.status = MediaStatus.analyzed
                                 break
-                            elif results_data.get("status") == "error":
-                                raise Exception(results_data.get("message", "Audio analysis error"))
-                            await asyncio.sleep(1.0)
+                            elif results_data.get("status") in ["error", "failed"]:
+                                raise Exception(results_data.get("message") or results_data.get("error", "Audio analysis error"))
+                            await asyncio.sleep(5.0)
                         else:
                             raise Exception("Timeout aguardando processamento do áudio")
                     except Exception as e:

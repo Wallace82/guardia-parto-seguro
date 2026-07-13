@@ -12,6 +12,10 @@ param(
     [switch]$Reset       # Para, remove volumes e sobe do zero (CUIDADO: apaga dados!)
 )
 
+# Garante que o script rode a partir da raiz do projeto, independentemente de onde for chamado
+Set-Location -Path $PSScriptRoot
+
+
 $COMPOSE_FILE = "infra\docker-compose.yml"
 $ENV_FILE     = ".env"
 $ENV_EXAMPLE  = ".env.example"
@@ -127,7 +131,6 @@ function Show-Urls {
     Write-Host "  ==========================================" -ForegroundColor Green
     Write-Host "   Servicos disponiveis:" -ForegroundColor Green
     Write-Host "  ==========================================" -ForegroundColor Green
-    Write-Host "   Dashboard       -> http://localhost:8501" -ForegroundColor White
     Write-Host "   API Gateway     -> http://localhost:8000" -ForegroundColor White
     Write-Host "   Swagger UI      -> http://localhost:8000/docs" -ForegroundColor White
     Write-Host "   Video Service   -> http://localhost:8001" -ForegroundColor DarkGray

@@ -24,6 +24,18 @@ class SessionUpdateRequest(BaseModel):
     status: str | None = None
 
 
+class ChartPoint(BaseModel):
+    label: str
+    value: int
+
+
+class DashboardMetricsOut(BaseModel):
+    total_sessions: int
+    critical_alerts: int
+    average_ira: float
+    monthly_distribution: list[ChartPoint]
+
+
 # --------------- Response ---------------
 
 class MediaFileOut(BaseModel):

@@ -64,7 +64,10 @@ Use `POST /api/v1/auth/login` para obter um Bearer token e inclua-o no header:
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501", "http://frontend:8501"],
+    allow_origins=[
+        "http://localhost:4200",   # Angular dev server
+        "http://localhost:4300",   # Angular alternativo
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
