@@ -123,7 +123,7 @@ chmod +x start.sh
 
 | Serviço | URL | Descrição |
 |---|---|---|
-| **Dashboard** | http://localhost:8501 | Interface Frontend principal (Streamlit) |
+| **Dashboard (Angular)** | http://localhost:4200 | Interface Frontend principal |
 | **API Gateway** | http://localhost:8000 | FastAPI backend principal |
 | **AWS Domain** | http://localhost:8007 | IA da AWS (S3, Textract, etc) |
 | **Swagger UI** | http://localhost:8007/docs | Documentação interativa da API AWS |
