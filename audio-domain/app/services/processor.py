@@ -33,32 +33,135 @@ class AudioProcessor:
             log.warning("file_not_found", file_path=file_path, note="Prosseguindo com análise simulada mockada mesmo sem o arquivo")
 
         try:
-            # Ponto de injeção: Integrar boto3 transcribe client
+            import speech_recognition as sr
+            from pydub import AudioSegment
+            import tempfile
             
-            # Simulando o tempo de transcrição (AWS API Call)
-            time.sleep(4.0)
+            transcription_text = ""
+            key_findings = []
+            ira_score = 30.0
+            sentiment_score = 100.0
+            duration_seconds = 0.0
             
-            # TODO: Obter o resultado real do AWS Transcribe
-            log.info("aws_transcribe_success", session_id=session_id)
-            
+            if os.path.exists(file_path):
+                # 1. Converter para WAV (requisito do SpeechRecognition)
+                log.info("converting_audio_to_wav", file_path=file_path)
+                try:
+                    audio_segment = AudioSegment.from_file(file_path)
+                    duration_seconds = len(audio_segment) / 1000.0
+                    
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_wav:
+                        audio_segment.export(tmp_wav.name, format="wav")
+                        tmp_wav_path = tmp_wav.name
+                    
+                    # 2. Reconhecimento de voz
+                    log.info("running_speech_recognition")
+                    recognizer = sr.Recognizer()
+                    with sr.AudioFile(tmp_wav_path) as source:
+                        audio_data = recognizer.record(source)
+                        try:
+                            transcription_text = recognizer.recognize_google(audio_data, language="pt-BR")
+                            log.info("speech_recognition_success", text_length=len(transcription_text))
+                        except sr.UnknownValueError:
+                            log.warning("speech_recognition_unknown_value")
+                            transcription_text = "(Áudio ininteligível ou em silêncio)"
+                        except sr.RequestError as e:
+                            log.error("speech_recognition_request_error", error=str(e))
+                            transcription_text = "(Erro ao contactar serviço de transcrição)"
+                            
+                    os.remove(tmp_wav_path)
+                    
+                    # 3. Análise semântica avançada com OpenAI
+                    import openai
+                    import json
+                    api_key = os.environ.get("OPENAI_API_KEY")
+                    
+                    if not api_key or not transcription_text.strip() or transcription_text.startswith("("):
+                        log.warning("openai_fallback", reason="Sem API KEY ou sem texto transcrito")
+                        text_lower = transcription_text.lower()
+                        if "dor" in text_lower or "ajuda" in text_lower or "socorro" in text_lower:
+                            ira_score = 60.0
+                            sentiment_score = 40.0
+                            key_findings.append({
+                                "type": "verbalization",
+                                "timestamp_seconds": duration_seconds / 2.0,
+                                "description": "Verbalização de risco (fallback)",
+                                "confidence": 0.8
+                            })
+                        else:
+                            ira_score = 15.0
+                            sentiment_score = 90.0
+                    else:
+                        log.info("running_openai_analysis")
+                        client = openai.OpenAI(api_key=api_key)
+                        prompt = f"""
+Você é um sistema especialista em vigilância obstétrica.
+Analise a seguinte transcrição de áudio de uma sala de parto e identifique:
+1. Risco de maus-tratos, violência obstétrica ou dor intensa ignorada.
+2. Qualidade do acolhimento/sentimento.
+
+Transcrição: "{transcription_text}"
+
+Retorne um JSON válido estritamente com o seguinte formato:
+{{
+  "ira_score": (número decimal de 0.0 a 100.0, onde 100.0 é risco crítico/violência, e 0.0 é totalmente seguro),
+  "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito, e 0.0 é péssimo),
+  "key_findings": [
+    {{
+      "description": "Breve frase descrevendo o achado, ex: 'Tom agressivo por parte do profissional' ou 'Paciente queixando-se de dor'",
+      "confidence": (número decimal de 0.0 a 1.0)
+    }}
+  ]
+}}
+"""
+                        try:
+                            response = client.chat.completions.create(
+                                model="gpt-4o-mini",
+                                messages=[{"role": "user", "content": prompt}],
+                                response_format={ "type": "json_object" },
+                                temperature=0.1
+                            )
+                            result_json = json.loads(response.choices[0].message.content)
+                            
+                            ira_score = float(result_json.get("ira_score", 30.0))
+                            sentiment_score = float(result_json.get("sentiment_score", 70.0))
+                            
+                            for finding in result_json.get("key_findings", []):
+                                key_findings.append({
+                                    "type": "semantic_analysis",
+                                    "timestamp_seconds": duration_seconds / 2.0,
+                                    "description": f"IA (Semântica): {finding.get('description', '')}",
+                                    "confidence": finding.get("confidence", 0.9)
+                                })
+                            log.info("openai_analysis_success", ira_score=ira_score)
+                        except Exception as oai_err:
+                            log.error("openai_analysis_failed", error=str(oai_err))
+                            ira_score = 50.0
+                            sentiment_score = 50.0
+                            key_findings.append({
+                                "type": "error",
+                                "timestamp_seconds": 0.0,
+                                "description": "Erro na interpretação semântica da IA",
+                                "confidence": 1.0
+                            })
+                except Exception as ex:
+                    log.error("audio_file_processing_error", error=str(ex))
+                    transcription_text = "(Erro ao processar arquivo local de áudio)"
+
+            else:
+                transcription_text = "Arquivo de áudio não encontrado no disco local para análise real."
+                
             _RESULTS_DB[session_id] = {
                 "session_id": session_id,
                 "status": "completed",
-                "ira_score": 58.0,
+                "ira_score": ira_score,
                 "components": {
-                    "sentiment_score": 60.5,
-                    "keyword_risk_score": 50.0
+                    "sentiment_score": sentiment_score,
+                    "keyword_risk_score": ira_score
                 },
-                "duration_seconds": 120.0,
-                "transcription": "Speaker_1: Dói muito, por favor... Speaker_2: Fica quieta.",
-                "key_findings": [
-                    {
-                        "type": "verbalization",
-                        "timestamp_seconds": 45.0,
-                        "description": "Verbalização negativa detectada: 'Dói muito'",
-                        "confidence": 0.95
-                    }
-                ],
+                "duration_seconds": duration_seconds,
+                "transcription": transcription_text,
+                "key_findings": key_findings,
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }
             log.info("audio_processing_completed", session_id=session_id)

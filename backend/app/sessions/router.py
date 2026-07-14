@@ -328,26 +328,51 @@ async def get_session_analysis(
         "recommendation": "Sem recomendações geradas. O serviço de risco pode estar indisponível."
     }
 
-    if risk_details:
-        for domain, details in risk_details.items():
-            if isinstance(details, dict):
-                indicators = details.get("key_indicators", [])
-                for ind in indicators:
-                    # Logica simples de negocio real para classificar o indicador
-                    if "ausente" in ind or "dor" in ind or "negativo" in ind or "defensiva" in ind:
-                        factors["attention"].append(ind.replace("_", " ").title())
-                    else:
-                        factors["positive"].append(ind.replace("_", " ").title())
-
-        # A recomendação principal pode vir do maior score ou da analise geral
-        if session.ira_score and session.ira_score >= 70:
-            factors["recommendation"] = "Risco alto identificado. Intervenção imediata recomendada."
-        elif session.ira_score and session.ira_score >= 40:
-            factors["recommendation"] = "Risco moderado. Aumentar vigilância e revisar analgesia."
-        elif session.ira_score is not None:
-            factors["recommendation"] = "Baixo risco. Manter monitoramento regular."
+    # Gera fatores baseados em achados REAIS (sem mocks hardcoded)
+    has_video_attention = False
+    if video_findings:
+        for vf in video_findings:
+            desc = vf.get("description", "")
+            if desc:
+                factors["attention"].append(f"Vídeo: {desc}")
+                has_video_attention = True
+                
+    if not has_video_attention and session.score_video is not None:
+        if session.score_video < 50:
+            factors["positive"].append("Vídeo: Expressões faciais neutras/tranquilas")
         else:
-            factors["recommendation"] = "Recomendação não disponível (cálculo pendente)."
+            factors["attention"].append("Vídeo: Possível tensão ou postura defensiva detectada")
+
+    has_audio_attention = False
+    if transcription and transcription.get("segments"):
+        for seg in transcription["segments"]:
+            if seg.get("sentiment") == "negative":
+                factors["attention"].append(f"Áudio: {seg.get('text')}")
+                has_audio_attention = True
+                
+    if not has_audio_attention and session.score_audio is not None:
+        if session.score_audio < 50:
+            factors["positive"].append("Áudio: Sem verbalização de dor")
+        else:
+            factors["attention"].append("Áudio: Possível desconforto vocal detectado")
+
+    if risk_details and "document" in risk_details:
+        doc_indicators = risk_details["document"].get("key_indicators", [])
+        for ind in doc_indicators:
+            if "ausente" in ind or "irregular" in ind:
+                factors["attention"].append(f"Doc: {ind.replace('_', ' ').title()}")
+            else:
+                factors["positive"].append(f"Doc: {ind.replace('_', ' ').title()}")
+
+    # A recomendação principal pode vir do maior score ou da analise geral
+    if session.ira_score and session.ira_score >= 70:
+        factors["recommendation"] = "Risco alto identificado. Intervenção imediata recomendada."
+    elif session.ira_score and session.ira_score >= 40:
+        factors["recommendation"] = "Risco moderado. Aumentar vigilância e revisar analgesia."
+    elif session.ira_score is not None:
+        factors["recommendation"] = "Baixo risco. Manter monitoramento regular."
+    else:
+        factors["recommendation"] = "Recomendação não disponível (cálculo pendente)."
 
     return {
         "session_id": session_id,

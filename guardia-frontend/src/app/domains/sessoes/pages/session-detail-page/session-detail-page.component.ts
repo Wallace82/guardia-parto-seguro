@@ -11,12 +11,11 @@ import { SessionsService } from '../../services/sessions.service';
 import { SessionOut, MediaFile } from '../../models/sessions.models';
 import { MediaUploaderComponent } from '../../components/media-uploader.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog.component';
-import { IaSummaryComponent } from '../../../dashboard/components/ia-summary.component';
 
 @Component({
   selector: 'app-session-detail-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink, MediaUploaderComponent, MatDialogModule, IaSummaryComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink, MediaUploaderComponent, MatDialogModule],
   providers: [DatePipe],
   template: `
     <div class="p-8 max-w-[1200px] mx-auto min-h-screen">
@@ -80,14 +79,6 @@ import { IaSummaryComponent } from '../../../dashboard/components/ia-summary.com
               (fileDropped)="onFileUpload($event)">
             </app-media-uploader>
           </div>
-
-          @if (session()?.status === 'completed') {
-            <app-ia-summary
-              [iraLevel]="session()!.ira_level"
-              [iraScore]="session()!.ira_score"
-              [sessionId]="session()!.id"
-            />
-          }
         </div>
 
         <!-- Files List (Right 1 col) -->
