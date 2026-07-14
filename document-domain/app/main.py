@@ -98,75 +98,109 @@ async def analyze(data: DocumentAnalyzeRequest):
     except Exception as e:
         log.warning("document.aws_service.failed", error=str(e))
 
-    ocr_text_lower = ocr_text.lower()
+    # 4. Análise semântica avançada com OpenAI (Substituindo Regex)
+    import openai
+    import json
+    api_key = os.environ.get("OPENAI_API_KEY")
     
-    # 4. Check rule criteria based on actual text
-    consent_present = "consentimento" in ocr_text_lower or "autorizado" in ocr_text_lower
-    
-    # Extract CRM using regex (e.g. CRM-SP 123456)
-    crm_match = re.search(r'crm[-\s]?[a-z]{2}\s?\d+', ocr_text_lower)
-    professional_crm = crm_match.group(0).upper() if crm_match else None
-    
-    # Signature is considered present if we found a CRM or the word "assinatura"
-    professional_signature = bool(professional_crm) or "assinatura" in ocr_text_lower
-    
-    # Extract Medical Record (Prontuário) (e.g. Prontuário HC-2024-001)
-    record_match = re.search(r'prontu[aá]rio\s*[:\-]?\s*([a-z0-9\-]+)', ocr_text_lower)
-    medical_record = record_match.group(1).upper() if record_match else None
-    
-    # Extract CIDs (e.g. CID O26.8)
-    cid_matches = re.findall(r'cid[- 10]*[:\s]*([a-z]\d{2}(?:\.\d)?)', ocr_text_lower)
-    diagnosis_cid10 = [cid.upper() for cid in cid_matches]
-    
-    # Extract diagnoses, procedures, medications
-    medications = []
-    if "ocitocina" in ocr_text_lower:
-        medications.append({"name": "Ocitocina", "dose": "Não extraída", "route": "Não extraída"})
+    if not api_key or not ocr_text.strip():
+        log.warning("openai_fallback", reason="Sem API KEY ou sem texto OCR")
+        # Fallback (Regex antigo)
+        ocr_text_lower = ocr_text.lower()
+        consent_present = "consentimento" in ocr_text_lower or "autorizado" in ocr_text_lower
+        crm_match = re.search(r'crm[-\s]?[a-z]{2}\s?\d+', ocr_text_lower)
+        professional_crm = crm_match.group(0).upper() if crm_match else None
+        professional_signature = bool(professional_crm) or "assinatura" in ocr_text_lower
+        record_match = re.search(r'prontu[aá]rio\s*[:\-]?\s*([a-z0-9\-]+)', ocr_text_lower)
+        medical_record = record_match.group(1).upper() if record_match else None
+        cid_matches = re.findall(r'cid[- 10]*[:\s]*([a-z]\d{2}(?:\.\d)?)', ocr_text_lower)
+        diagnosis_cid10 = [cid.upper() for cid in cid_matches]
+        medications = [{"name": "Ocitocina", "dose": "Não extraída", "route": "Não extraída"}] if "ocitocina" in ocr_text_lower else []
+        procedures = []
+        if "exame obstétrico" in ocr_text_lower or "exame obstetrico" in ocr_text_lower: procedures.append("Exame obstétrico")
+        if "episiotomia" in ocr_text_lower: procedures.append("Episiotomia")
+        if "cardiotocografia" in ocr_text_lower: procedures.append("Cardiotocografia")
         
-    procedures = []
-    if "exame obstétrico" in ocr_text_lower or "exame obstetrico" in ocr_text_lower:
-        procedures.append("Exame obstétrico")
-    if "episiotomia" in ocr_text_lower:
-        procedures.append("Episiotomia")
-    if "cardiotocografia" in ocr_text_lower:
-        procedures.append("Cardiotocografia")
-
-    # Complete extracted fields
-    extracted_fields = ExtractedFields(
-        patient_name_hash=None, # Cannot reliably extract without NLP
-        medical_record=medical_record,
-        diagnosis_cid10=diagnosis_cid10,
-        procedures=procedures,
-        medications=medications,
-        professional_signature=professional_signature,
-        professional_crm=professional_crm,
-        attendance_date=None,
-        consent_present=consent_present
-    )
-
-    # 5. Define completeness and risk score (IRA)
-    # RNF-009 / RN-009 / RN-003
-    if consent_present:
-        completeness_score = 95.0
-        ira_score = 15.0  # Risco obstétrico baixo do documento
-    else:
-        completeness_score = 45.0
-        ira_score = 80.0  # Risco obstétrico alto (inconsistência crítica)
-
-    consistency_checks = [
-        ConsistencyCheck(
-            check="consent_present",
-            passed=consent_present,
-            severity="none" if consent_present else "high",
-            detail="Termo de consentimento verificado" if consent_present else "Consentimento informado ausente para procedimento invasivo"
-        ),
-        ConsistencyCheck(
-            check="professional_signature",
-            passed=professional_signature,
-            severity="none" if professional_signature else "medium",
-            detail="Assinatura e CRM presentes" if professional_signature else "Assinatura profissional não identificada"
+        extracted_fields = ExtractedFields(
+            patient_name_hash=None, medical_record=medical_record, diagnosis_cid10=diagnosis_cid10,
+            procedures=procedures, medications=medications, professional_signature=professional_signature,
+            professional_crm=professional_crm, attendance_date=None, consent_present=consent_present
         )
-    ]
+        completeness_score = 95.0 if consent_present else 45.0
+        ira_score = 15.0 if consent_present else 80.0
+        consistency_checks = [
+            ConsistencyCheck(check="consent_present", passed=consent_present, severity="none" if consent_present else "high", detail="Termo de consentimento verificado" if consent_present else "Consentimento ausente"),
+            ConsistencyCheck(check="professional_signature", passed=professional_signature, severity="none" if professional_signature else "medium", detail="Assinatura e CRM presentes" if professional_signature else "Assinatura ausente")
+        ]
+    else:
+        log.info("running_openai_document_analysis")
+        client = openai.OpenAI(api_key=api_key)
+        prompt = f"""
+Você é um sistema especialista em auditoria médica e obstétrica.
+Extraia os dados clínicos do seguinte texto extraído de um prontuário/documento via OCR:
+
+Texto OCR: "{ocr_text}"
+
+Retorne um JSON estritamente neste formato:
+{{
+  "medical_record": "Número do prontuário (ou null se não houver)",
+  "diagnosis_cid10": ["Lista de CIDs (códigos) encontrados"],
+  "procedures": ["Lista de procedimentos médicos identificados (escreva o nome correto e padronizado)"],
+  "medications": [{{"name": "nome do remédio", "dose": "dose descrita ou 'Não extraída'", "route": "via descrita ou 'Não extraída'"}}],
+  "professional_signature": true ou false (se há assinatura explícita, carimbo, ou número de registro médico como CRM),
+  "professional_crm": "O CRM extraído com a sigla do estado se houver (ou null)",
+  "consent_present": true ou false (se o documento menciona expressamente que o paciente consentiu, autorizou ou concordou com o tratamento/procedimentos)
+}}
+"""
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={ "type": "json_object" },
+                temperature=0.1
+            )
+            data_json = json.loads(response.choices[0].message.content)
+            
+            consent_present = bool(data_json.get("consent_present", False))
+            professional_signature = bool(data_json.get("professional_signature", False))
+            
+            extracted_fields = ExtractedFields(
+                patient_name_hash=None,
+                medical_record=data_json.get("medical_record"),
+                diagnosis_cid10=data_json.get("diagnosis_cid10", []),
+                procedures=data_json.get("procedures", []),
+                medications=data_json.get("medications", []),
+                professional_signature=professional_signature,
+                professional_crm=data_json.get("professional_crm"),
+                attendance_date=None,
+                consent_present=consent_present
+            )
+            
+            # Define completeness and risk score (IRA)
+            completeness_score = 95.0 if consent_present else 45.0
+            ira_score = 15.0 if consent_present else 80.0
+            
+            consistency_checks = [
+                ConsistencyCheck(
+                    check="consent_present",
+                    passed=consent_present,
+                    severity="none" if consent_present else "high",
+                    detail="IA: Consentimento informado e explícito identificado no texto" if consent_present else "IA: Sem evidência de consentimento explícito no texto"
+                ),
+                ConsistencyCheck(
+                    check="professional_signature",
+                    passed=professional_signature,
+                    severity="none" if professional_signature else "medium",
+                    detail="IA: Assinatura ou CRM do profissional presentes" if professional_signature else "IA: Assinatura profissional não detectada"
+                )
+            ]
+            log.info("openai_document_analysis_success", ira=ira_score)
+        except Exception as oai_err:
+            log.error("openai_document_analysis_failed", error=str(oai_err))
+            extracted_fields = ExtractedFields(consent_present=False)
+            completeness_score = 40.0
+            ira_score = 90.0
+            consistency_checks = [ConsistencyCheck(check="error", passed=False, severity="high", detail="Falha na análise via IA (OpenAI)")]
 
     log.info("document.analyze.completed", session_id=data.session_id, ira_score=ira_score, consent=consent_present)
 
