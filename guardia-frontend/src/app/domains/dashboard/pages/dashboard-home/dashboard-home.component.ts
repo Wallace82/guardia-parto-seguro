@@ -119,6 +119,7 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
               [iraScore]="activeSession()!.ira_score"
               [emotionScore]="emotionScore()"
               [poseScore]="poseScore()"
+              [commScore]="commScore()"
             />
 
             <!-- Timeline + IA Summary -->
@@ -184,6 +185,8 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
   emotionScore = signal<number | null>(null);
   poseScore = signal<number | null>(null);
 
+  commScore = signal<number | null>(null);
+
   ngOnInit() {
     this.loadRecentSessions();
   }
@@ -223,6 +226,7 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     this.timelineEvents.set([]);
     this.emotionScore.set(null);
     this.poseScore.set(null);
+    this.commScore.set(null);
     this.analysis.set(null);
     
     if (session.status === 'completed') {
@@ -256,6 +260,30 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
           this.emotionScore.set(vidRes.components.emotion_score || 0);
           this.poseScore.set(vidRes.components.pose_score || 0);
         }
+      }
+    }
+
+    if (analysis.transcription && analysis.transcription.segments) {
+      let positiveCount = 0;
+      let totalCount = 0;
+      for (const seg of analysis.transcription.segments) {
+         if (seg.role === 'profissional') {
+            totalCount++;
+            if (seg.sentiment === 'positive' || seg.sentiment === 'neutral') positiveCount++;
+         }
+      }
+      
+      if (totalCount === 0) {
+        for (const seg of analysis.transcription.segments) {
+           totalCount++;
+           if (seg.sentiment === 'positive' || seg.sentiment === 'neutral') positiveCount++;
+        }
+      }
+      
+      if (totalCount > 0) {
+        this.commScore.set(Math.round((positiveCount / totalCount) * 100));
+      } else {
+        this.commScore.set(85); // Default positive if text exists
       }
     }
   }

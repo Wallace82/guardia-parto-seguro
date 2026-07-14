@@ -69,6 +69,7 @@ export class RealtimeIndicatorsComponent {
   // Real specific AI components
   emotionScore = input<number | null>(null);
   poseScore = input<number | null>(null);
+  commScore = input<number | null>(null);
 
   indicators = computed<IndicatorData[]>(() => {
     const video = this.scoreVideo();
@@ -78,6 +79,7 @@ export class RealtimeIndicatorsComponent {
     // Check if we have detailed analysis available
     const hasEmotion = this.emotionScore() !== null && this.emotionScore() !== undefined;
     const hasPose = this.poseScore() !== null && this.poseScore() !== undefined;
+    const hasComm = this.commScore() !== null && this.commScore() !== undefined;
 
     const hasVideo = video !== null && video !== undefined;
     const hasAudio = audio !== null && audio !== undefined;
@@ -86,7 +88,6 @@ export class RealtimeIndicatorsComponent {
     // Use detailed scores if available, otherwise fallback to the old calculation or 0
     let emotionalValue = 0;
     if (hasEmotion) {
-       // O emotion_score do backend representa "risco de dor/medo". Para o visual ser positivo (confiança): 100 - risco
        emotionalValue = Math.round(100 - this.emotionScore()!);
     } else if (hasVideo) {
        emotionalValue = Math.round(100 - video!);
@@ -94,14 +95,23 @@ export class RealtimeIndicatorsComponent {
     
     let bodyValue = 0;
     if (hasPose) {
-       // O pose_score do backend representa "risco postural". Para o visual ser positivo: 100 - risco
        bodyValue = Math.round(100 - this.poseScore()!);
     } else if (hasVideo) {
        bodyValue = Math.round(100 - video! * 0.7);
     }
 
-    const commValue = hasDoc ? Math.round(100 - doc!) : 0;
+    let commValue = 0;
+    if (hasComm) {
+       commValue = this.commScore()!;
+    } else if (hasDoc) {
+       commValue = Math.round(100 - doc!);
+    } else if (hasAudio) {
+       commValue = Math.round(100 - audio!);
+    }
+
     const anxietyValue = hasAudio ? Math.round(audio!) : 0;
+    
+    const commIsActive = hasComm || hasDoc || hasAudio;
 
     return [
       {
@@ -120,9 +130,9 @@ export class RealtimeIndicatorsComponent {
         title: 'Comunicação',
         subtitle: 'Humanizada',
         value: commValue,
-        level: hasDoc ? this.getPositiveLevel(commValue) : 'Aguardando',
-        description: hasDoc ? this.getPositiveDescription(commValue, 'comunicação') : 'Sem dados de documentos',
-        color: hasDoc ? this.getPositiveColor(commValue) : '#4b5563',
+        level: commIsActive ? this.getPositiveLevel(commValue) : 'Aguardando',
+        description: commIsActive ? this.getPositiveDescription(commValue, 'comunicação') : 'Sem dados textuais/áudio',
+        color: commIsActive ? this.getPositiveColor(commValue) : '#4b5563',
       },
       {
         icon: 'accessibility_new',

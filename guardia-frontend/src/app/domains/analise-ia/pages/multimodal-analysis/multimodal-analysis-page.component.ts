@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -54,46 +54,54 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
         <!-- Fontes de dados analisadas -->
         <div class="mb-8 animate-fade-in" style="animation-delay: 0.15s">
           <h3 class="text-lg font-semibold text-white mb-4">Fontes de dados analisadas</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             
-            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none">
+            <!-- Video -->
+            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none" [class.opacity-50]="videoFiles().length === 0">
               <mat-icon class="text-primary-400 !text-3xl mb-2">videocam</mat-icon>
               <h4 class="text-sm font-bold text-white">Vídeo</h4>
-              <p class="text-xs text-text-muted mb-4 font-mono">15 min 32s</p>
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon>
-                Processado
-              </span>
+              <p class="text-xs text-text-muted mb-4 font-mono">{{ videoFiles().length }} arquivo(s)</p>
+              @if (videoFiles().length > 0) {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> Processado
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface2 text-text-muted text-xs font-semibold rounded-full w-full justify-center">
+                  Não enviado
+                </span>
+              }
             </div>
 
-            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none">
+            <!-- Audio -->
+            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none" [class.opacity-50]="audioFiles().length === 0">
               <mat-icon class="text-secondary-400 !text-3xl mb-2">graphic_eq</mat-icon>
               <h4 class="text-sm font-bold text-white">Áudio</h4>
-              <p class="text-xs text-text-muted mb-4 font-mono">08 min 47s</p>
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon>
-                Transcrito
-              </span>
+              <p class="text-xs text-text-muted mb-4 font-mono">{{ audioFiles().length }} arquivo(s)</p>
+              @if (audioFiles().length > 0) {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> Transcrito
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface2 text-text-muted text-xs font-semibold rounded-full w-full justify-center">
+                  Não enviado
+                </span>
+              }
             </div>
 
-            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none">
+            <!-- Documentos -->
+            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none" [class.opacity-50]="docFiles().length === 0">
               <mat-icon class="text-primary-300 !text-3xl mb-2">description</mat-icon>
               <h4 class="text-sm font-bold text-white">Documentos</h4>
-              <p class="text-xs text-text-muted mb-4 font-mono">3 arquivos</p>
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon>
-                Extraído
-              </span>
-            </div>
-
-            <div class="glass-card p-5 flex flex-col items-center text-center hover:!transform-none">
-              <mat-icon class="text-danger-400 !text-3xl mb-2">monitor_heart</mat-icon>
-              <h4 class="text-sm font-bold text-white">Sinais vitais</h4>
-              <p class="text-xs text-text-muted mb-4 font-mono">Tempo real</p>
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon>
-                Monitorado
-              </span>
+              <p class="text-xs text-text-muted mb-4 font-mono">{{ docFiles().length }} arquivo(s)</p>
+              @if (docFiles().length > 0) {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> Extraído
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface2 text-text-muted text-xs font-semibold rounded-full w-full justify-center">
+                  Não enviado
+                </span>
+              }
             </div>
 
           </div>
@@ -126,6 +134,10 @@ export class MultimodalAnalysisPageComponent implements OnInit {
   loading = signal(true);
   session = signal<SessionOut | null>(null);
   analysis = signal<SessionAnalysisOut | null>(null);
+
+  videoFiles = computed(() => this.session()?.media_files?.filter(f => f.media_type === 'video') || []);
+  audioFiles = computed(() => this.session()?.media_files?.filter(f => f.media_type === 'audio') || []);
+  docFiles = computed(() => this.session()?.media_files?.filter(f => f.media_type === 'document') || []);
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
