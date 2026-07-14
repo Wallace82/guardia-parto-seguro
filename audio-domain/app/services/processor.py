@@ -95,20 +95,25 @@ class AudioProcessor:
                         log.info("running_openai_analysis")
                         client = openai.OpenAI(api_key=api_key)
                         prompt = f"""
-Você é um sistema especialista em vigilância obstétrica.
-Analise a seguinte transcrição de áudio de uma sala de parto e identifique:
-1. Risco de maus-tratos, violência obstétrica ou dor intensa ignorada.
-2. Qualidade do acolhimento/sentimento.
+Você é um sistema especialista em vigilância obstétrica e análise de linguagem (NLP).
+Analise a seguinte transcrição de áudio de uma sala de parto e avalie a interação entre a equipe médica e a paciente.
+
+Além dos riscos gerais (dor ignorada, violência física), você DEVE identificar ativamente os seguintes padrões de comunicação:
+- Comentários inadequados (ex: "na hora de fazer o menino você não sentiu dor", "hoje vamos fazer menos toques em você do que eu gostaria").
+- Linguagem invasiva (ex: "deita ai e abre as pernas que vou te examinar").
+- Abuso de autoridade ou tom de superioridade da equipe médica.
+- Falta de consentimento informado (realizar procedimentos sem explicar ou pedir permissão clara).
+- Comunicação não humanizada (frieza, falta de empatia, impaciência, descaso).
 
 Transcrição: "{transcription_text}"
 
 Retorne um JSON válido estritamente com o seguinte formato:
 {{
-  "ira_score": (número decimal de 0.0 a 100.0, onde 100.0 é risco crítico/violência, e 0.0 é totalmente seguro),
-  "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito, e 0.0 é péssimo),
+  "ira_score": (número decimal de 0.0 a 100.0, onde 100.0 é risco crítico/violência/abuso extremo, e 0.0 é totalmente seguro e humanizado),
+  "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito/humanizado, e 0.0 é péssimo/frio),
   "key_findings": [
     {{
-      "description": "Breve frase descrevendo o achado, ex: 'Tom agressivo por parte do profissional' ou 'Paciente queixando-se de dor'",
+      "description": "Breve frase descrevendo o achado, ex: 'Comentário inadequado detectado: ...', 'Linguagem invasiva identificada', ou 'Falta de consentimento informado'",
       "confidence": (número decimal de 0.0 a 1.0)
     }}
   ]
