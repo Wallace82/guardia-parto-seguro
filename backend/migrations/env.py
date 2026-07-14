@@ -17,6 +17,7 @@ if config.config_file_name is not None:
 from app.database import Base
 from app.auth.models import User, RefreshToken
 from app.sessions.models import Session, MediaFile
+from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis, RiskHistory
 from app.alerts.models import Alert
 from app.audit.models import AuditLog
 

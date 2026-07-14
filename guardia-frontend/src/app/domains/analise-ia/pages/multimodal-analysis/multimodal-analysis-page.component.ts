@@ -51,6 +51,16 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
           <app-patient-info-bar [session]="session()" />
         </div>
 
+        <!-- Anotações Clínicas Iniciais -->
+        @if (session()?.notes) {
+          <div class="mb-8 animate-fade-in" style="animation-delay: 0.12s">
+            <h3 class="text-lg font-semibold text-white mb-4">Anotações Clínicas</h3>
+            <div class="glass-card p-5">
+              <p class="text-sm text-text-muted whitespace-pre-line">{{ session()?.notes }}</p>
+            </div>
+          </div>
+        }
+
         <!-- Fontes de dados analisadas -->
         <div class="mb-8 animate-fade-in" style="animation-delay: 0.15s">
           <h3 class="text-lg font-semibold text-white mb-4">Fontes de dados analisadas</h3>
@@ -115,7 +125,13 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
         <!-- Fusion Result & Factors -->
         <div class="mb-12 animate-fade-in" style="animation-delay: 0.25s">
           <div class="grid grid-cols-1 gap-8">
-            <app-fusion-result [score]="session()?.ira_score || 0" />
+            <app-fusion-result 
+              [score]="session()?.ira_score || 0"
+              [scoreVideo]="session()?.score_video"
+              [scoreAudio]="session()?.score_audio"
+              [scoreDocument]="session()?.score_document"
+              [scoreNotes]="session()?.score_notes"
+            />
             <app-factors-panel [factors]="analysis()?.factors" />
           </div>
         </div>

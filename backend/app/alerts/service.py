@@ -12,6 +12,7 @@ import structlog
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.alerts.models import Alert, AlertSeverity
 from app.alerts.schemas import AlertCreateRequest
@@ -72,6 +73,7 @@ class AlertService:
         count_query = select(func.count()).select_from(query.subquery())
         total = await self.db.scalar(count_query) or 0
 
+        query = query.options(joinedload(Alert.session))
         result = await self.db.execute(query.offset(skip).limit(limit))
         items = list(result.scalars().all())
 

@@ -111,7 +111,6 @@ export class SidebarComponent {
   mainMenuItems: MenuItem[] = [
     { icon: 'home', label: 'Início', route: '/dashboard' },
     { icon: 'people', label: 'Pacientes', route: '/sessoes' },
-    { icon: 'psychology', label: 'Análise IA', route: '/analise' },
     { icon: 'summarize', label: 'Relatórios', route: '/relatorios' },
     { icon: 'notification_important', label: 'Alertas', route: '/alertas' },
   ];

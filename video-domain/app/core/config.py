@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
 
     # ── Banco de Dados ──
-    DATABASE_URL: str = "postgresql+asyncpg://guardia:guardia_dev_pass@postgres-domains:5432/video_db"
+    DATABASE_URL: str = "postgresql+asyncpg://guardia:guardia_dev_pass@postgres-core:5432/core_db"
 
     # ── Volume compartilhado (mídias de vídeo) ──
     SHARED_MEDIA_DIR: str = "/shared_media"

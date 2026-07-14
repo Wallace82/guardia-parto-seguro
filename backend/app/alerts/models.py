@@ -57,5 +57,15 @@ class Alert(Base):
         DateTime(timezone=True), server_default=func.now(), index=True
     )
 
+    session: Mapped["Session"] = relationship("Session")
+
+    @property
+    def patient_code(self) -> str | None:
+        return self.session.patient_code if self.session else None
+
+    @property
+    def session_title(self) -> str | None:
+        return self.session.title if self.session else None
+
     def __repr__(self) -> str:
         return f"<Alert id={self.id} type={self.alert_type} severity={self.severity}>"

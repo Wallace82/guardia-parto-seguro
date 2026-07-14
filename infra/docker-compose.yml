@@ -10,7 +10,6 @@
 # --------------- VOLUMES PERSISTENTES ----------------
 volumes:
   postgres_core_data:
-  postgres_domains_data:
   redis_data:
   shared_media_data:
 
@@ -48,28 +47,7 @@ services:
       retries: 5
       start_period: 20s
 
-  # --- PostgreSQL: bancos de domínio (video, audio, document, risk, report) ---
-  postgres-domains:
-    image: postgres:16-alpine
-    container_name: guardia-postgres-domains
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER:-guardia}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-guardia_dev_pass}
-      POSTGRES_DB: video_db
-    volumes:
-      - postgres_domains_data:/var/lib/postgresql/data
-      - ./postgres/init-domains.sql:/docker-entrypoint-initdb.d/init-domains.sql:ro
-    networks:
-      - guardia_net
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-guardia}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+
 
   # --- Redis: cache e filas de sessão ---
   redis:
@@ -140,7 +118,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/video_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8001"
       VIDEO_FRAME_SAMPLE_RATE: ${VIDEO_FRAME_SAMPLE_RATE:-1.0}
       DEEPFACE_BACKEND: ${DEEPFACE_BACKEND:-retinaface}
@@ -154,7 +132,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
@@ -175,7 +153,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/audio_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8002"
       SHARED_MEDIA_DIR: /shared_media
     volumes:
@@ -186,7 +164,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
@@ -207,7 +185,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/document_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8003"
       SHARED_MEDIA_DIR: /shared_media
     volumes:
@@ -218,7 +196,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/documents/health"]
@@ -239,7 +217,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/risk_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8004"
       IRA_WEIGHT_VIDEO: ${IRA_WEIGHT_VIDEO:-0.40}
       IRA_WEIGHT_AUDIO: ${IRA_WEIGHT_AUDIO:-0.35}
@@ -253,7 +231,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8004/api/v1/risk/health"]
@@ -274,7 +252,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/report_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8005"
     volumes:
       - ../report-domain:/app
@@ -283,7 +261,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/reports/health"]
@@ -332,7 +310,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/security_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8006"
     volumes:
       - ../security-domain:/app
@@ -341,7 +319,7 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/health"]

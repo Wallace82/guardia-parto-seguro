@@ -3,7 +3,7 @@ GuardIA — Sessions Service
 CRUD de sessões com controle de acesso por papel
 """
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -197,8 +197,61 @@ class SessionService:
             except Exception:
                 pass
                 
+        # Remover registros de análise associados à mídia
+        if media_file.media_type == "video":
+            from app.sessions.analysis_models import VideoAnalysis
+            await self.db.execute(delete(VideoAnalysis).where(VideoAnalysis.session_id == session.id, VideoAnalysis.arquivo_video == media_file.filename))
+        elif media_file.media_type == "audio":
+            from app.sessions.analysis_models import AudioAnalysis
+            await self.db.execute(delete(AudioAnalysis).where(AudioAnalysis.session_id == session.id, AudioAnalysis.arquivo_audio == media_file.filename))
+        elif media_file.media_type == "document":
+            from app.sessions.analysis_models import DocumentAnalysis
+            await self.db.execute(delete(DocumentAnalysis).where(DocumentAnalysis.session_id == session.id, DocumentAnalysis.arquivo_documento == media_file.filename))
+
         # Remover do banco
         await self.db.delete(media_file)
+        await self.db.commit()
+
+        # Recalcular os índices e o IRA da sessão
+        await self._recalculate_session_risk(session.id)
+
+    async def _recalculate_session_risk(self, session_id: int):
+        from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis
+        from app.risk_engine.fusion_service import RiskFusionEngine
+        
+        session = await self.db.get(Session, session_id)
+        if not session:
+            return
+
+        result = await self.db.execute(select(VideoAnalysis).where(VideoAnalysis.session_id == session_id))
+        video_analyses = result.scalars().all()
+        
+        result = await self.db.execute(select(AudioAnalysis).where(AudioAnalysis.session_id == session_id))
+        audio_analyses = result.scalars().all()
+        
+        result = await self.db.execute(select(DocumentAnalysis).where(DocumentAnalysis.session_id == session_id))
+        doc_analyses = result.scalars().all()
+
+        fusion_result = RiskFusionEngine.calculate_session_risk(
+            list(video_analyses), list(audio_analyses), list(doc_analyses), session.notes
+        )
+        
+        session.ira_score = fusion_result["globalScore"]
+        risk_level = fusion_result["riskLevel"].lower()
+        if risk_level == "medium":
+            session.ira_level = "moderado"
+        elif risk_level == "high":
+            session.ira_level = "critico"
+        elif risk_level == "low":
+            session.ira_level = "baixo"
+        else:
+            session.ira_level = risk_level
+
+        session.score_video = fusion_result["sources"].get("video")
+        session.score_audio = fusion_result["sources"].get("audio")
+        session.score_document = fusion_result["sources"].get("document")
+        session.score_notes = fusion_result["sources"].get("notes")
+
         await self.db.commit()
 
     async def get_dashboard_metrics(self) -> dict:

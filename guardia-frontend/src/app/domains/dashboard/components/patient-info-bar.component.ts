@@ -69,10 +69,7 @@ export class PatientInfoBarComponent {
   });
 
   clinicalDetails = computed(() => {
-    const s = this.session();
-    if (!s) return '';
-    // Usa as notas da sessão como detalhes clínicos, se houver
-    return s.notes || 'Dados clínicos não informados';
+    return 'Paciente em monitoramento ativo';
   });
 
   sala = computed(() => {

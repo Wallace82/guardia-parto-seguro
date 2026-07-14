@@ -23,6 +23,7 @@ export interface SessionOut {
   score_video: number | null;
   score_audio: number | null;
   score_document: number | null;
+  score_notes: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
