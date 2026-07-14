@@ -57,11 +57,13 @@ class Session(Base):
     )
 
     # IRA calculado (preenchido após processamento)
+    # DEPRECATED: Estes campos flat serão migrados para as novas tabelas de análise (Etapa 2).
     ira_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ira_level: Mapped[str | None] = mapped_column(String(20), nullable=True)  # baixo/moderado/critico
     score_video: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_audio: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_document: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score_notes: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -73,6 +75,17 @@ class Session(Base):
 
     media_files: Mapped[list["MediaFile"]] = relationship(
         back_populates="session", cascade="all, delete-orphan"
+    )
+
+    # Novas relações de análise baseada em evidências
+    video_analyses: Mapped[list["VideoAnalysis"]] = relationship(
+        "VideoAnalysis", back_populates="session", cascade="all, delete-orphan"
+    )
+    audio_analyses: Mapped[list["AudioAnalysis"]] = relationship(
+        "AudioAnalysis", back_populates="session", cascade="all, delete-orphan"
+    )
+    document_analyses: Mapped[list["DocumentAnalysis"]] = relationship(
+        "DocumentAnalysis", back_populates="session", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

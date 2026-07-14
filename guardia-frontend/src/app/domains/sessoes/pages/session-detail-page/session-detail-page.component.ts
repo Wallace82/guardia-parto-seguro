@@ -4,16 +4,19 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { finalize } from 'rxjs';
 
 import { SessionsService } from '../../services/sessions.service';
 import { SessionOut, MediaFile } from '../../models/sessions.models';
 import { MediaUploaderComponent } from '../../components/media-uploader.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog.component';
+import { IaSummaryComponent } from '../../../dashboard/components/ia-summary.component';
 
 @Component({
   selector: 'app-session-detail-page',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink, MediaUploaderComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink, MediaUploaderComponent, MatDialogModule, IaSummaryComponent],
   providers: [DatePipe],
   template: `
     <div class="p-8 max-w-[1200px] mx-auto min-h-screen">
@@ -77,6 +80,14 @@ import { MediaUploaderComponent } from '../../components/media-uploader.componen
               (fileDropped)="onFileUpload($event)">
             </app-media-uploader>
           </div>
+
+          @if (session()?.status === 'completed') {
+            <app-ia-summary
+              [iraLevel]="session()!.ira_level"
+              [iraScore]="session()!.ira_score"
+              [sessionId]="session()!.id"
+            />
+          }
         </div>
 
         <!-- Files List (Right 1 col) -->
@@ -101,6 +112,7 @@ import { MediaUploaderComponent } from '../../components/media-uploader.componen
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-white text-sm font-bold truncate mb-0.5" [title]="file.filename">{{ file.filename }}</p>
+                    <p class="text-text-muted text-[11px] mb-1.5 leading-tight">{{ getFileDescription(file.media_type) }}</p>
                     <div class="flex items-center justify-between text-xs text-text-subtle">
                       <span>{{ (file.file_size_bytes / 1024 / 1024) | number:'1.1-2' }} MB</span>
                       
@@ -130,6 +142,7 @@ export class SessionDetailPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly sessionsService = inject(SessionsService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   sessionId: number | null = null;
   session = signal<SessionOut | null>(null);
@@ -228,17 +241,39 @@ export class SessionDetailPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteFile(mediaId: number) {
-    if (confirm('Tem certeza que deseja excluir este arquivo? Essa ação não pode ser desfeita.')) {
-      this.sessionsService.deleteMediaFile(mediaId).subscribe({
-        next: () => {
-          this.snackBar.open('Arquivo excluído com sucesso!', 'OK', { duration: 3000 });
-          this.loadSession();
-        },
-        error: () => {
-          this.snackBar.open('Erro ao excluir o arquivo.', 'Fechar', { duration: 3000 });
-        }
-      });
+  getFileDescription(type: string): string {
+    switch (type) {
+      case 'video': return 'Extrai postura corporal e expressões faciais.';
+      case 'audio': return 'Avalia ansiedade vocal e comunicação humanizada.';
+      case 'document': return 'Extrai indicadores de risco do prontuário.';
+      default: return 'Arquivo em processamento de IA.';
     }
+  }
+
+  deleteFile(mediaId: number) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Excluir arquivo',
+        message: 'Tem certeza que deseja excluir este arquivo? Essa ação não pode ser desfeita e os dados da análise serão perdidos.',
+        confirmText: 'Excluir',
+        cancelText: 'Cancelar',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.sessionsService.deleteMediaFile(mediaId).subscribe({
+          next: () => {
+            this.snackBar.open('Arquivo excluído com sucesso!', 'OK', { duration: 3000 });
+            this.loadSession();
+          },
+          error: () => {
+            this.snackBar.open('Erro ao excluir o arquivo.', 'Fechar', { duration: 3000 });
+          }
+        });
+      }
+    });
   }
 }

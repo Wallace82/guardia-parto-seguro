@@ -78,13 +78,18 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                     <mat-icon class="text-danger-500 mt-1 !text-[28px] !w-[28px] !h-[28px]">error</mat-icon>
                     <div class="flex-1">
                       <div class="flex justify-between items-start mb-1">
-                        <h3 class="text-danger-400 font-bold text-base m-0">{{ humanizeTitle(alert.title) }}</h3>
+                        <h3 class="text-danger-400 font-bold text-base m-0">{{ alert.title }}</h3>
                         <span class="text-xs text-text-muted font-mono">{{ alert.created_at | date:'HH:mm' }}</span>
                       </div>
-                      <p class="text-white text-sm mb-3">{{ humanizeDescription(alert.description) }}</p>
+                      <p class="text-white text-sm mb-3">{{ alert.description }}</p>
                       <div class="flex items-center justify-between">
-                        <p class="text-xs text-text-muted">Paciente: Maria Silva de Oliveira • Sala 03</p>
-                        <span class="bg-danger-500/20 text-danger-400 text-xs font-bold px-2 py-0.5 rounded border border-danger-500/30">Crítico</span>
+                        <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
+                        <div class="flex items-center gap-3">
+                          <span class="bg-danger-500/20 text-danger-400 text-xs font-bold px-2 py-0.5 rounded border border-danger-500/30">Crítico</span>
+                          <button mat-button class="!text-danger-400 hover:!bg-danger-500/10" (click)="acknowledge(alert.id)" [disabled]="isAcknowledging() === alert.id">
+                            <mat-icon>check</mat-icon> Reconhecer
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -106,13 +111,18 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                     <mat-icon class="text-warning mt-1 !text-[28px] !w-[28px] !h-[28px]">warning</mat-icon>
                     <div class="flex-1">
                       <div class="flex justify-between items-start mb-1">
-                        <h3 class="text-warning-500 font-bold text-base m-0">{{ humanizeTitle(alert.title) }}</h3>
+                        <h3 class="text-warning-500 font-bold text-base m-0">{{ alert.title }}</h3>
                         <span class="text-xs text-text-muted font-mono">{{ alert.created_at | date:'HH:mm' }}</span>
                       </div>
-                      <p class="text-white text-sm mb-3">{{ humanizeDescription(alert.description) }}</p>
+                      <p class="text-white text-sm mb-3">{{ alert.description }}</p>
                       <div class="flex items-center justify-between">
-                        <p class="text-xs text-text-muted">Paciente: Maria Silva de Oliveira • Sala 03</p>
-                        <span class="bg-warning/20 text-warning-400 text-xs font-bold px-2 py-0.5 rounded border border-warning/30">Atenção</span>
+                        <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
+                        <div class="flex items-center gap-3">
+                          <span class="bg-warning/20 text-warning-400 text-xs font-bold px-2 py-0.5 rounded border border-warning/30">Atenção</span>
+                          <button mat-button class="!text-warning-500 hover:!bg-warning/10" (click)="acknowledge(alert.id)" [disabled]="isAcknowledging() === alert.id">
+                            <mat-icon>check</mat-icon> Reconhecer
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -124,33 +134,7 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
             </div>
           }
 
-          <!-- Alertas Informativos -->
-          @if (informativeAlerts().length > 0) {
-            <div>
-              <h2 class="text-primary-400 font-bold mb-4">Alertas informativos</h2>
-              <div class="flex flex-col gap-3">
-                @for (alert of informativeAlerts(); track alert.id) {
-                  <div class="bg-primary-500/5 border border-primary-500/20 rounded-xl p-5 hover:bg-primary-500/10 transition-colors cursor-pointer flex items-start gap-4">
-                    <mat-icon class="text-primary-400 mt-1 !text-[28px] !w-[28px] !h-[28px]">info</mat-icon>
-                    <div class="flex-1">
-                      <div class="flex justify-between items-start mb-1">
-                        <h3 class="text-primary-400 font-bold text-base m-0">{{ alert.title }}</h3>
-                        <span class="text-xs text-text-muted font-mono">{{ alert.created_at | date:'HH:mm' }}</span>
-                      </div>
-                      <p class="text-white text-sm mb-3">{{ alert.description }}</p>
-                      <div class="flex items-center justify-between">
-                        <p class="text-xs text-text-muted">Paciente: Maria Silva de Oliveira • Sala 03</p>
-                        <span class="bg-primary-500/20 text-primary-300 text-xs font-bold px-2 py-0.5 rounded border border-primary-500/30">Informativo</span>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-              <div class="mt-3 text-right">
-                <a class="text-xs text-primary-400 font-semibold hover:underline cursor-pointer">Ver todos os informativos ({{ informativeAlerts().length }}) →</a>
-              </div>
-            </div>
-          }
+
 
         </div>
       </div>
@@ -174,8 +158,7 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
 
   // Computed signals for categorized alerts
   criticalAlerts = computed(() => this.alerts().filter(a => a.severity === 'critical'));
-  moderateAlerts = computed(() => this.alerts().filter(a => a.severity === 'moderate' && a.alert_type !== 'system_error'));
-  informativeAlerts = computed(() => this.alerts().filter(a => a.alert_type === 'system_error')); // Simulating informative alerts with system_error type for now
+  moderateAlerts = computed(() => this.alerts().filter(a => a.severity === 'moderate'));
 
   ngOnInit() {
     // Polling de 10 segundos
@@ -238,24 +221,4 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Helpers para humanizar textos
-  humanizeTitle(title: string): string {
-    if (title.toLowerCase().includes('violência') || title.toLowerCase().includes('abuso')) {
-      return 'Comunicação inadequada identificada';
-    }
-    if (title.toLowerCase().includes('alto risco')) {
-      return 'Ansiedade elevada detectada';
-    }
-    return title;
-  }
-
-  humanizeDescription(desc: string): string {
-    if (desc.toLowerCase().includes('agressão') || desc.toLowerCase().includes('violência')) {
-      return 'Foram detectadas interrupções e ausência de explicações à paciente.';
-    }
-    if (desc.toLowerCase().includes('risco')) {
-      return 'A IA identificou níveis elevados de ansiedade na paciente.';
-    }
-    return desc;
-  }
 }

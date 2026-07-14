@@ -62,6 +62,7 @@ class SessionOut(BaseModel):
     score_video: float | None
     score_audio: float | None
     score_document: float | None
+    score_notes: float | None
     notes: str | None
     created_at: datetime
     updated_at: datetime

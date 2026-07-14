@@ -47,3 +47,16 @@ export interface SessionAnalysisOut {
   risk_details: RiskDetails | null;
   factors: AnalysisFactors | null;
 }
+
+export interface RiskSourcesOut {
+  video: number | null;
+  audio: number | null;
+  document: number | null;
+}
+
+export interface SessionRiskSummaryOut {
+  sessionId: number;
+  globalScore: number;
+  riskLevel: string;
+  sources: RiskSourcesOut;
+}

@@ -14,8 +14,8 @@ import { QuickActionsComponent } from '../../components/quick-actions.component'
 import { SessionsService } from '../../../sessoes/services/sessions.service';
 import { AnalysisService } from '../../../analise-ia/services/analysis.service';
 import { SessionOut } from '../../../sessoes/models/sessions.models';
-import { SessionAnalysisOut } from '../../../analise-ia/models/analysis.models';
-import { finalize, Subject, takeUntil } from 'rxjs';
+import { SessionAnalysisOut, SessionRiskSummaryOut } from '../../../analise-ia/models/analysis.models';
+import { finalize, Subject, takeUntil, forkJoin } from 'rxjs';
 import { ExportPdfService } from '../../../relatorios/services/export-pdf.service';
 
 @Component({
@@ -113,12 +113,13 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
 
             <!-- Realtime Indicators -->
             <app-realtime-indicators
-              [scoreVideo]="activeSession()!.score_video"
-              [scoreAudio]="activeSession()!.score_audio"
-              [scoreDocument]="activeSession()!.score_document"
-              [iraScore]="activeSession()!.ira_score"
+              [scoreVideo]="riskSummary()?.sources?.video || activeSession()!.score_video"
+              [scoreAudio]="riskSummary()?.sources?.audio || activeSession()!.score_audio"
+              [scoreDocument]="riskSummary()?.sources?.document || activeSession()!.score_document"
+              [iraScore]="riskSummary()?.globalScore || activeSession()!.ira_score"
               [emotionScore]="emotionScore()"
               [poseScore]="poseScore()"
+              [commScore]="commScore()"
             />
 
             <!-- Timeline + IA Summary -->
@@ -178,11 +179,14 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
   recentSessions = signal<SessionOut[]>([]);
   activeSession = signal<SessionOut | null>(null);
   analysis = signal<SessionAnalysisOut | null>(null);
+  riskSummary = signal<SessionRiskSummaryOut | null>(null);
   timelineEvents = signal<TimelineEvent[]>([]);
   loading = signal(false);
   loadingSessionDetails = signal(false);
   emotionScore = signal<number | null>(null);
   poseScore = signal<number | null>(null);
+
+  commScore = signal<number | null>(null);
 
   ngOnInit() {
     this.loadRecentSessions();
@@ -223,7 +227,9 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     this.timelineEvents.set([]);
     this.emotionScore.set(null);
     this.poseScore.set(null);
+    this.commScore.set(null);
     this.analysis.set(null);
+    this.riskSummary.set(null);
     
     if (session.status === 'completed') {
       this.loadAnalysis(session.id);
@@ -232,17 +238,24 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
 
   loadAnalysis(sessionId: number) {
     this.loadingSessionDetails.set(true);
-    this.analysisService.getAnalysis(sessionId).pipe(
+    
+    // Disparar ambas as requisições em paralelo
+    forkJoin({
+      analysis: this.analysisService.getAnalysis(sessionId),
+      riskSummary: this.analysisService.getRiskSummary(sessionId)
+    }).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.loadingSessionDetails.set(false))
     ).subscribe({
-      next: (analysis) => {
-        this.analysis.set(analysis);
-        this.buildTimelineFromAnalysis(analysis);
-        this.extractScoresFromAnalysis(analysis);
+      next: (res) => {
+        this.analysis.set(res.analysis);
+        this.riskSummary.set(res.riskSummary);
+        
+        this.buildTimelineFromAnalysis(res.analysis);
+        this.extractScoresFromAnalysis(res.analysis);
       },
       error: () => {
-        // Mock data
+        // Fallback or mock data handling
       }
     });
   }
@@ -256,6 +269,30 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
           this.emotionScore.set(vidRes.components.emotion_score || 0);
           this.poseScore.set(vidRes.components.pose_score || 0);
         }
+      }
+    }
+
+    if (analysis.transcription && analysis.transcription.segments) {
+      let positiveCount = 0;
+      let totalCount = 0;
+      for (const seg of analysis.transcription.segments) {
+         if (seg.role === 'profissional') {
+            totalCount++;
+            if (seg.sentiment === 'positive' || seg.sentiment === 'neutral') positiveCount++;
+         }
+      }
+      
+      if (totalCount === 0) {
+        for (const seg of analysis.transcription.segments) {
+           totalCount++;
+           if (seg.sentiment === 'positive' || seg.sentiment === 'neutral') positiveCount++;
+        }
+      }
+      
+      if (totalCount > 0) {
+        this.commScore.set(Math.round((positiveCount / totalCount) * 100));
+      } else {
+        this.commScore.set(85); // Default positive if text exists
       }
     }
   }

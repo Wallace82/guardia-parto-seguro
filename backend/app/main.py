@@ -12,6 +12,7 @@ from app.alerts.router import router as alerts_router
 from app.auth.router import router as auth_router
 from app.config import settings
 from app.sessions.router import router as sessions_router
+from app.sessions.analysis_router import router as analysis_router
 from app.middleware.logging import StructlogMiddleware
 
 # Configura o structlog para gerar JSON
@@ -79,6 +80,7 @@ app.add_middleware(StructlogMiddleware)
 # Routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(sessions_router, prefix="/api/v1/sessions", tags=["Sessions"])
+app.include_router(analysis_router)
 app.include_router(alerts_router, prefix="/api/v1/alerts", tags=["Alerts"])
 
 

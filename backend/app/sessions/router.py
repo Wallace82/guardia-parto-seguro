@@ -173,6 +173,43 @@ async def upload_media(
         user_role=current_user.role,
     )
 
+    if media_type == "video":
+        import tempfile
+        import os
+        import subprocess
+        
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
+                tmp_vid.write(file_content)
+                tmp_vid_path = tmp_vid.name
+                
+            tmp_aud_path = tmp_vid_path.replace(".mp4", ".mp3")
+            
+            subprocess.run([
+                "ffmpeg", "-i", tmp_vid_path, 
+                "-vn", "-acodec", "libmp3lame", "-q:a", "2", 
+                tmp_aud_path, "-y"
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            if os.path.exists(tmp_aud_path):
+                with open(tmp_aud_path, "rb") as f_aud:
+                    audio_bytes = f_aud.read()
+                    
+                await SessionService(db).add_media_file(
+                    session_id=session_id,
+                    filename=file.filename.rsplit('.', 1)[0] + ".mp3",
+                    content_type="audio/mpeg",
+                    media_type="audio",
+                    file_content=audio_bytes,
+                    user_id=current_user.id,
+                    user_role=current_user.role,
+                )
+                os.remove(tmp_aud_path)
+            os.remove(tmp_vid_path)
+        except Exception as e:
+            import structlog
+            structlog.get_logger(__name__).warning("audio_extraction_failed", error=str(e))
+
     # Dispara o orquestrador em background
     from app.orchestrator.orchestrator import orchestrate_session_analysis
     background_tasks.add_task(orchestrate_session_analysis, session_id)

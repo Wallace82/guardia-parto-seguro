@@ -61,7 +61,11 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class FusionResultComponent {
-  score = input<number>(18);
+  score = input<number>(0);
+  scoreVideo = input<number | null | undefined>(null);
+  scoreAudio = input<number | null | undefined>(null);
+  scoreDocument = input<number | null | undefined>(null);
+  scoreNotes = input<number | null | undefined>(null);
   
   riskLabel = computed(() => {
     const s = this.score();
@@ -77,19 +81,22 @@ export class FusionResultComponent {
     return '#DC2626';
   });
 
-  // Calculate rotation mapping 0-100 to -180 to 0 degrees for the clip-path semicirle
   rotation = computed(() => {
     const s = Math.min(Math.max(this.score(), 0), 100);
-    // When score is 0, we want it entirely hidden, so rotate -180deg
-    // When score is 100, we want it fully visible, so rotate 0deg
     return -180 + (s * 1.8);
   });
 
-  contributions = computed(() => [
-    { label: 'Vídeo', value: 25, color: '#2563EB' },
-    { label: 'Áudio', value: 20, color: '#8B5CF6' },
-    { label: 'Docum.', value: 10, color: '#EAB308' },
-    { label: 'Sinais', value: 5, color: '#DC2626' },
-    { label: 'Histórico', value: 40, color: '#16A34A' },
-  ]);
+  contributions = computed(() => {
+    const hasVideo = this.scoreVideo() !== null && this.scoreVideo() !== undefined;
+    const hasAudio = this.scoreAudio() !== null && this.scoreAudio() !== undefined;
+    const hasDoc = this.scoreDocument() !== null && this.scoreDocument() !== undefined;
+    const hasNotes = this.scoreNotes() !== null && this.scoreNotes() !== undefined;
+
+    return [
+      { label: 'Vídeo (35%)', value: hasVideo ? 35 : 0, color: hasVideo ? '#2563EB' : '#4b5563' },
+      { label: 'Áudio (30%)', value: hasAudio ? 30 : 0, color: hasAudio ? '#8B5CF6' : '#4b5563' },
+      { label: 'Documentos (20%)', value: hasDoc ? 20 : 0, color: hasDoc ? '#EAB308' : '#4b5563' },
+      { label: 'Anotações (15%)', value: hasNotes ? 15 : 0, color: hasNotes ? '#14B8A6' : '#4b5563' }
+    ];
+  });
 }

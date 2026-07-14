@@ -4,6 +4,8 @@ export type AlertType = 'ira_critico' | 'ira_moderado' | 'system_error';
 export interface AlertOut {
   id: number;
   session_id: number;
+  patient_code?: string;
+  session_title?: string;
   alert_type: AlertType;
   severity: AlertSeverity;
   title: string;

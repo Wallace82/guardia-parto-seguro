@@ -23,6 +23,8 @@ class AlertAcknowledgeRequest(BaseModel):
 class AlertOut(BaseModel):
     id: int
     session_id: int
+    patient_code: str | None = None
+    session_title: str | None = None
     alert_type: str
     severity: str
     title: str

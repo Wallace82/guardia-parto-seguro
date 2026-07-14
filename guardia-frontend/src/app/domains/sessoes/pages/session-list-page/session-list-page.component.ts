@@ -98,6 +98,9 @@ import { SessionEditDialogComponent } from '../../components/session-edit-dialog
                   <a mat-icon-button color="primary" [routerLink]="['/sessoes', s.id]" title="Ver Detalhes">
                     <mat-icon>visibility</mat-icon>
                   </a>
+                  <a mat-icon-button class="text-secondary-400" [routerLink]="['/analise/multimodal', s.id]" title="Resumo da IA">
+                    <mat-icon>psychology</mat-icon>
+                  </a>
                 </td>
               </ng-container>
 
