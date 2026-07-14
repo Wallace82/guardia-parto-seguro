@@ -2,6 +2,7 @@
 GuardIA — Document Domain Service (AWS Integration)
 """
 import os
+import re
 import asyncio
 import httpx
 import structlog
@@ -97,26 +98,34 @@ async def analyze(data: DocumentAnalyzeRequest):
     except Exception as e:
         log.warning("document.aws_service.failed", error=str(e))
 
-    # 3. Dynamic OCR Simulation fallback (checks filename for demo-friendly variations)
-    if not ocr_text or ocr_text == "RELATÓRIO MÉDICO SIMULADO (MOCK)":
-        filename_lower = os.path.basename(file_path).lower()
-        if "consent" in filename_lower or "term" in filename_lower or "autoriz" in filename_lower:
-            ocr_text = "Termo de consentimento livre e esclarecido assinado pela paciente Clara Lima. CRM-SP 123456. Procedimento de episiotomia autorizado."
-        else:
-            ocr_text = "RELATÓRIO MÉDICO SIMULADO (MOCK). Prontuário HC-2024-001. Paciente Clara Lima. Ocitocina 5 UI IV. CRM-SP 123456."
-
     ocr_text_lower = ocr_text.lower()
     
-    # 4. Check rule criteria
+    # 4. Check rule criteria based on actual text
     consent_present = "consentimento" in ocr_text_lower or "autorizado" in ocr_text_lower
-    professional_signature = "crm" in ocr_text_lower or "assinatura" in ocr_text_lower
+    
+    # Extract CRM using regex (e.g. CRM-SP 123456)
+    crm_match = re.search(r'crm[-\s]?[a-z]{2}\s?\d+', ocr_text_lower)
+    professional_crm = crm_match.group(0).upper() if crm_match else None
+    
+    # Signature is considered present if we found a CRM or the word "assinatura"
+    professional_signature = bool(professional_crm) or "assinatura" in ocr_text_lower
+    
+    # Extract Medical Record (Prontuário) (e.g. Prontuário HC-2024-001)
+    record_match = re.search(r'prontu[aá]rio\s*[:\-]?\s*([a-z0-9\-]+)', ocr_text_lower)
+    medical_record = record_match.group(1).upper() if record_match else None
+    
+    # Extract CIDs (e.g. CID O26.8)
+    cid_matches = re.findall(r'cid[- 10]*[:\s]*([a-z]\d{2}(?:\.\d)?)', ocr_text_lower)
+    diagnosis_cid10 = [cid.upper() for cid in cid_matches]
     
     # Extract diagnoses, procedures, medications
     medications = []
     if "ocitocina" in ocr_text_lower:
-        medications.append({"name": "Ocitocina", "dose": "5 UI", "route": "IV"})
+        medications.append({"name": "Ocitocina", "dose": "Não extraída", "route": "Não extraída"})
         
-    procedures = ["Exame obstétrico"]
+    procedures = []
+    if "exame obstétrico" in ocr_text_lower or "exame obstetrico" in ocr_text_lower:
+        procedures.append("Exame obstétrico")
     if "episiotomia" in ocr_text_lower:
         procedures.append("Episiotomia")
     if "cardiotocografia" in ocr_text_lower:
@@ -124,13 +133,13 @@ async def analyze(data: DocumentAnalyzeRequest):
 
     # Complete extracted fields
     extracted_fields = ExtractedFields(
-        patient_name_hash="abc123mockhash",
-        medical_record="HC-2026-003",
-        diagnosis_cid10=["O26.8", "Z34.3"],
+        patient_name_hash=None, # Cannot reliably extract without NLP
+        medical_record=medical_record,
+        diagnosis_cid10=diagnosis_cid10,
         procedures=procedures,
         medications=medications,
         professional_signature=professional_signature,
-        professional_crm="CRM-SP 123456" if professional_signature else None,
+        professional_crm=professional_crm,
         attendance_date=None,
         consent_present=consent_present
     )
