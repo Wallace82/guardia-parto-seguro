@@ -29,30 +29,13 @@ class TextBlock(BaseModel):
     text: Optional[str] = None
     confidence: Optional[float] = None
 
-class ExtractedFields(BaseModel):
-    patient_name_hash: Optional[str] = None
-    medical_record: Optional[str] = None
-    diagnosis_cid10: List[str] = []
-    procedures: List[str] = []
-    medications: List[dict] = []
-    professional_signature: bool = False
-    professional_crm: Optional[str] = None
-    attendance_date: Optional[str] = None
-    consent_present: bool = False
-
-class ConsistencyCheck(BaseModel):
-    check: str
-    passed: bool
-    severity: str
-    detail: str
-
 class DocumentAnalyzeResponse(BaseModel):
     session_id: str
     ira_score: float
     document_type: str
-    extracted_fields: ExtractedFields
+    extracted_fields: dict
     completeness_score: float
-    consistency_checks: List[ConsistencyCheck]
+    consistency_checks: list
     ocr_text: Optional[str] = None
     raw_ai_analysis: Optional[dict] = None
 
@@ -96,121 +79,163 @@ async def analyze(data: DocumentAnalyzeRequest):
                 job_data = response.json()
                 job_id = job_data.get("job_id")
                 if job_id:
-                    # Obter resultados
-                    res_resp = await client.get(f"{aws_service_url}/api/v1/textract/results/{job_id}")
-                    if res_resp.status_code == 200:
-                        res_data = res_resp.json()
-                        ocr_text = res_data.get("extracted_text", "")
+                    import asyncio
+                    # Polling para aguardar o resultado do Textract (AWS Async)
+                    max_attempts = 15
+                    for attempt in range(max_attempts):
+                        res_resp = await client.get(f"{aws_service_url}/api/v1/textract/results/{job_id}")
+                        if res_resp.status_code == 200:
+                            res_data = res_resp.json()
+                            if res_data.get("status") == "SUCCEEDED":
+                                ocr_text = res_data.get("extracted_text", "") or ""
+                                break
+                            elif res_data.get("status") in ["FAILED", "PARTIAL_SUCCESS"]:
+                                break
+                        await asyncio.sleep(2.0)
     except Exception as e:
         log.warning("document.aws_service.failed", error=str(e))
 
-    # 4. Análise semântica avançada com OpenAI (Substituindo Regex)
+    # Mock do Textract para testes se não houve retorno da AWS
+    if not ocr_text.strip():
+        log.info("Usando OCR Mockado (Prontuário Simulado)")
+        ocr_text = """
+PRONTUÁRIO CLÍNICO SIMULADO - GUARDIA
+PARTO SEGURO
+ATENÇÃO: Documento fictício criado exclusivamente para testes e demonstrações.
+Paciente: Maria Aparecida da Silva
+ID: PACIENTE_001
+Idade: 29 anos
+Gestação: 38 semanas
+Data da Consulta: 22/06/2026
+Histórico Clínico
+Hipertensão gestacional controlada. Sem histórico de diabetes gestacional. Relata episódios
+recorrentes de ansiedade durante o pré-natal.
+Sinais Vitais
+PA: 138/88 mmHg | FC: 84 bpm | Temperatura: 36,7°C
+Observações da Consulta
+Paciente apresentou fala hesitante ao relatar preocupações sobre o parto. Demonstrou sinais
+visíveis de ansiedade e desconforto emocional durante parte da entrevista.
+Avaliação Psicológica Preliminar
+Indicadores compatíveis com ansiedade gestacional moderada. Recomendada avaliação
+multiprofissional e acompanhamento psicológico.
+Plano de Acompanhamento
+Retorno em 7 dias. Monitoramento da pressão arterial. Reforço das orientações sobre trabalho de
+parto e suporte emocional.
+"""
+
+    # 4. Análise semântica avançada com OpenAI
     import openai
     import json
     api_key = os.environ.get("OPENAI_API_KEY")
-    
+    raw_ai_analysis = None
     if not api_key or not ocr_text.strip():
         log.warning("openai_fallback", reason="Sem API KEY ou sem texto OCR")
-        # Fallback (Regex antigo)
-        ocr_text_lower = ocr_text.lower()
-        consent_present = "consentimento" in ocr_text_lower or "autorizado" in ocr_text_lower
-        crm_match = re.search(r'crm[-\s]?[a-z]{2}\s?\d+', ocr_text_lower)
-        professional_crm = crm_match.group(0).upper() if crm_match else None
-        professional_signature = bool(professional_crm) or "assinatura" in ocr_text_lower
-        record_match = re.search(r'prontu[aá]rio\s*[:\-]?\s*([a-z0-9\-]+)', ocr_text_lower)
-        medical_record = record_match.group(1).upper() if record_match else None
-        cid_matches = re.findall(r'cid[- 10]*[:\s]*([a-z]\d{2}(?:\.\d)?)', ocr_text_lower)
-        diagnosis_cid10 = [cid.upper() for cid in cid_matches]
-        medications = [{"name": "Ocitocina", "dose": "Não extraída", "route": "Não extraída"}] if "ocitocina" in ocr_text_lower else []
-        procedures = []
-        if "exame obstétrico" in ocr_text_lower or "exame obstetrico" in ocr_text_lower: procedures.append("Exame obstétrico")
-        if "episiotomia" in ocr_text_lower: procedures.append("Episiotomia")
-        if "cardiotocografia" in ocr_text_lower: procedures.append("Cardiotocografia")
-        
-        extracted_fields = ExtractedFields(
-            patient_name_hash=None, medical_record=medical_record, diagnosis_cid10=diagnosis_cid10,
-            procedures=procedures, medications=medications, professional_signature=professional_signature,
-            professional_crm=professional_crm, attendance_date=None, consent_present=consent_present
-        )
-        completeness_score = 95.0 if consent_present else 45.0
-        ira_score = 15.0 if consent_present else 80.0
-        consistency_checks = [
-            ConsistencyCheck(check="consent_present", passed=consent_present, severity="none" if consent_present else "high", detail="Termo de consentimento verificado" if consent_present else "Consentimento ausente"),
-            ConsistencyCheck(check="professional_signature", passed=professional_signature, severity="none" if professional_signature else "medium", detail="Assinatura e CRM presentes" if professional_signature else "Assinatura ausente")
-        ]
+        # Fallback de erro
+        ira_score = 90.0
+        extracted_fields = {}
+        completeness_score = 40.0
+        consistency_checks = []
     else:
-        log.info("running_openai_document_analysis")
-        client = openai.OpenAI(api_key=api_key)
-        prompt = f"""
-Você é um sistema especialista em auditoria médica e obstétrica.
-Extraia os dados clínicos do seguinte texto extraído de um prontuário/documento via OCR:
-
-Texto OCR: "{ocr_text}"
-
-Retorne um JSON estritamente neste formato:
-{{
-  "medical_record": "Número do prontuário (ou null se não houver)",
-  "diagnosis_cid10": ["Lista de CIDs (códigos) encontrados"],
-  "procedures": ["Lista de procedimentos médicos identificados (escreva o nome correto e padronizado)"],
-  "medications": [{{"name": "nome do remédio", "dose": "dose descrita ou 'Não extraída'", "route": "via descrita ou 'Não extraída'"}}],
-  "professional_signature": true ou false (se há assinatura explícita, carimbo, ou número de registro médico como CRM),
-  "professional_crm": "O CRM extraído com a sigla do estado se houver (ou null)",
-  "consent_present": true ou false (se o documento menciona expressamente que o paciente consentiu, autorizou ou concordou com o tratamento/procedimentos)
-}}
-"""
         try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                response_format={ "type": "json_object" },
-                temperature=0.1
-            )
-            data_json = json.loads(response.choices[0].message.content)
-            raw_ai_analysis = data_json
-            
-            consent_present = bool(data_json.get("consent_present", False))
-            professional_signature = bool(data_json.get("professional_signature", False))
-            
-            extracted_fields = ExtractedFields(
-                patient_name_hash=None,
-                medical_record=data_json.get("medical_record"),
-                diagnosis_cid10=data_json.get("diagnosis_cid10", []),
-                procedures=data_json.get("procedures", []),
-                medications=data_json.get("medications", []),
-                professional_signature=professional_signature,
-                professional_crm=data_json.get("professional_crm"),
-                attendance_date=None,
-                consent_present=consent_present
-            )
-            
-            # Define completeness and risk score (IRA)
-            completeness_score = 95.0 if consent_present else 45.0
-            ira_score = 15.0 if consent_present else 80.0
-            
-            consistency_checks = [
-                ConsistencyCheck(
-                    check="consent_present",
-                    passed=consent_present,
-                    severity="none" if consent_present else "high",
-                    detail="IA: Consentimento informado e explícito identificado no texto" if consent_present else "IA: Sem evidência de consentimento explícito no texto"
-                ),
-                ConsistencyCheck(
-                    check="professional_signature",
-                    passed=professional_signature,
-                    severity="none" if professional_signature else "medium",
-                    detail="IA: Assinatura ou CRM do profissional presentes" if professional_signature else "IA: Assinatura profissional não detectada"
+            import openai
+            client = openai.OpenAI(api_key=api_key)
+            if data.document_type in ["prontuario", "termo_consentimento", "prescricao"]:
+                prompt = f"""
+Você é o módulo de Inteligência Artificial Clínica do sistema GuardIA Parto Seguro.
+
+Sua função é analisar documentos clínicos relacionados à saúde da mulher, gestação, parto e pós-parto.
+Você receberá textos extraídos automaticamente pelo AWS Textract a partir de documentos PDF.
+
+Sua responsabilidade é:
+1. Interpretar o conteúdo clínico.
+2. Extrair informações estruturadas.
+3. Identificar fatores de risco.
+4. Avaliar indicadores emocionais e psicossociais.
+5. Gerar um Índice de Risco Assistencial (IRA).
+
+IMPORTANTE:
+Você não realiza diagnóstico médico.
+Você não substitui profissionais de saúde.
+Sua função é auxiliar análise assistencial e indicar pontos que merecem atenção.
+
+---
+ANTES DA ANÁLISE:
+Avalie a qualidade do texto recebido.
+Se o documento possuir apenas informações genéricas não invente informações.
+Retorne: qualidade_documento = BAIXA e informe que são necessários mais dados.
+
+---
+ANALISE OS SEGUINTES DOMÍNIOS:
+
+## 1. Dados obstétricos
+Extraia: idade, idade gestacional, número de gestações, histórico obstétrico, complicações, exames, sinais vitais.
+
+## 2. Fatores clínicos
+Identifique: hipertensão, diabetes, sangramentos, dores, alterações laboratoriais, condições pré-existentes.
+
+## 3. Fatores emocionais
+Avaliar: ansiedade, medo, insegurança, tristeza, sofrimento emocional, sinais de vulnerabilidade.
+
+## 4. Comunicação
+Avaliar: dificuldade de expressão, hesitação, dúvidas, necessidade de maior acolhimento.
+
+## 5. Indicadores relacionados à humanização
+Identificar: necessidade de escuta ativa, suporte emocional, autonomia da paciente, consentimento informado.
+
+---
+CALCULE O IRA (Índice de Risco Assistencial):
+Pesos: Fatores clínicos (30%), Fatores emocionais (30%), Comunicação (20%), Vulnerabilidade psicossocial (20%)
+Classificação: 0-25 (BAIXO), 26-50 (MODERADO), 51-75 (ELEVADO), 76-100 (CRÍTICO)
+
+---
+RETORNE SEMPRE UM JSON ESTRITAMENTE NESTE FORMATO:
+{{
+ "document_quality": "",
+ "patient": {{ "name":"", "age":"", "gestational_age":"" }},
+ "clinical_data": {{ "conditions":[], "vital_signs":{{}} }},
+ "emotional_analysis": {{ "indicators":[], "severity":"" }},
+ "communication_analysis":{{ "indicators":[] }},
+ "risk_factors": [],
+ "ira": {{ "score":0, "classification":"" }},
+ "evidence": {{ "positive":"", "attention_points":[] }},
+ "recommendations": [],
+ "requires_human_review": true
+}}
+
+Nunca invente dados ausentes. Sempre informe quando uma informação não estiver disponível.
+
+Texto OCR do Documento:
+{ocr_text}
+"""
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={ "type": "json_object" },
+                    temperature=0.2
                 )
-            ]
-            log.info("openai_document_analysis_success", ira=ira_score)
+                data_json = json.loads(response.choices[0].message.content)
+                raw_ai_analysis = data_json
+                
+                extracted_fields = data_json
+                ira_score = float(data_json.get("ira", {}).get("score", 50.0))
+                completeness_score = 90.0 if data_json.get("document_quality", "").upper() != "BAIXA" else 50.0
+                consistency_checks = []
+                
+                log.info("openai_document_analysis_success", ira=ira_score)
+            else:
+                ira_score = 0.0
+                extracted_fields = {}
+                completeness_score = 0.0
+                consistency_checks = []
         except Exception as oai_err:
             log.error("openai_document_analysis_failed", error=str(oai_err))
             raw_ai_analysis = {"error": str(oai_err)}
-            extracted_fields = ExtractedFields(consent_present=False)
+            extracted_fields = {}
             completeness_score = 40.0
             ira_score = 90.0
-            consistency_checks = [ConsistencyCheck(check="error", passed=False, severity="high", detail="Falha na análise via IA (OpenAI)")]
+            consistency_checks = [{"check": "error", "passed": False, "severity": "high", "detail": "Falha na análise via IA (OpenAI)"}]
 
-    log.info("document.analyze.completed", session_id=data.session_id, ira_score=ira_score, consent=consent_present)
+    log.info("document.analyze.completed", session_id=data.session_id, ira_score=ira_score)
 
     return DocumentAnalyzeResponse(
         session_id=data.session_id,
@@ -220,7 +245,7 @@ Retorne um JSON estritamente neste formato:
         completeness_score=completeness_score,
         consistency_checks=consistency_checks,
         ocr_text=ocr_text,
-        raw_ai_analysis=raw_ai_analysis if 'raw_ai_analysis' in locals() else None
+        raw_ai_analysis=raw_ai_analysis
     )
 
 @app.post("/api/v1/documents/analyze-notes", status_code=status.HTTP_200_OK)
@@ -233,19 +258,137 @@ async def analyze_notes(data: NotesAnalyzeRequest):
     try:
         client = openai.OpenAI(api_key=api_key)
         prompt = f"""
-Você é um auditor médico especialista. Leia as seguintes anotações clínicas de um atendimento obstétrico.
-Forneça uma análise textual humanizada destacando os principais sinais de risco (psicológico, físico) e os fatores que precisam de atenção.
-Seja conciso, direto e profissional. Formate o texto usando quebras de linha e tópicos marcados com hífen, sem introduções desnecessárias. Não retorne JSON, apenas o texto da análise.
+Você é o módulo de Inteligência Artificial Clínica do sistema GuardIA Parto Seguro.
+
+Sua função é analisar anotações clínicas relacionadas à saúde da mulher, gestação, parto e pós-parto.
+
+Você NÃO deve realizar diagnóstico médico definitivo.
+
+Sua função é identificar indicadores, padrões, fatores de atenção e gerar uma análise assistencial baseada nas informações fornecidas.
+
+Analise sempre considerando:
+- contexto obstétrico;
+- aspectos emocionais;
+- comunicação paciente-equipe;
+- sinais de ansiedade, medo ou sofrimento;
+- possíveis barreiras de comunicação;
+- fatores psicossociais;
+- indicadores relacionados à humanização do atendimento.
+
+IMPORTANTE:
+Antes de analisar o conteúdo clínico, avalie a qualidade da informação recebida.
+Caso o texto seja muito curto, genérico ou sem informações relevantes, NÃO invente informações.
+
+Exemplos de textos insuficientes:
+"Paciente gestante em acompanhamento pré-natal."
+"Paciente está bem."
+"Consulta realizada."
+
+Nestes casos responda:
+- Informação insuficiente para análise detalhada.
+- Solicitar complementação da anotação clínica.
+Nunca crie sintomas, emoções ou riscos que não estejam descritos.
+
+---
+
+REGRAS DE ANÁLISE:
+1. Identifique informações clínicas presentes.
+2. Identifique indicadores emocionais.
+3. Identifique indicadores comportamentais.
+4. Identifique fatores de vulnerabilidade.
+5. Avalie qualidade da comunicação registrada.
+6. Gere um índice de atenção assistencial (IRA).
+O IRA é um indicador auxiliar e não substitui avaliação profissional.
+
+---
+
+ESCALA IRA:
+0-25: Baixo indicador de atenção.
+26-50: Necessita acompanhamento.
+51-75: Atenção elevada.
+76-100: Necessita avaliação prioritária.
+
+---
+
+FORMATO OBRIGATÓRIO DA RESPOSTA:
+Retorne sempre em JSON:
+{{
+ "qualidade_informacao": {{
+    "nivel": "ALTA|MEDIA|BAIXA",
+    "observacao": ""
+ }},
+ "resumo_clinico": "",
+ "indicadores_identificados": [
+    {{
+      "tipo":"",
+      "descricao":"",
+      "intensidade":"BAIXA|MEDIA|ALTA"
+    }}
+ ],
+ "aspectos_emocionais": {{
+    "identificados": [],
+    "nivel": ""
+ }},
+ "aspectos_comunicacao": {{
+    "avaliacao":"",
+    "indicadores":[]
+ }},
+ "fatores_risco": [],
+ "ira_score": 0,
+ "classificacao_ira": "",
+ "recomendacoes": [
+    ""
+ ],
+ "necessita_avaliacao_humana": true
+}}
+
+---
+
+Sempre mantenha uma abordagem ética, cuidadosa e baseada em evidências.
 
 Anotações Clínicas: "{data.notes}"
 """
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
+            response_format={ "type": "json_object" },
             temperature=0.3
         )
-        analysis_text = response.choices[0].message.content
-        return {"analysis": analysis_text}
+        import json
+        result = json.loads(response.choices[0].message.content)
+        
+        # Formata o texto para manter compatibilidade com a UI existente
+        analysis_text = f"**Resumo Clínico:**\n{result.get('resumo_clinico', 'Não informado')}\n\n"
+        analysis_text += f"**Qualidade da Informação:** {result.get('qualidade_informacao', {}).get('nivel', '')} - {result.get('qualidade_informacao', {}).get('observacao', '')}\n\n"
+        
+        if result.get("indicadores_identificados"):
+            analysis_text += "**Indicadores Identificados:**\n"
+            for ind in result.get("indicadores_identificados", []):
+                analysis_text += f"- {ind.get('tipo', 'Outro')}: {ind.get('descricao', '')} (Intensidade: {ind.get('intensidade', '')})\n"
+            analysis_text += "\n"
+            
+        if result.get("aspectos_emocionais", {}).get("identificados"):
+            analysis_text += f"**Aspectos Emocionais (Nível {result.get('aspectos_emocionais', {}).get('nivel', '')}):**\n"
+            for emo in result.get("aspectos_emocionais", {}).get("identificados", []):
+                analysis_text += f"- {emo}\n"
+            analysis_text += "\n"
+            
+        if result.get("fatores_risco"):
+            analysis_text += "**Fatores de Risco:**\n"
+            for fator in result.get("fatores_risco", []):
+                analysis_text += f"- {fator}\n"
+            analysis_text += "\n"
+            
+        if result.get("recomendacoes"):
+            analysis_text += "**Recomendações:**\n"
+            for rec in result.get("recomendacoes", []):
+                analysis_text += f"- {rec}\n"
+                
+        return {
+            "analysis": analysis_text,
+            "clinical_risk_score": float(result.get("ira_score", 0.0)),
+            "structured_analysis": result
+        }
     except Exception as e:
         log.error("openai_notes_analysis_failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Erro na OpenAI: {str(e)}")

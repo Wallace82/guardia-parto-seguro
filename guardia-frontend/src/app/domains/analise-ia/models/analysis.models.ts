@@ -46,6 +46,7 @@ export interface SessionAnalysisOut {
   video_analyses: Record<string, any>;
   risk_details: RiskDetails | null;
   factors: AnalysisFactors | null;
+  notes_analysis_text?: string;
 }
 
 export interface RiskSourcesOut {

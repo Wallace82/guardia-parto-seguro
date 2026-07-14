@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +15,8 @@ import { PatientInfoBarComponent } from '../../../dashboard/components/patient-i
 import { PipelineDiagramComponent } from '../../components/pipeline-diagram.component';
 import { FusionResultComponent } from '../../components/fusion-result.component';
 import { FactorsPanelComponent } from '../../components/factors-panel.component';
+import { NotesAnalysisDialogComponent } from '../../components/notes-analysis-dialog.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-multimodal-analysis-page',
@@ -22,7 +24,7 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule,
     PatientInfoBarComponent, PipelineDiagramComponent,
-    FusionResultComponent, FactorsPanelComponent
+    FusionResultComponent, FactorsPanelComponent, MatDialogModule
   ],
   template: `
     <div class="p-6 lg:p-8 max-w-[1600px] mx-auto min-h-screen">
@@ -106,29 +108,14 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white m-0">Anotações Clínicas</h3>
               
-              <button mat-stroked-button color="accent" class="!rounded-full border-accent-500/50 hover:bg-accent-500/10 transition-colors" (click)="evaluateNotes()" [disabled]="loadingNotesAnalysis()">
-                @if (loadingNotesAnalysis()) {
-                  <mat-icon class="animate-spin">autorenew</mat-icon> Lendo...
-                } @else {
-                  <mat-icon>psychology</mat-icon> Avaliar com IA
-                }
+              <button mat-stroked-button color="accent" class="!rounded-full border-accent-500/50 hover:bg-accent-500/10 transition-colors" (click)="openNotesAnalysis()">
+                <mat-icon>psychology</mat-icon> Ver Avaliação com IA
               </button>
             </div>
 
             <div class="glass-card p-5">
               <p class="text-sm text-text-muted whitespace-pre-line leading-relaxed">{{ session()?.notes }}</p>
             </div>
-            
-            @if (notesAnalysisResult()) {
-              <div class="mt-4 glass-card p-6 border-t-2 border-t-accent-500 bg-accent-500/5 animate-slide-up shadow-glow-accent">
-                <h4 class="text-sm font-bold text-accent-400 flex items-center gap-2 mb-3 uppercase tracking-wider">
-                  <mat-icon>auto_awesome</mat-icon> Análise da IA (OpenAI)
-                </h4>
-                <div class="text-sm text-white/90 whitespace-pre-line leading-relaxed">
-                  {{ notesAnalysisResult() }}
-                </div>
-              </div>
-            }
           </div>
         }
 
@@ -213,17 +200,19 @@ import { FactorsPanelComponent } from '../../components/factors-panel.component'
     </div>
   `
 })
-export class MultimodalAnalysisPageComponent implements OnInit {
+export class MultimodalAnalysisPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sessionsService = inject(SessionsService);
   private readonly analysisService = inject(AnalysisService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   sessionId: number | null = null;
   loading = signal(true);
   session = signal<SessionOut | null>(null);
   analysis = signal<SessionAnalysisOut | null>(null);
+  private pollingTimer: any = null;
   
   allSessions = signal<SessionOut[]>([]);
 
@@ -270,19 +259,53 @@ export class MultimodalAnalysisPageComponent implements OnInit {
     });
   }
 
-  loadData() {
-    this.loading.set(true);
-    this.sessionsService.getSession(this.sessionId!).pipe(
-      finalize(() => this.loading.set(false))
-    ).subscribe({
+  ngOnDestroy() {
+    this.stopPolling();
+  }
+
+  startPolling() {
+    if (!this.pollingTimer) {
+      this.pollingTimer = setInterval(() => {
+        this.loadData(true);
+      }, 5000);
+    }
+  }
+
+  stopPolling() {
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+  }
+
+  loadData(isPolling = false) {
+    if (!isPolling) this.loading.set(true);
+    this.sessionsService.getSession(this.sessionId!).subscribe({
       next: (session) => {
         this.session.set(session);
-        if (session.status === 'completed') {
+        if (!isPolling) this.loading.set(false);
+        
+        const needsPolling = 
+          session.status === 'processing' || 
+          session.media_files?.some(f => f.status === 'processing') || 
+          (!!session.notes && session.score_notes === null);
+          
+        if (needsPolling) {
+          this.startPolling();
+        } else {
+          this.stopPolling();
+        }
+
+        if (session.status === 'completed' || session.score_notes !== null || session.ira_score !== null) {
           this.loadAnalysis();
         }
       },
       error: () => {
-        this.snackBar.open('Erro ao carregar sessão.', 'Fechar', { duration: 3000 });
+        if (!isPolling) {
+          this.snackBar.open('Erro ao carregar sessão.', 'Fechar', { duration: 3000 });
+          this.loading.set(false);
+        }
+        this.stopPolling();
       }
     });
   }
@@ -295,18 +318,17 @@ export class MultimodalAnalysisPageComponent implements OnInit {
     });
   }
 
-  evaluateNotes() {
-    if (!this.sessionId) return;
-    this.loadingNotesAnalysis.set(true);
-    this.analysisService.analyzeNotesText(this.sessionId).pipe(
-      finalize(() => this.loadingNotesAnalysis.set(false))
-    ).subscribe({
-      next: (res) => {
-        this.notesAnalysisResult.set(res.analysis);
-      },
-      error: () => {
-        this.snackBar.open('Erro ao avaliar anotações com IA.', 'Fechar', { duration: 3000 });
-      }
+  openNotesAnalysis() {
+    if (!this.analysis()?.notes_analysis_text) {
+      this.snackBar.open('Análise textual ainda não está disponível ou está sendo processada.', 'Fechar', { duration: 3000 });
+      return;
+    }
+    
+    this.dialog.open(NotesAnalysisDialogComponent, {
+      data: { text: this.analysis()?.notes_analysis_text },
+      panelClass: 'custom-dialog-container',
+      backdropClass: 'custom-backdrop',
+      width: '600px'
     });
   }
 }

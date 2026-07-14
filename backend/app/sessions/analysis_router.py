@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 from app.database import get_db
 from app.sessions.models import Session
@@ -133,21 +133,8 @@ async def analyze_session_notes(session_id: int, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=404, detail="Notas não encontradas")
         
     try:
-        from app.orchestrator.domain_client import DomainClient
-        client = DomainClient()
-        analysis_text = await client.analyze_notes(session_id, session.notes)
-        
-        # Grava a análise na tabela document_analysis
-        d_analysis = DocumentAnalysis(
-            session_id=session_id,
-            arquivo_documento="Anotações Clínicas (Multimodal)",
-            tipo_documento="anotacoes",
-            texto_extraido=session.notes,
-            fatores_identificados={"analise_textual": analysis_text}
-        )
-        db.add(d_analysis)
-        await db.commit()
-        
+        from app.sessions.service import process_notes_background
+        analysis_text = await process_notes_background(session_id, session.notes)
         return {"analysis": analysis_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao analisar notas: {str(e)}")

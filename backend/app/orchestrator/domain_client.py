@@ -89,7 +89,7 @@ class DomainClient:
             response.raise_for_status()
             return response.json()
 
-    async def analyze_notes(self, session_id: int, notes: str) -> str:
+    async def analyze_notes(self, session_id: int, notes: str) -> Dict[str, Any]:
         """Envia as anotações textuais da sessão para análise no document-service."""
         url = f"{settings.DOCUMENT_SERVICE_URL}/api/v1/documents/analyze-notes"
         payload = {
@@ -100,7 +100,7 @@ class DomainClient:
             log.info("document_analyze_notes_request", url=url, session_id=session_id)
             response = await client.post(url, json=payload)
             response.raise_for_status()
-            return response.json().get("analysis", "")
+            return response.json()
 
     async def correlate_risk(
         self,

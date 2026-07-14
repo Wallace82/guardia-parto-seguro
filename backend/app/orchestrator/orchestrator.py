@@ -182,6 +182,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         clinical_risk_score=doc_res.get("ira_score"),
                         fatores_identificados={
                             "consistency_checks": doc_res.get("consistency_checks"),
+                            "estruturado": doc_res.get("extracted_fields"),
                             "raw_ai_analysis": doc_res.get("raw_ai_analysis")
                         },
                         confidence_score=doc_res.get("completeness_score")

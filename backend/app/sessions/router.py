@@ -34,6 +34,7 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 )
 async def create_session(
     data: SessionCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: DB,
 ):
@@ -43,6 +44,11 @@ async def create_session(
     """
     session = await SessionService(db).create(data, current_user.id)
     await AuditService.log_action(db, action="create_session", resource=f"session_{session.id}", user_id=current_user.id)
+    
+    if session.notes:
+        from app.sessions.service import process_notes_background
+        background_tasks.add_task(process_notes_background, session.id, session.notes)
+        
     return SessionCreatedResponse(session=SessionOut.model_validate(session))
 
 
@@ -98,6 +104,7 @@ async def get_session(
 async def update_session(
     session_id: int,
     data: SessionUpdateRequest,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: DB,
 ):
@@ -106,6 +113,11 @@ async def update_session(
         session_id, data, current_user.id, current_user.role
     )
     await AuditService.log_action(db, action="update_session", resource=f"session_{session.id}", user_id=current_user.id)
+    
+    if data.notes is not None:
+        from app.sessions.service import process_notes_background
+        background_tasks.add_task(process_notes_background, session.id, session.notes)
+        
     return SessionOut.model_validate(session)
 
 
@@ -236,16 +248,19 @@ async def get_session_analysis(
         session_id, current_user.id, current_user.role
     )
     
-    if session.status != "completed":
+    if session.status != "completed" and session.ira_score is None:
         return {
             "session_id": session_id,
             "status": session.status,
             "transcription": None,
             "video_findings": [],
-            "risk_details": None
+            "risk_details": None,
+            "factors": None
         }
 
     from app.orchestrator.domain_client import DomainClient
+    from sqlalchemy import select
+    from app.sessions.analysis_models import DocumentAnalysis
     client = DomainClient()
     
     transcription = None
@@ -356,13 +371,85 @@ async def get_session_analysis(
         else:
             factors["attention"].append("Áudio: Possível desconforto vocal detectado")
 
-    if risk_details and "document" in risk_details:
-        doc_indicators = risk_details["document"].get("key_indicators", [])
-        for ind in doc_indicators:
-            if "ausente" in ind or "irregular" in ind:
-                factors["attention"].append(f"Doc: {ind.replace('_', ' ').title()}")
-            else:
-                factors["positive"].append(f"Doc: {ind.replace('_', ' ').title()}")
+    # Fatores reais extraídos de Prontuários (PDF)
+    pdf_analysis_res = await db.execute(
+        select(DocumentAnalysis).where(
+            DocumentAnalysis.session_id == session_id,
+            DocumentAnalysis.tipo_documento != "anotacoes"
+        ).order_by(DocumentAnalysis.id.desc())
+    )
+    pdf_analysis = pdf_analysis_res.scalars().first()
+    
+    if pdf_analysis and pdf_analysis.fatores_identificados and "estruturado" in pdf_analysis.fatores_identificados:
+        estruturado_pdf = pdf_analysis.fatores_identificados["estruturado"]
+        
+        # Fatores clínicos
+        clinical = estruturado_pdf.get("clinical_data", {})
+        for cond in clinical.get("conditions", []):
+            factors["attention"].append(f"Prontuário (Clínico): {cond}")
+            
+        # Fatores Emocionais
+        emotional = estruturado_pdf.get("emotional_analysis", {})
+        for emo in emotional.get("indicators", []):
+            factors["attention"].append(f"Prontuário (Emocional): {emo}")
+            
+        # Comunicação
+        comm = estruturado_pdf.get("communication_analysis", {})
+        for c in comm.get("indicators", []):
+            factors["attention"].append(f"Prontuário (Comunicação): {c}")
+            
+        # Fatores de Risco
+        for risk in estruturado_pdf.get("risk_factors", []):
+            factors["attention"].append(f"Prontuário (Risco): {risk}")
+            
+        # Evidências
+        evidence = estruturado_pdf.get("evidence", {})
+        if evidence.get("positive"):
+            factors["positive"].append(f"Prontuário: {evidence.get('positive')}")
+        for attn in evidence.get("attention_points", []):
+            factors["attention"].append(f"Prontuário (Atenção): {attn}")
+    else:
+        # Fallback para o antigo formato
+        if risk_details and "document" in risk_details:
+            doc_indicators = risk_details["document"].get("key_indicators", [])
+            for ind in doc_indicators:
+                if "ausente" in ind or "irregular" in ind:
+                    factors["attention"].append(f"Prontuário PDF: {ind.replace('_', ' ').title()}")
+                else:
+                    factors["positive"].append(f"Prontuário PDF: {ind.replace('_', ' ').title()}")
+
+    # Adicionar os fatores reais extraídos das Anotações Clínicas
+    notes_analysis_res = await db.execute(
+        select(DocumentAnalysis).where(
+            DocumentAnalysis.session_id == session_id,
+            DocumentAnalysis.tipo_documento == "anotacoes"
+        )
+    )
+    notes_analysis = notes_analysis_res.scalars().first()
+    
+    notes_text = None
+    if notes_analysis and notes_analysis.fatores_identificados:
+        notes_text = notes_analysis.fatores_identificados.get("analise_textual")
+        if "estruturado" in notes_analysis.fatores_identificados:
+            estruturado = notes_analysis.fatores_identificados["estruturado"]
+            
+            # Indicadores identificados (Anotações)
+            for ind in estruturado.get("indicadores_identificados", []):
+                desc = ind.get("descricao", "")
+                if desc:
+                    if ind.get("intensidade", "BAIXA").upper() in ["ALTA", "MEDIA"]:
+                        factors["attention"].append(f"Anotações: {desc}")
+                    else:
+                        factors["positive"].append(f"Anotações: {desc}")
+                        
+            # Fatores de risco (Anotações)
+            for risk in estruturado.get("fatores_risco", []):
+                factors["attention"].append(f"Risco (Anotações): {risk}")
+                
+            # Qualidade de informação
+            qualidade = estruturado.get("qualidade_informacao", {})
+            if qualidade.get("nivel") == "BAIXA":
+                factors["attention"].append(f"Qualidade das Anotações: {qualidade.get('observacao')}")
 
     # A recomendação principal pode vir do maior score ou da analise geral
     if session.ira_score and session.ira_score >= 70:
@@ -381,7 +468,8 @@ async def get_session_analysis(
         "video_findings": video_findings,
         "video_analyses": video_analyses,
         "risk_details": risk_details,
-        "factors": factors
+        "factors": factors,
+        "notes_analysis_text": notes_text
     }
 
 @router.get(

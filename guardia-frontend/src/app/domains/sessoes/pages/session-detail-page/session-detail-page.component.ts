@@ -44,8 +44,8 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
         </div>
 
         <div class="flex items-center gap-3">
-          @if (session()?.status === 'completed') {
-            <a mat-flat-button color="accent" [routerLink]="['/analise-ia', session()?.id]">
+          @if (session()?.status === 'completed' || session()?.score_notes !== null || session()?.ira_score !== null) {
+            <a mat-flat-button color="accent" [routerLink]="['/analise/multimodal', session()?.id]">
               <mat-icon>psychology</mat-icon> Ver Análise de IA
             </a>
           } @else if (session()?.status === 'processing') {
@@ -199,7 +199,11 @@ export class SessionDetailPageComponent implements OnInit, OnDestroy {
         this.session.set(res);
         if (!isPolling) this.loading.set(false);
         
-        const needsPolling = res.status === 'processing' || res.media_files?.some(f => f.status === 'processing');
+        const needsPolling = 
+          res.status === 'processing' || 
+          res.media_files?.some(f => f.status === 'processing') || 
+          (!!res.notes && res.score_notes === null);
+          
         if (needsPolling) {
           this.startPolling();
         } else {
