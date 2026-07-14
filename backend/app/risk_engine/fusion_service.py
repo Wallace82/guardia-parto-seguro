@@ -117,33 +117,49 @@ class RiskFusionEngine:
 
     @classmethod
     def _evaluate_notes(cls, notes: str) -> float:
-        """Avaliação léxica simples das anotações clínicas para extração de score de risco."""
-        text = notes.lower()
-        risk_keywords = [
-            "ansiedade", "medo", "dor", "tensão", "receio", "hesitação", 
-            "insegurança", "risco", "sangramento", "preocupação", "alteração", 
-            "contração forte", "desconforto", "pânico", "choro", "taquicardia", 
-            "hipertensão", "desespero", "agitação", "nervosa", "sofrimento", 
-            "aflição", "desmaio", "hemorragia", "hiperventilação", "exaustão", 
-            "fadiga", "tremor", "palpitação", "angústia"
-        ]
-        positive_keywords = [
-            "tranquila", "calma", "sem queixas", "estável", "boa", "confortável", 
-            "sorridente", "cooperativa", "aliviada", "relaxada", "segura", 
-            "repouso", "evolução normal", "orientada", "eupnéica", "corada", 
-            "hidratada", "ativa", "normocardia", "sem alterações", "tolerando", 
-            "animada", "descansando", "lúcida", "sem dor", "afebril", 
-            "dormindo", "amamentando", "adequado", "fisiológico"
-        ]
+        """Avaliação inteligente das anotações clínicas usando OpenAI."""
+        import os
+        import openai
+        import json
         
-        score = 50.0  # Base score
-        
-        for kw in risk_keywords:
-            if kw in text:
-                score += 15.0
-                
-        for kw in positive_keywords:
-            if kw in text:
-                score -= 10.0
-                
-        return min(max(score, 0.0), 100.0)
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key or not notes.strip():
+            log.warning("openai_notes_fallback", reason="Sem API KEY ou sem anotações")
+            # Fallback (Regex antigo)
+            text = notes.lower()
+            risk_keywords = ["ansiedade", "medo", "dor", "tensão", "receio", "insegurança", "risco", "sangramento", "preocupação", "alteração", "desconforto", "choro", "taquicardia", "hipertensão", "desespero", "sofrimento", "hemorragia"]
+            positive_keywords = ["tranquila", "calma", "sem queixas", "estável", "boa", "confortável", "sorridente", "cooperativa", "aliviada", "relaxada", "segura", "repouso", "sem alterações", "sem dor"]
+            
+            score = 50.0
+            for kw in risk_keywords:
+                if kw in text: score += 15.0
+            for kw in positive_keywords:
+                if kw in text: score -= 10.0
+            return min(max(score, 0.0), 100.0)
+            
+        try:
+            client = openai.OpenAI(api_key=api_key)
+            prompt = f"""
+Você é um auditor médico especialista. Leia as seguintes anotações clínicas de um atendimento obstétrico e avalie o risco do paciente.
+O risco varia de 0 (perfeitamente estável, relaxada, sem dores) a 100 (risco crítico, dor extrema, complicações).
+
+Anotações Clínicas: "{notes}"
+
+Retorne um JSON estritamente neste formato:
+{{
+  "risk_score": valor numerico de 0 a 100
+}}
+"""
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={ "type": "json_object" },
+                temperature=0.1
+            )
+            data_json = json.loads(response.choices[0].message.content)
+            score = float(data_json.get("risk_score", 50.0))
+            log.info("openai_notes_success", score=score)
+            return min(max(score, 0.0), 100.0)
+        except Exception as oai_err:
+            log.error("openai_notes_failed", error=str(oai_err))
+            return 50.0
