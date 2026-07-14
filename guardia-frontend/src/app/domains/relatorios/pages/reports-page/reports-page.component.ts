@@ -143,19 +143,18 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                   <mat-icon class="!text-3xl">person</mat-icon>
                 </div>
                 <div>
-                  <h2 class="text-xl font-bold text-white mb-1">Maria Silva de Oliveira</h2>
-                  <p class="text-sm text-text-muted">30 anos • G1P0 • 39s2d<br>Sala 03 • Leito 05</p>
+                  <h2 class="text-xl font-bold text-white mb-1">Paciente {{ activeSession()?.patient_code }}</h2>
+                  <p class="text-sm text-text-muted">Sessão #{{ activeSession()?.id }} • {{ activeSession()?.title }}</p>
                 </div>
               </div>
               
               <div class="flex gap-8">
                 <div>
-                  <span class="block text-xs text-text-muted font-medium mb-1">Início do trabalho de parto</span>
-                  <span class="block font-bold text-white">10:02</span>
-                  <span class="block text-xs text-text-muted">há 04h32</span>
+                  <span class="block text-xs text-text-muted font-medium mb-1">Data da Sessão</span>
+                  <span class="block font-bold text-white">{{ activeSession()?.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
                 </div>
                 <div>
-                  <span class="block text-xs text-text-muted font-medium mb-1">Data do relatório</span>
+                  <span class="block text-xs text-text-muted font-medium mb-1">Data do Relatório</span>
                   <span class="block font-bold text-white">{{ generationDate() | date:'dd/MM/yyyy HH:mm' }}</span>
                 </div>
               </div>
@@ -175,19 +174,19 @@ import { ExportPdfService } from '../../services/export-pdf.service';
               <div class="bg-surface2/40 p-6 rounded-xl border border-border flex flex-col items-center justify-center">
                 <h3 class="text-sm font-bold text-white mb-4 self-start">Classificação de risco</h3>
                 <div class="flex items-center gap-4 mb-4">
-                  <mat-icon class="text-success !text-5xl !w-12 !h-12">verified_user</mat-icon>
+                  <mat-icon [ngClass]="getRiskColorClass(activeSession()?.ira_level)" class="!text-5xl !w-12 !h-12">{{ getRiskIcon(activeSession()?.ira_level) }}</mat-icon>
                   <div>
-                    <span class="block text-xl font-bold text-success">Baixo risco</span>
-                    <span class="block text-3xl font-black text-white">18%</span>
+                    <span class="block text-xl font-bold" [ngClass]="getRiskColorClass(activeSession()?.ira_level)">{{ getRiskLabel(activeSession()?.ira_level) }}</span>
+                    <span class="block text-3xl font-black text-white">{{ activeSession()?.ira_score || 0 }}%</span>
                   </div>
                 </div>
                 <div class="w-full">
                   <div class="flex justify-between text-xs text-text-muted mb-1">
-                    <span>Confiança da IA</span>
-                    <span class="font-bold text-white">92%</span>
+                    <span>Score IRA</span>
+                    <span class="font-bold text-white">{{ activeSession()?.ira_score || 0 }}%</span>
                   </div>
                   <div class="w-full h-1.5 bg-bg rounded-full overflow-hidden">
-                    <div class="h-full bg-primary-500 rounded-full w-[92%]"></div>
+                    <div class="h-full bg-primary-500 rounded-full transition-all" [style.width.%]="activeSession()?.ira_score || 0"></div>
                   </div>
                 </div>
               </div>
@@ -200,26 +199,38 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                 <div class="bg-surface2/40 p-4 rounded-xl border border-border flex flex-col items-center text-center">
                   <mat-icon class="text-primary-400 mb-2">videocam</mat-icon>
                   <span class="text-sm font-bold text-white">Vídeo</span>
-                  <span class="text-xs text-text-muted mb-2">15 min 32s</span>
-                  <span class="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full flex items-center gap-1"><mat-icon class="!text-[12px] !w-3 !h-3">check_circle</mat-icon> Processado</span>
+                  <span class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full flex items-center gap-1"
+                        [ngClass]="hasMedia('video') ? 'text-success bg-success/10' : 'text-text-muted bg-surface2'">
+                    <mat-icon class="!text-[12px] !w-3 !h-3">{{ hasMedia('video') ? 'check_circle' : 'remove_circle_outline' }}</mat-icon> 
+                    {{ hasMedia('video') ? 'Processado' : 'Ausente' }}
+                  </span>
                 </div>
                 <div class="bg-surface2/40 p-4 rounded-xl border border-border flex flex-col items-center text-center">
                   <mat-icon class="text-secondary-400 mb-2">graphic_eq</mat-icon>
                   <span class="text-sm font-bold text-white">Áudio</span>
-                  <span class="text-xs text-text-muted mb-2">08 min 47s</span>
-                  <span class="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full flex items-center gap-1"><mat-icon class="!text-[12px] !w-3 !h-3">check_circle</mat-icon> Transcrito</span>
+                  <span class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full flex items-center gap-1"
+                        [ngClass]="hasMedia('audio') ? 'text-success bg-success/10' : 'text-text-muted bg-surface2'">
+                    <mat-icon class="!text-[12px] !w-3 !h-3">{{ hasMedia('audio') ? 'check_circle' : 'remove_circle_outline' }}</mat-icon> 
+                    {{ hasMedia('audio') ? 'Processado' : 'Ausente' }}
+                  </span>
                 </div>
                 <div class="bg-surface2/40 p-4 rounded-xl border border-border flex flex-col items-center text-center">
                   <mat-icon class="text-primary-300 mb-2">description</mat-icon>
                   <span class="text-sm font-bold text-white">Documentos</span>
-                  <span class="text-xs text-text-muted mb-2">3 arquivos</span>
-                  <span class="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full flex items-center gap-1"><mat-icon class="!text-[12px] !w-3 !h-3">check_circle</mat-icon> Extraído</span>
+                  <span class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full flex items-center gap-1"
+                        [ngClass]="hasMedia('document') ? 'text-success bg-success/10' : 'text-text-muted bg-surface2'">
+                    <mat-icon class="!text-[12px] !w-3 !h-3">{{ hasMedia('document') ? 'check_circle' : 'remove_circle_outline' }}</mat-icon> 
+                    {{ hasMedia('document') ? 'Processado' : 'Ausente' }}
+                  </span>
                 </div>
                 <div class="bg-surface2/40 p-4 rounded-xl border border-border flex flex-col items-center text-center">
-                  <mat-icon class="text-danger-400 mb-2">monitor_heart</mat-icon>
-                  <span class="text-sm font-bold text-white">Sinais vitais</span>
-                  <span class="text-xs text-text-muted mb-2">Tempo real</span>
-                  <span class="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full flex items-center gap-1"><mat-icon class="!text-[12px] !w-3 !h-3">check_circle</mat-icon> Monitorado</span>
+                  <mat-icon class="text-danger-400 mb-2">note_alt</mat-icon>
+                  <span class="text-sm font-bold text-white">Anotações</span>
+                  <span class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full flex items-center gap-1"
+                        [ngClass]="activeSession()?.notes ? 'text-success bg-success/10' : 'text-text-muted bg-surface2'">
+                    <mat-icon class="!text-[12px] !w-3 !h-3">{{ activeSession()?.notes ? 'check_circle' : 'remove_circle_outline' }}</mat-icon> 
+                    {{ activeSession()?.notes ? 'Analisadas' : 'Ausente' }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -359,6 +370,8 @@ export class ReportsPageComponent implements OnInit {
   fakeHash = signal('');
   generationDate = signal(new Date());
 
+  activeSession = signal<SessionOut | null>(null);
+
   ngOnInit() {
     this.sessionsService.getSessions(0, 100).subscribe({
       next: (res) => {
@@ -378,44 +391,53 @@ export class ReportsPageComponent implements OnInit {
   }
 
   startGeneration() {
+    if (!this.selectedSessionId) return;
+
     this.step.set('processing');
     this.progress.set(0);
     this.statusMessage.set('🔍 Carregando dados da sessão e mídias analisadas...');
     
-    // Simula os passos
-    setTimeout(() => {
-      this.progress.set(40);
-      this.statusMessage.set('✍️ Estruturando layout e renderizando gráficos de IRA...');
-      
-      setTimeout(() => {
-        this.progress.set(80);
-        this.statusMessage.set('🔒 Calculando assinatura criptográfica SHA-256...');
+    this.sessionsService.getSession(this.selectedSessionId).subscribe({
+      next: (session) => {
+        this.activeSession.set(session);
+        this.progress.set(40);
+        this.statusMessage.set('✍️ Estruturando layout e renderizando gráficos de IRA...');
         
         setTimeout(() => {
-          this.progress.set(100);
-          this.statusMessage.set('✅ Pronto!');
+          this.progress.set(80);
+          this.statusMessage.set('🔒 Calculando assinatura criptográfica SHA-256...');
           
-          this.generationDate.set(new Date());
-          this.fakeHash.set(this.generateRandomSha256());
-          this.step.set('completed');
-          this.snackBar.open('🎉 Relatório gerado com sucesso!', 'OK', { duration: 3000 });
-        }, 1200);
-      }, 1500);
-    }, 1200);
+          setTimeout(() => {
+            this.progress.set(100);
+            this.statusMessage.set('✅ Pronto!');
+            
+            this.generationDate.set(new Date());
+            this.fakeHash.set(this.generateRandomSha256());
+            this.step.set('completed');
+            this.snackBar.open('🎉 Relatório gerado com sucesso!', 'OK', { duration: 3000 });
+          }, 800);
+        }, 1000);
+      },
+      error: () => {
+        this.snackBar.open('Erro ao carregar sessão', 'Fechar');
+        this.reset();
+      }
+    });
   }
 
   downloadReport() {
-    if (this.selectedSessionId) {
+    const session = this.activeSession();
+    if (this.selectedSessionId && session) {
       if (this.format === 'pdf') {
         this.exportPdf.exportSessionReport(this.selectedSessionId);
       } else {
-        // Fallback simulação Excel
-        this.snackBar.open('Baixando arquivo Excel (Simulado)...', '', { duration: 2000 });
-        const blob = new Blob(['ID,Title,IRA_Score\n101,Parto Clara,78.5'], { type: 'text/csv' });
+        this.snackBar.open('Baixando arquivo Excel...', '', { duration: 2000 });
+        const score = session.ira_score !== null ? session.ira_score : 'N/A';
+        const blob = new Blob([`ID,Title,Patient,Status,IRA_Score\n${session.id},"${session.title}","${session.patient_code}",${session.status},${score}`], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Relatorio_Executivo_Sessao_${this.selectedSessionId}.csv`;
+        a.download = `Relatorio_Executivo_Sessao_${session.id}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -432,5 +454,44 @@ export class ReportsPageComponent implements OnInit {
     return Array.from({length: 64}, () => 
       Math.floor(Math.random() * 16).toString(16)
     ).join('');
+  }
+
+  getRiskLabel(level: string | null | undefined): string {
+    if (!level) return 'Sem classificação';
+    switch(level.toLowerCase()) {
+      case 'baixo': return 'Baixo risco';
+      case 'moderado': return 'Risco moderado';
+      case 'elevado': return 'Risco elevado';
+      case 'critico': return 'Risco crítico';
+      default: return level;
+    }
+  }
+
+  getRiskColorClass(level: string | null | undefined): string {
+    if (!level) return 'text-text-muted';
+    switch(level.toLowerCase()) {
+      case 'baixo': return 'text-success';
+      case 'moderado': return 'text-warning';
+      case 'elevado': return 'text-danger-400';
+      case 'critico': return 'text-danger-500';
+      default: return 'text-text-muted';
+    }
+  }
+
+  getRiskIcon(level: string | null | undefined): string {
+    if (!level) return 'help_outline';
+    switch(level.toLowerCase()) {
+      case 'baixo': return 'verified_user';
+      case 'moderado': return 'warning';
+      case 'elevado': return 'error_outline';
+      case 'critico': return 'report';
+      default: return 'info';
+    }
+  }
+
+  hasMedia(type: string): boolean {
+    const session = this.activeSession();
+    if (!session || !session.media_files) return false;
+    return session.media_files.some(m => m.media_type === type);
   }
 }

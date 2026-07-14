@@ -502,24 +502,87 @@ async def get_session_report_pdf(
     Geração minimalista (simulada via stream binária direta) para evitar dependências pesadas em homologação.
     """
     from fastapi.responses import Response
+    from fpdf import FPDF
     
     # Confirma que a sessão existe e que o usuário tem acesso
-    await SessionService(db).get_by_id(session_id, current_user.id, current_user.role)
+    session = await SessionService(db).get_by_id(session_id, current_user.id, current_user.role)
     await AuditService.log_action(db, action="download_report", resource=f"session_{session_id}", user_id=current_user.id)
     
-    # Simulamos um payload mínimo de PDF válido:
-    pdf_content = (
-        b"%PDF-1.4\n"
-        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>\nendobj\n"
-        b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
-        b"5 0 obj\n<< /Length 64 >>\nstream\n"
-        b"BT\n/F1 24 Tf\n100 700 Td\n(Prontuario de Inteligencia Artificial) Tj\nET\n"
-        b"endstream\nendobj\n"
-        b"xref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000224 00000 n \n0000000312 00000 n \n"
-        b"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n427\n%%EOF"
-    )
+    class PDF(FPDF):
+        def header(self):
+            self.set_font("helvetica", "B", 16)
+            self.cell(0, 10, "Relatorio Executivo - GuardIA", border=False, align="C", new_x="LMARGIN", new_y="NEXT")
+            self.ln(5)
+            
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("helvetica", "I", 8)
+            self.cell(0, 10, f"Pagina {self.page_no()}/{{nb}}", align="C")
+
+    pdf = PDF()
+    pdf.add_page()
+    
+    # Informações Básicas
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, "Informacoes da Sessao", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    
+    pdf.cell(0, 8, f"Sessao ID: {session.id}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Paciente: {session.patient_code}", new_x="LMARGIN", new_y="NEXT")
+    if session.title:
+        pdf.cell(0, 8, f"Titulo: {session.title}", new_x="LMARGIN", new_y="NEXT")
+    if session.created_at:
+        pdf.cell(0, 8, f"Data/Hora: {session.created_at.strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+        
+    pdf.ln(5)
+    
+    # Classificação de Risco
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, "Classificacao de Risco (IRA)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    
+    ira_score = f"{session.ira_score:.1f}%" if session.ira_score is not None else "N/A"
+    ira_level = session.ira_level.upper() if session.ira_level else "N/A"
+    
+    pdf.cell(0, 8, f"Nivel de Risco: {ira_level}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Score IRA: {ira_score}", new_x="LMARGIN", new_y="NEXT")
+    
+    pdf.ln(5)
+    
+    # Detalhes de Score
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, "Scores por Fonte Analisada", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    
+    v_score = f"{session.score_video:.1f}" if session.score_video is not None else "N/A"
+    a_score = f"{session.score_audio:.1f}" if session.score_audio is not None else "N/A"
+    d_score = f"{session.score_document:.1f}" if session.score_document is not None else "N/A"
+    n_score = f"{session.score_notes:.1f}" if session.score_notes is not None else "N/A"
+    
+    pdf.cell(0, 8, f"Video: {v_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Audio: {a_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Documentos: {d_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Anotacoes: {n_score}", new_x="LMARGIN", new_y="NEXT")
+    
+    pdf.ln(5)
+    
+    # Anotações Médicas
+    if session.notes:
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "Anotacoes", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "", 12)
+        
+        # Filtrar caracteres especiais que a FPDF1/latin-1 pode reclamar caso use encoding antigo, 
+        # porém fpdf2 suporta unicode nativamente (UTF-8).
+        pdf.multi_cell(0, 8, session.notes, new_x="LMARGIN", new_y="NEXT")
+
+    # Autenticidade
+    pdf.ln(10)
+    pdf.set_font("helvetica", "I", 10)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 6, "Documento gerado eletronicamente pelo sistema GuardIA.", new_x="LMARGIN", new_y="NEXT")
+    
+    pdf_content = bytes(pdf.output())
     
     return Response(
         content=pdf_content, 
