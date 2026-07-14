@@ -11,7 +11,7 @@ _RESULTS_DB = {}
 
 class AudioProcessor:
     
-    def process_audio(self, session_id: str, blob_url: str):
+    def process_audio(self, session_id: str, media_id: str, blob_url: str):
         """
         Lê o arquivo de áudio do volume e faz a chamada
         ao Amazon Transcribe.
@@ -151,7 +151,7 @@ Retorne um JSON válido estritamente com o seguinte formato:
             else:
                 transcription_text = "Arquivo de áudio não encontrado no disco local para análise real."
                 
-            _RESULTS_DB[session_id] = {
+            result_dict = {
                 "session_id": session_id,
                 "status": "completed",
                 "ira_score": ira_score,
@@ -164,14 +164,18 @@ Retorne um JSON válido estritamente com o seguinte formato:
                 "key_findings": key_findings,
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }
-            log.info("audio_processing_completed", session_id=session_id)
+            _RESULTS_DB[media_id] = result_dict
+            _RESULTS_DB[session_id] = result_dict
+            log.info("audio_processing_completed", session_id=session_id, media_id=media_id)
             
         except Exception as e:
-            log.exception("audio_processing_failed", session_id=session_id, error=str(e))
-            _RESULTS_DB[session_id] = {
+            log.exception("audio_processing_failed", session_id=session_id, media_id=media_id, error=str(e))
+            err_dict = {
                 "status": "failed",
                 "error": str(e)
             }
+            _RESULTS_DB[media_id] = err_dict
+            _RESULTS_DB[session_id] = err_dict
 
-    def get_result(self, session_id: str):
-        return _RESULTS_DB.get(session_id)
+    def get_result(self, job_id: str):
+        return _RESULTS_DB.get(job_id)

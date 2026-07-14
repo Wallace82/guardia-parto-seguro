@@ -33,6 +33,9 @@ class AlertOut(BaseModel):
     is_acknowledged: bool
     acknowledged_by: int | None
     acknowledged_at: datetime | None
+    is_dismissed: bool
+    dismissed_by: int | None
+    dismissed_at: datetime | None
     email_sent: bool
     created_at: datetime
 

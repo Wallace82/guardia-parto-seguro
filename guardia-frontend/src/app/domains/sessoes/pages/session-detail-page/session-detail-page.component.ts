@@ -56,72 +56,93 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="flex flex-col gap-6">
         
-        <!-- Upload Area (Left 2 cols) -->
-        <div class="lg:col-span-2 flex flex-col gap-6 animate-slide-up" style="animation-delay: 0.1s">
-          
-          @if (session()?.notes) {
-            <div class="glass-card p-6">
-              <h3 class="font-bold text-white flex items-center gap-2 mb-2">
-                <mat-icon class="text-primary-400">notes</mat-icon> Notas Clínicas Iniciais
-              </h3>
-              <p class="text-text-muted text-sm leading-relaxed whitespace-pre-line">{{ session()?.notes }}</p>
-            </div>
-          }
-
-          <div class="glass-card p-6">
-            <h3 class="font-bold text-white flex items-center gap-2 mb-4">
-              <mat-icon class="text-secondary-400">add_photo_alternate</mat-icon> Adicionar Arquivos
+        <!-- Notas (Se existirem) -->
+        @if (session()?.notes) {
+          <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.1s">
+            <h3 class="font-bold text-white flex items-center gap-2 mb-2">
+              <mat-icon class="text-primary-400">notes</mat-icon> Notas Clínicas Iniciais
             </h3>
-            <app-media-uploader 
-              [uploading]="uploading" 
-              (fileDropped)="onFileUpload($event)">
-            </app-media-uploader>
+            <p class="text-text-muted text-sm leading-relaxed whitespace-pre-line">{{ session()?.notes }}</p>
           </div>
-        </div>
+        }
 
-        <!-- Files List (Right 1 col) -->
-        <div class="glass-card p-0 flex flex-col h-[600px] animate-slide-up" style="animation-delay: 0.2s">
-          <div class="p-5 border-b border-border">
-            <h3 class="font-bold text-white flex items-center gap-2 m-0">
+        <!-- Gerenciamento de Arquivos (Upload + Listagem combinados) -->
+        <div class="glass-card p-0 flex flex-col animate-slide-up" style="animation-delay: 0.2s">
+          <div class="p-6 border-b border-border flex items-center justify-between bg-surface2/30">
+            <h3 class="font-bold text-white flex items-center gap-2 m-0 text-lg">
               <mat-icon class="text-primary-400">folder</mat-icon> Arquivos da Sessão
             </h3>
+            <span class="text-sm text-text-subtle">{{ session()?.media_files?.length || 0 }} arquivos anexados</span>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-            @if (session()?.media_files?.length === 0) {
-              <div class="flex flex-col items-center justify-center h-full text-text-muted text-center opacity-70">
-                <mat-icon class="text-4xl mb-2">file_present</mat-icon>
-                <p>Nenhum arquivo enviado ainda.</p>
-              </div>
-            } @else {
-              @for (file of session()?.media_files; track file.id) {
-                <div class="bg-surface2/50 border border-border rounded-lg p-3 flex gap-3 hover:bg-surface2/80 transition-colors">
-                  <div class="w-10 h-10 rounded bg-primary-500/10 flex flex-shrink-0 items-center justify-center text-primary-400">
-                    <mat-icon>{{ getFileIcon(file.media_type) }}</mat-icon>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-white text-sm font-bold truncate mb-0.5" [title]="file.filename">{{ file.filename }}</p>
-                    <p class="text-text-muted text-[11px] mb-1.5 leading-tight">{{ getFileDescription(file.media_type) }}</p>
-                    <div class="flex items-center justify-between text-xs text-text-subtle">
-                      <span>{{ (file.file_size_bytes / 1024 / 1024) | number:'1.1-2' }} MB</span>
-                      
-                      @if (file.status === 'analyzed') {
-                        <span class="text-success flex items-center gap-0.5"><mat-icon class="text-[12px] w-[12px] h-[12px]">check_circle</mat-icon> Analisado</span>
-                      } @else if (file.status === 'processing') {
-                        <span class="text-warning-400 flex items-center gap-0.5"><mat-icon class="text-[12px] w-[12px] h-[12px] animate-spin">autorenew</mat-icon> Processando</span>
-                      } @else {
-                        <span class="text-primary-300">Enviado</span>
-                      }
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-0">
+            
+            <!-- Área de Upload (Lado esquerdo) -->
+            <div class="lg:col-span-2 p-6 border-b lg:border-b-0 lg:border-r border-border bg-surface2/10">
+              <p class="text-sm text-text-muted mb-4">Arraste os documentos, vídeos ou áudios do parto para a área abaixo para iniciar a Análise Multimodal.</p>
+              <app-media-uploader 
+                [uploading]="uploading" 
+                (fileDropped)="onFileUpload($event)">
+              </app-media-uploader>
+            </div>
+
+            <!-- Lista de Arquivos (Lado direito) -->
+            <div class="lg:col-span-3 p-6 flex flex-col max-h-[450px] overflow-y-auto">
+              @if (session()?.media_files?.length === 0) {
+                <div class="flex flex-col items-center justify-center h-full text-text-muted text-center opacity-70 py-12">
+                  <mat-icon class="text-5xl mb-3 text-surface2">cloud_upload</mat-icon>
+                  <p class="text-lg font-medium text-white mb-1">Nenhum arquivo enviado</p>
+                  <p class="text-sm">A análise IA depende do envio de mídias.</p>
+                </div>
+              } @else {
+                <div class="flex flex-col gap-3">
+                  @for (file of session()?.media_files; track file.id) {
+                    <div class="bg-surface2/50 border border-border rounded-lg p-4 flex gap-4 hover:bg-surface2/80 transition-all items-start">
+                      <div class="w-12 h-12 rounded bg-primary-500/10 flex flex-shrink-0 items-center justify-center text-primary-400 mt-1">
+                        <mat-icon>{{ getFileIcon(file.media_type) }}</mat-icon>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                          <p class="text-white text-sm font-bold truncate m-0" [title]="file.filename">{{ file.filename }}</p>
+                          @if (getFileRiskScore(file) !== null) {
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border"
+                                  [ngClass]="{
+                                    'bg-danger-500/10 text-danger-400 border-danger-500/30': getFileRiskScore(file)! >= 70,
+                                    'bg-warning-500/10 text-warning-400 border-warning-500/30': getFileRiskScore(file)! >= 40 && getFileRiskScore(file)! < 70,
+                                    'bg-success/10 text-success border-success/30': getFileRiskScore(file)! < 40
+                                  }">
+                              Risco Extrapolado: {{ getFileRiskScore(file) | number:'1.0-0' }}
+                            </span>
+                          }
+                        </div>
+                        
+                        <p class="text-text-muted text-[11px] mb-2 leading-relaxed">
+                          {{ getFileDescription(file.media_type) }}
+                          <span class="text-primary-300 font-semibold block mt-0.5">Peso no Score Global: {{ getFileWeight(file.media_type) }}%</span>
+                        </p>
+                        
+                        <div class="flex items-center gap-3 text-xs text-text-subtle pt-1 border-t border-border/50">
+                          <span class="bg-surface px-2 py-0.5 rounded">{{ (file.file_size_bytes / 1024 / 1024) | number:'1.1-2' }} MB</span>
+                          
+                          @if (file.status === 'analyzed') {
+                            <span class="text-success flex items-center gap-1"><mat-icon class="text-[14px] w-[14px] h-[14px]">check_circle</mat-icon> Analisado</span>
+                          } @else if (file.status === 'processing') {
+                            <span class="text-warning-400 flex items-center gap-1"><mat-icon class="text-[14px] w-[14px] h-[14px] animate-spin">autorenew</mat-icon> Processando</span>
+                          } @else {
+                            <span class="text-primary-300">Enviado</span>
+                          }
+                        </div>
+                      </div>
+                      <button mat-icon-button color="warn" class="text-text-subtle hover:text-danger-500 hover:bg-danger-500/10 transition-colors mt-1" title="Excluir arquivo" (click)="deleteFile(file.id)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
                     </div>
-                  </div>
-                  <button mat-icon-button color="warn" class="scale-75 text-text-subtle hover:text-warn-500 transition-colors" title="Excluir arquivo" (click)="deleteFile(file.id)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  }
                 </div>
               }
-            }
+            </div>
           </div>
         </div>
 
@@ -238,6 +259,27 @@ export class SessionDetailPageComponent implements OnInit, OnDestroy {
       case 'audio': return 'Avalia ansiedade vocal e comunicação humanizada.';
       case 'document': return 'Extrai indicadores de risco do prontuário.';
       default: return 'Arquivo em processamento de IA.';
+    }
+  }
+
+  getFileRiskScore(file: MediaFile): number | null {
+    if (file.analysis_score !== null && file.analysis_score !== undefined) return file.analysis_score;
+    const sessionData = this.session();
+    if (!sessionData) return null;
+    
+    if (file.media_type === 'video' && sessionData.score_video) return sessionData.score_video;
+    if (file.media_type === 'audio' && sessionData.score_audio) return sessionData.score_audio;
+    if (file.media_type === 'document' && sessionData.score_document) return sessionData.score_document;
+    
+    return null;
+  }
+
+  getFileWeight(type: string): number {
+    switch (type) {
+      case 'video': return 35;
+      case 'audio': return 30;
+      case 'document': return 20;
+      default: return 0;
     }
   }
 

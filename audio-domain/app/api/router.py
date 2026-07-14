@@ -22,18 +22,18 @@ async def analyze(data: AudioAnalyzeRequest, background_tasks: BackgroundTasks):
     processor = AudioProcessor()
     
     # Processa o áudio em background
-    background_tasks.add_task(processor.process_audio, data.session_id, data.blob_url)
+    background_tasks.add_task(processor.process_audio, data.session_id, data.media_id, data.blob_url)
     
     return AudioAnalyzeResponse(
-        job_id=data.session_id,
+        job_id=data.media_id,
         status="processing",
         message="Processamento de áudio com AWS iniciado em background"
     )
 
-@router.get("/results/{session_id}", status_code=status.HTTP_200_OK)
-async def results(session_id: str):
+@router.get("/results/{job_id}", status_code=status.HTTP_200_OK)
+async def results(job_id: str):
     processor = AudioProcessor()
-    result = processor.get_result(session_id)
+    result = processor.get_result(job_id)
     if not result:
         return {"status": "processing_or_not_found"}
     return result

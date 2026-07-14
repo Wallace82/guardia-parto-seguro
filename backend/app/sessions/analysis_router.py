@@ -100,7 +100,7 @@ async def get_document_analysis(analysis_id: int, db: AsyncSession = Depends(get
 # =======================
 # SESSION CONSOLIDATED
 # =======================
-@router.get("/api/session/{session_id}/risk-summary", response_model=SessionRiskSummaryOut)
+@router.get("/api/v1/session/{session_id}/risk-summary", response_model=SessionRiskSummaryOut)
 async def get_session_risk_summary(session_id: int, db: AsyncSession = Depends(get_db)):
     # Buscar todas as análises vinculadas à sessão
     vid_res = await db.execute(select(VideoAnalysis).where(VideoAnalysis.session_id == session_id))
@@ -121,3 +121,33 @@ async def get_session_risk_summary(session_id: int, db: AsyncSession = Depends(g
         riskLevel=fusion_result["riskLevel"],
         sources=RiskSourcesOut(**fusion_result["sources"])
     )
+
+
+# =======================
+# NOTES ANALYSIS (OPENAI)
+# =======================
+@router.get("/api/v1/session/{session_id}/analyze-notes")
+async def analyze_session_notes(session_id: int, db: AsyncSession = Depends(get_db)):
+    session = await db.get(Session, session_id)
+    if not session or not session.notes:
+        raise HTTPException(status_code=404, detail="Notas não encontradas")
+        
+    try:
+        from app.orchestrator.domain_client import DomainClient
+        client = DomainClient()
+        analysis_text = await client.analyze_notes(session_id, session.notes)
+        
+        # Grava a análise na tabela document_analysis
+        d_analysis = DocumentAnalysis(
+            session_id=session_id,
+            arquivo_documento="Anotações Clínicas (Multimodal)",
+            tipo_documento="anotacoes",
+            texto_extraido=session.notes,
+            fatores_identificados={"analise_textual": analysis_text}
+        )
+        db.add(d_analysis)
+        await db.commit()
+        
+        return {"analysis": analysis_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao analisar notas: {str(e)}")

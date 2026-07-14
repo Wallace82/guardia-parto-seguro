@@ -324,6 +324,7 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
           description: finding.description,
           classification: finding.type,
           type: finding.confidence > 0.8 ? 'warning' : finding.confidence > 0.5 ? 'neutral' : 'positive',
+          technology: 'Visão Computacional'
         });
       }
     }
@@ -344,6 +345,7 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
                           seg.sentiment === 'negative' ? 'Atenção necessária' : 'Condição estável',
           type: seg.sentiment === 'positive' ? 'positive' :
                 seg.sentiment === 'negative' ? 'warning' : 'neutral',
+          technology: 'IA Semântica'
         });
       }
     }

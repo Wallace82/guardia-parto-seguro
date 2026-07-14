@@ -81,6 +81,23 @@ async def acknowledge_alert(
     return AlertOut.model_validate(alert)
 
 
+@router.patch(
+    "/{alert_id}/dismiss",
+    response_model=AlertOut,
+    summary="Ignorar alerta",
+)
+async def dismiss_alert(
+    alert_id: int,
+    current_user: CurrentUser,
+    db: DB,
+):
+    """
+    Marca o alerta como ignorado (ex: falso positivo).
+    """
+    alert = await AlertService(db).dismiss(alert_id, current_user.id)
+    return AlertOut.model_validate(alert)
+
+
 @router.post(
     "/internal",
     response_model=AlertOut,

@@ -53,6 +53,12 @@ class DocumentAnalyzeResponse(BaseModel):
     extracted_fields: ExtractedFields
     completeness_score: float
     consistency_checks: List[ConsistencyCheck]
+    ocr_text: Optional[str] = None
+    raw_ai_analysis: Optional[dict] = None
+
+class NotesAnalyzeRequest(BaseModel):
+    session_id: str
+    notes: str
 
 @app.get("/api/v1/health", status_code=status.HTTP_200_OK)
 @app.get("/api/v1/documents/health", status_code=status.HTTP_200_OK)
@@ -160,6 +166,7 @@ Retorne um JSON estritamente neste formato:
                 temperature=0.1
             )
             data_json = json.loads(response.choices[0].message.content)
+            raw_ai_analysis = data_json
             
             consent_present = bool(data_json.get("consent_present", False))
             professional_signature = bool(data_json.get("professional_signature", False))
@@ -197,6 +204,7 @@ Retorne um JSON estritamente neste formato:
             log.info("openai_document_analysis_success", ira=ira_score)
         except Exception as oai_err:
             log.error("openai_document_analysis_failed", error=str(oai_err))
+            raw_ai_analysis = {"error": str(oai_err)}
             extracted_fields = ExtractedFields(consent_present=False)
             completeness_score = 40.0
             ira_score = 90.0
@@ -210,5 +218,34 @@ Retorne um JSON estritamente neste formato:
         document_type=data.document_type,
         extracted_fields=extracted_fields,
         completeness_score=completeness_score,
-        consistency_checks=consistency_checks
+        consistency_checks=consistency_checks,
+        ocr_text=ocr_text,
+        raw_ai_analysis=raw_ai_analysis if 'raw_ai_analysis' in locals() else None
     )
+
+@app.post("/api/v1/documents/analyze-notes", status_code=status.HTTP_200_OK)
+async def analyze_notes(data: NotesAnalyzeRequest):
+    import openai
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API Key não configurada no document-domain")
+        
+    try:
+        client = openai.OpenAI(api_key=api_key)
+        prompt = f"""
+Você é um auditor médico especialista. Leia as seguintes anotações clínicas de um atendimento obstétrico.
+Forneça uma análise textual humanizada destacando os principais sinais de risco (psicológico, físico) e os fatores que precisam de atenção.
+Seja conciso, direto e profissional. Formate o texto usando quebras de linha e tópicos marcados com hífen, sem introduções desnecessárias. Não retorne JSON, apenas o texto da análise.
+
+Anotações Clínicas: "{data.notes}"
+"""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+        analysis_text = response.choices[0].message.content
+        return {"analysis": analysis_text}
+    except Exception as e:
+        log.error("openai_notes_analysis_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Erro na OpenAI: {str(e)}")

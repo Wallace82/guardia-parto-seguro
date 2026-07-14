@@ -14,6 +14,9 @@ export interface AlertOut {
   is_acknowledged: boolean;
   acknowledged_by: number | null;
   acknowledged_at: string | null;
+  is_dismissed: boolean;
+  dismissed_by: number | null;
+  dismissed_at: string | null;
   email_sent: boolean;
   created_at: string;
 }

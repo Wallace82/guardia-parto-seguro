@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
 from app.sessions.models import Session, SessionStatus, MediaFile, MediaStatus
+from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis
 from app.alerts.models import AlertSeverity, AlertType
 from app.alerts.service import AlertService
 from app.alerts.schemas import AlertCreateRequest
@@ -101,6 +102,18 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                             if results_data.get("status") == "completed":
                                 vf.analysis_score = results_data.get("ira_score")
                                 vf.status = MediaStatus.analyzed
+                                
+                                # Salva na tabela detalhada
+                                v_analysis = VideoAnalysis(
+                                    session_id=session_id,
+                                    arquivo_video=vf.filename,
+                                    duracao=results_data.get("duration_seconds", 0),
+                                    modelo_utilizado="DeepFace + MediaPipe",
+                                    emotion_score=results_data.get("components", {}).get("emotion_score"),
+                                    body_language_score=results_data.get("components", {}).get("pose_score"),
+                                    eventos_detectados={"key_findings": results_data.get("key_findings", [])}
+                                )
+                                db.add(v_analysis)
                                 break
                             elif results_data.get("status") in ["error", "failed"]:
                                 raise Exception(results_data.get("message") or results_data.get("error", "Video analysis error"))
@@ -123,10 +136,20 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     # Polling para aguardar a conclusão do processamento assíncrono do áudio
                     try:
                         for _ in range(120):
-                            results_data = await client.get_audio_results(session_id)
+                            results_data = await client.get_audio_results(audio_file.id)
                             if results_data.get("status") == "completed":
                                 audio_file.analysis_score = results_data.get("ira_score")
                                 audio_file.status = MediaStatus.analyzed
+                                
+                                # Salva na tabela detalhada
+                                a_analysis = AudioAnalysis(
+                                    session_id=session_id,
+                                    arquivo_audio=audio_file.filename,
+                                    transcricao=results_data.get("transcription"),
+                                    sentiment_score=results_data.get("components", {}).get("sentiment_score"),
+                                    eventos={"key_findings": results_data.get("key_findings", [])}
+                                )
+                                db.add(a_analysis)
                                 break
                             elif results_data.get("status") in ["error", "failed"]:
                                 raise Exception(results_data.get("message") or results_data.get("error", "Audio analysis error"))
@@ -148,6 +171,22 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                 else:
                     doc_file.analysis_score = doc_res.get("ira_score")
                     doc_file.status = MediaStatus.analyzed
+                    
+                    # Salva na tabela detalhada
+                    d_analysis = DocumentAnalysis(
+                        session_id=session_id,
+                        arquivo_documento=doc_file.filename,
+                        tipo_documento=doc_res.get("document_type"),
+                        texto_extraido=doc_res.get("ocr_text"),
+                        entidades_detectadas=doc_res.get("extracted_fields"),
+                        clinical_risk_score=doc_res.get("ira_score"),
+                        fatores_identificados={
+                            "consistency_checks": doc_res.get("consistency_checks"),
+                            "raw_ai_analysis": doc_res.get("raw_ai_analysis")
+                        },
+                        confidence_score=doc_res.get("completeness_score")
+                    )
+                    db.add(d_analysis)
 
             await db.commit()
 

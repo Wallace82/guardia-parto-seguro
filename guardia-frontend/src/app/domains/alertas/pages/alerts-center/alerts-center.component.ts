@@ -86,6 +86,9 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                         <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
                         <div class="flex items-center gap-3">
                           <span class="bg-danger-500/20 text-danger-400 text-xs font-bold px-2 py-0.5 rounded border border-danger-500/30">Crítico</span>
+                          <button mat-button class="!text-text-muted hover:!text-white hover:!bg-surface" (click)="dismiss(alert.id)" [disabled]="isAcknowledging() === alert.id">
+                            <mat-icon>visibility_off</mat-icon> Ignorar
+                          </button>
                           <button mat-button class="!text-danger-400 hover:!bg-danger-500/10" (click)="acknowledge(alert.id)" [disabled]="isAcknowledging() === alert.id">
                             <mat-icon>check</mat-icon> Reconhecer
                           </button>
@@ -119,6 +122,9 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                         <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
                         <div class="flex items-center gap-3">
                           <span class="bg-warning/20 text-warning-400 text-xs font-bold px-2 py-0.5 rounded border border-warning/30">Atenção</span>
+                          <button mat-button class="!text-text-muted hover:!text-white hover:!bg-surface" (click)="dismiss(alert.id)" [disabled]="isAcknowledging() === alert.id">
+                            <mat-icon>visibility_off</mat-icon> Ignorar
+                          </button>
                           <button mat-button class="!text-warning-500 hover:!bg-warning/10" (click)="acknowledge(alert.id)" [disabled]="isAcknowledging() === alert.id">
                             <mat-icon>check</mat-icon> Reconhecer
                           </button>
@@ -216,6 +222,21 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.snackBar.open('Erro ao reconhecer alerta.', 'Fechar', { duration: 3000 });
+        this.isAcknowledging.set(null);
+      }
+    });
+  }
+
+  dismiss(id: number) {
+    this.isAcknowledging.set(id); // Reusa o mesmo loading signal para travar botões
+    this.alertsService.dismissAlert(id).subscribe({
+      next: () => {
+        this.snackBar.open('Alerta ignorado com sucesso.', 'OK', { duration: 3000 });
+        this.isAcknowledging.set(null);
+        this.refreshTrigger$.next();
+      },
+      error: () => {
+        this.snackBar.open('Erro ao ignorar alerta.', 'Fechar', { duration: 3000 });
         this.isAcknowledging.set(null);
       }
     });

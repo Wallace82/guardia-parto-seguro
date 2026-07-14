@@ -50,6 +50,15 @@ class Alert(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Controle de descarte (ignorar alerta)
+    is_dismissed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    dismissed_by: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    dismissed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     # Controle de notificação por e-mail
     email_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

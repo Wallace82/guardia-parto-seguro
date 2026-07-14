@@ -16,4 +16,8 @@ export class AnalysisService {
   getRiskSummary(sessionId: number): Observable<SessionRiskSummaryOut> {
     return this.http.get<SessionRiskSummaryOut>(`${environment.apiUrl}/session/${sessionId}/risk-summary`);
   }
+
+  analyzeNotesText(sessionId: number): Observable<{ analysis: string }> {
+    return this.http.get<{ analysis: string }>(`${environment.apiUrl}/session/${sessionId}/analyze-notes`);
+  }
 }

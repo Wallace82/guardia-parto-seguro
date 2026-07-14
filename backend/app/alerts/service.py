@@ -66,7 +66,7 @@ class AlertService:
         if severity:
             query = query.where(Alert.severity == severity)
         if unacknowledged_only:
-            query = query.where(Alert.is_acknowledged.is_(False))
+            query = query.where(Alert.is_acknowledged.is_(False), Alert.is_dismissed.is_(False))
 
         query = query.order_by(Alert.created_at.desc())
 
@@ -81,7 +81,9 @@ class AlertService:
 
     async def acknowledge(self, alert_id: int, acknowledged_by_id: int) -> Alert:
         """Marca alerta como reconhecido pelo profissional/gestor."""
-        result = await self.db.execute(select(Alert).where(Alert.id == alert_id))
+        result = await self.db.execute(
+            select(Alert).where(Alert.id == alert_id).options(joinedload(Alert.session))
+        )
         alert = result.scalar_one_or_none()
 
         if not alert:
@@ -89,15 +91,38 @@ class AlertService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Alerta não encontrado",
             )
-        if alert.is_acknowledged:
+        if alert.is_acknowledged or alert.is_dismissed:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Alerta já foi reconhecido",
+                detail="Alerta já foi reconhecido ou ignorado",
             )
 
         alert.is_acknowledged = True
         alert.acknowledged_by = acknowledged_by_id
         alert.acknowledged_at = datetime.now(timezone.utc)
+        return alert
+
+    async def dismiss(self, alert_id: int, dismissed_by_id: int) -> Alert:
+        """Marca alerta como ignorado (falso positivo ou não relevante)."""
+        result = await self.db.execute(
+            select(Alert).where(Alert.id == alert_id).options(joinedload(Alert.session))
+        )
+        alert = result.scalar_one_or_none()
+
+        if not alert:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Alerta não encontrado",
+            )
+        if alert.is_acknowledged or alert.is_dismissed:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Alerta já foi reconhecido ou ignorado",
+            )
+
+        alert.is_dismissed = True
+        alert.dismissed_by = dismissed_by_id
+        alert.dismissed_at = datetime.now(timezone.utc)
         return alert
 
     async def _send_critical_email(self, alert: Alert) -> None:

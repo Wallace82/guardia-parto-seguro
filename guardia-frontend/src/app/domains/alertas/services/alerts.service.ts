@@ -30,4 +30,8 @@ export class AlertsService {
   acknowledgeAlert(id: number): Observable<AlertOut> {
     return this.http.patch<AlertOut>(`${this.baseUrl}/${id}/acknowledge`, {});
   }
+
+  dismissAlert(id: number): Observable<AlertOut> {
+    return this.http.patch<AlertOut>(`${this.baseUrl}/${id}/dismiss`, {});
+  }
 }
