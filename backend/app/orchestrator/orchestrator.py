@@ -237,7 +237,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             ira_score = risk_res.get("ira_score", 0.0)
             risk_level = risk_res.get("risk_level", "baixo")
             
-            # Atualizar os scores na sessão
+            # Atualizar os scores provisoriamente
             session.ira_score = ira_score
             session.ira_level = risk_level
             session.score_video = video_score
@@ -246,6 +246,14 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             session.status = SessionStatus.completed
             
             await db.commit()
+            
+            # Recalcula localmente usando a RiskFusionEngine (para aplicar regras avançadas
+            # de Correlação Transmodal e sincronizar os scores retroativos nos MediaFiles)
+            try:
+                from app.sessions.service import SessionService
+                await SessionService(db)._recalculate_session_risk(session_id)
+            except Exception as re_err:
+                log.error("orchestrator_recalculate_failed", session_id=session_id, error=str(re_err))
             log.info("orchestration_completed", session_id=session_id, ira_score=ira_score, level=risk_level)
 
             # Disparar Alertas se o risco for moderado ou crítico
