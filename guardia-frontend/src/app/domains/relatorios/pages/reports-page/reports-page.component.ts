@@ -69,18 +69,7 @@ import { ExportPdfService } from '../../services/export-pdf.service';
               </mat-form-field>
             </div>
 
-            <!-- FORMATO -->
-            <div>
-              <label class="block text-sm font-semibold text-white mb-2">Formato do Relatório</label>
-              <mat-radio-group [(ngModel)]="format" class="flex flex-col gap-3">
-                <mat-radio-button value="pdf" color="primary">
-                  <span class="text-white">Relatório Completo da Sessão (PDF)</span>
-                </mat-radio-button>
-                <mat-radio-button value="excel" color="primary">
-                  <span class="text-white">Resumo Executivo</span>
-                </mat-radio-button>
-              </mat-radio-group>
-            </div>
+
 
             <button 
               mat-flat-button 
@@ -125,7 +114,7 @@ import { ExportPdfService } from '../../services/export-pdf.service';
             </div>
             <div class="flex gap-3">
               <button mat-stroked-button class="!rounded-full" (click)="downloadReport()">
-                <mat-icon>save_alt</mat-icon> Exportar PDF
+                <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
               </button>
               <button mat-stroked-button color="primary" class="!rounded-full border-primary-500 text-primary-400">
                 <mat-icon>share</mat-icon> Compartilhar
@@ -165,9 +154,7 @@ import { ExportPdfService } from '../../services/export-pdf.service';
               <div class="bg-surface2/40 p-6 rounded-xl border border-border">
                 <h3 class="text-sm font-bold text-white mb-3">Resumo executivo</h3>
                 <p class="text-sm text-text-muted leading-relaxed">
-                  A análise multimodal realizada pelo GuardIA avaliou dados de vídeo, áudio, documentos e sinais vitais durante o atendimento.
-                  <br><br>
-                  Não foram identificados incidentes de alto risco. Recomenda-se manter a conduta atual e acompanhamento contínuo.
+                  {{ getDynamicSummary(activeSession()) }}
                 </p>
               </div>
               
@@ -241,28 +228,20 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                 <h3 class="text-sm font-bold text-white mb-4">Indicadores analisados</h3>
                 <div class="flex flex-col gap-2">
                   <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-success">psychology</mat-icon> Estado emocional</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Positivo</span>
+                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-primary-400">videocam</mat-icon> Análise de Vídeo</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" [ngClass]="getScoreClass(activeSession()?.score_video)">{{ formatScore(activeSession()?.score_video) }}</span>
                   </div>
                   <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-primary-400">forum</mat-icon> Comunicação</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Humanizada</span>
+                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-secondary-400">graphic_eq</mat-icon> Análise de Áudio</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" [ngClass]="getScoreClass(activeSession()?.score_audio)">{{ formatScore(activeSession()?.score_audio) }}</span>
                   </div>
                   <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-warning">accessibility_new</mat-icon> Linguagem corporal</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Adequada</span>
+                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-primary-300">description</mat-icon> Análise Documental</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" [ngClass]="getScoreClass(activeSession()?.score_document)">{{ formatScore(activeSession()?.score_document) }}</span>
                   </div>
                   <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-secondary-400">mic</mat-icon> Análise vocal</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Estável</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-primary-300">people</mat-icon> Interações da equipe</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Positivas</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded hover:bg-surface2/30">
-                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-text-muted">person_add</mat-icon> Presença de acompanhante</span>
-                    <span class="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">Confirmada</span>
+                    <span class="flex items-center gap-2 text-sm text-text-muted"><mat-icon class="!text-lg text-danger-400">note_alt</mat-icon> Análise de Anotações</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" [ngClass]="getScoreClass(activeSession()?.score_notes)">{{ formatScore(activeSession()?.score_notes) }}</span>
                   </div>
                 </div>
               </div>
@@ -270,26 +249,12 @@ import { ExportPdfService } from '../../services/export-pdf.service';
               <div>
                 <h3 class="text-sm font-bold text-white mb-4">Principais fatores positivos</h3>
                 <div class="flex flex-col gap-3">
-                  <div class="flex items-start gap-3">
-                    <mat-icon class="text-success !text-base">check_circle</mat-icon>
-                    <span class="text-sm text-white">Ambiente acolhedor e seguro</span>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <mat-icon class="text-success !text-base">check_circle</mat-icon>
-                    <span class="text-sm text-white">Equipe atenciosa e empática</span>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <mat-icon class="text-success !text-base">check_circle</mat-icon>
-                    <span class="text-sm text-white">Comunicação clara e respeitosa</span>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <mat-icon class="text-success !text-base">check_circle</mat-icon>
-                    <span class="text-sm text-white">Paciente confiante e colaborativa</span>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <mat-icon class="text-success !text-base">check_circle</mat-icon>
-                    <span class="text-sm text-white">Acompanhante presente e participativo</span>
-                  </div>
+                  @for (rec of getDynamicFactors(activeSession()); track rec) {
+                    <div class="flex items-start gap-3">
+                      <mat-icon class="text-primary-400 !text-base">info</mat-icon>
+                      <span class="text-sm text-white">{{ rec }}</span>
+                    </div>
+                  }
                 </div>
               </div>
             </div>
@@ -299,18 +264,12 @@ import { ExportPdfService } from '../../services/export-pdf.service';
               <div>
                 <h3 class="text-sm font-bold text-white mb-4">Recomendações</h3>
                 <div class="flex flex-col gap-3">
-                  <div class="flex items-center gap-3">
-                    <mat-icon class="text-text-muted !text-base">lock</mat-icon>
-                    <span class="text-sm text-text-muted">Manter conduta atual</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <mat-icon class="text-text-muted !text-base">visibility</mat-icon>
-                    <span class="text-sm text-text-muted">Continuar monitoramento contínuo</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <mat-icon class="text-text-muted !text-base">assignment_late</mat-icon>
-                    <span class="text-sm text-text-muted">Reavaliar em caso de mudança clínica</span>
-                  </div>
+                  @for (rec of getDynamicRecommendations(activeSession()); track rec) {
+                    <div class="flex items-center gap-3">
+                      <mat-icon class="text-text-muted !text-base">arrow_right</mat-icon>
+                      <span class="text-sm text-text-muted">{{ rec }}</span>
+                    </div>
+                  }
                 </div>
               </div>
 
@@ -318,16 +277,16 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                 <h3 class="text-sm font-bold text-white mb-4">Responsáveis</h3>
                 <div class="grid grid-cols-3 gap-y-2 text-sm">
                   <span class="font-bold text-white">Profissional:</span>
-                  <span class="col-span-2 text-text-muted">Enf. João Silva</span>
+                  <span class="col-span-2 text-text-muted">Profissional ID #{{ activeSession()?.professional_id }}</span>
                   
                   <span class="font-bold text-white">Função:</span>
-                  <span class="col-span-2 text-text-muted">Enfermeiro Obstetra</span>
+                  <span class="col-span-2 text-text-muted">Especialista GuardIA</span>
                   
-                  <span class="font-bold text-white">Registro:</span>
-                  <span class="col-span-2 text-text-muted">COREN 123456</span>
+                  <span class="font-bold text-white">Anotações:</span>
+                  <span class="col-span-2 text-text-muted line-clamp-2" [title]="activeSession()?.notes || 'Nenhuma anotação'">{{ activeSession()?.notes || 'Nenhuma anotação registrada.' }}</span>
                   
                   <span class="font-bold text-white mt-2">Assinatura:</span>
-                  <span class="col-span-2 text-text-muted mt-2 border-b border-text-muted/30 pb-1 italic font-serif">João Silva</span>
+                  <span class="col-span-2 text-text-muted mt-2 border-b border-text-muted/30 pb-1 italic font-serif">Prof. {{ activeSession()?.professional_id }}</span>
                 </div>
               </div>
             </div>
@@ -345,6 +304,127 @@ import { ExportPdfService } from '../../services/export-pdf.service';
 
           </div>
         </div>
+
+        <!-- VERSÃO PARA IMPRESSÃO (Oculta da tela, mas lida pelo html2canvas) -->
+        <div style="position: absolute; left: -9999px; top: 0; opacity: 0; pointer-events: none;">
+          <div id="pdf-printable-content" class="bg-white text-gray-900 p-12 w-[800px]" style="font-family: 'Helvetica Neue', Arial, sans-serif;">
+            
+            <!-- Header -->
+            <div class="border-b-2 border-gray-300 pb-6 mb-8 flex justify-between items-start">
+              <div>
+                <h1 class="text-3xl font-black text-gray-900 mb-2 uppercase tracking-tight">Relatório GuardIA</h1>
+                <p class="text-lg text-gray-600 font-medium">Análise Multimodal de Atendimento Obstétrico</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Emitido em</p>
+                <p class="text-lg text-gray-900 font-medium">{{ generationDate() | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+            </div>
+
+            <!-- Dados Paciente (Horizontal Distribution) -->
+            <div class="bg-gray-50 rounded-xl mb-8 border border-gray-200 overflow-hidden">
+              <div class="bg-gray-200 px-6 py-3 border-b border-gray-300">
+                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-widest">Informações Gerais da Sessão</h2>
+              </div>
+              <div class="p-6 grid grid-cols-4 gap-6 text-sm">
+                <div class="col-span-1">
+                  <p class="text-gray-500 font-bold mb-1">Paciente</p>
+                  <p class="text-gray-900 font-medium text-base">{{ activeSession()?.patient_code }}</p>
+                </div>
+                <div class="col-span-1">
+                  <p class="text-gray-500 font-bold mb-1">Sessão</p>
+                  <p class="text-gray-900 font-medium text-base">#{{ activeSession()?.id }}</p>
+                </div>
+                <div class="col-span-2">
+                  <p class="text-gray-500 font-bold mb-1">Profissional Responsável</p>
+                  <p class="text-gray-900 font-medium text-base">ID #{{ activeSession()?.professional_id }} - Especialista GuardIA</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumo e Risco -->
+            <div class="grid grid-cols-3 gap-8 mb-8">
+              <div class="col-span-2 flex flex-col justify-center">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-3">Síntese Executiva</h3>
+                <p class="text-base text-gray-700 leading-relaxed text-justify">
+                  {{ getDynamicSummary(activeSession()) }}
+                </p>
+              </div>
+              <div class="col-span-1 bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col items-center justify-center text-center">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Risco (IRA)</h3>
+                <span class="text-xl font-bold mb-1" [ngClass]="getPrintRiskColorClass(activeSession()?.ira_level)">{{ getRiskLabel(activeSession()?.ira_level) }}</span>
+                <span class="text-5xl font-black text-gray-900">{{ activeSession()?.ira_score || 0 }}<span class="text-2xl text-gray-500">%</span></span>
+              </div>
+            </div>
+
+            <!-- Indicadores -->
+            <div class="mb-8">
+              <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-300 pb-2">Desempenho dos Indicadores</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <span class="text-gray-700 font-medium">Análise de Vídeo</span>
+                  <span class="font-bold text-gray-900 bg-white px-3 py-1 rounded shadow-sm border border-gray-200">{{ formatScore(activeSession()?.score_video) }}</span>
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <span class="text-gray-700 font-medium">Análise de Áudio</span>
+                  <span class="font-bold text-gray-900 bg-white px-3 py-1 rounded shadow-sm border border-gray-200">{{ formatScore(activeSession()?.score_audio) }}</span>
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <span class="text-gray-700 font-medium">Análise Documental</span>
+                  <span class="font-bold text-gray-900 bg-white px-3 py-1 rounded shadow-sm border border-gray-200">{{ formatScore(activeSession()?.score_document) }}</span>
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <span class="text-gray-700 font-medium">Análise de Anotações</span>
+                  <span class="font-bold text-gray-900 bg-white px-3 py-1 rounded shadow-sm border border-gray-200">{{ formatScore(activeSession()?.score_notes) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recomendações e Fatores -->
+            <div class="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-300 pb-2">Recomendações Clínicas</h3>
+                <ul class="space-y-3">
+                  @for (rec of getDynamicRecommendations(activeSession()); track rec) {
+                    <li class="flex items-start gap-2">
+                      <div class="w-2 h-2 rounded-full bg-gray-400 mt-1.5 flex-shrink-0"></div>
+                      <span class="text-gray-700 text-sm leading-snug">{{ rec }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-300 pb-2">Fatores Relevantes</h3>
+                <ul class="space-y-3">
+                  @for (fac of getDynamicFactors(activeSession()); track fac) {
+                    <li class="flex items-start gap-2">
+                      <div class="w-2 h-2 rounded-full bg-gray-400 mt-1.5 flex-shrink-0"></div>
+                      <span class="text-gray-700 text-sm leading-snug">{{ fac }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            @if(activeSession()?.notes) {
+              <div class="mb-8">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-3 border-b border-gray-300 pb-2">Anotações Registradas</h3>
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm text-gray-800 italic">
+                  "{{ activeSession()?.notes }}"
+                </div>
+              </div>
+            }
+
+            <!-- Autenticidade -->
+            <div class="mt-12 pt-6 border-t-2 border-gray-300 text-center">
+              <p class="text-sm font-black text-gray-800 uppercase tracking-widest mb-2">Documento Assinado Digitalmente</p>
+              <p class="text-[10px] text-gray-400 font-mono tracking-widest">
+                HASH DE AUTENTICIDADE: {{ fakeHash() }}
+              </p>
+            </div>
+            
+          </div>
+        </div>
       }
     </div>
   `
@@ -359,7 +439,6 @@ export class ReportsPageComponent implements OnInit {
 
   // Formulário
   selectedSessionId: number | null = null;
-  format: 'pdf' | 'excel' = 'pdf';
   includeTranscription = true;
   includeFrames = true;
 
@@ -428,20 +507,8 @@ export class ReportsPageComponent implements OnInit {
   downloadReport() {
     const session = this.activeSession();
     if (this.selectedSessionId && session) {
-      if (this.format === 'pdf') {
-        this.exportPdf.exportSessionReport(this.selectedSessionId);
-      } else {
-        this.snackBar.open('Baixando arquivo Excel...', '', { duration: 2000 });
-        const score = session.ira_score !== null ? session.ira_score : 'N/A';
-        const blob = new Blob([`ID,Title,Patient,Status,IRA_Score\n${session.id},"${session.title}","${session.patient_code}",${session.status},${score}`], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Relatorio_Executivo_Sessao_${session.id}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
+      const filename = `Resumo_Executivo_GuardIA_Sessao_${session.id}.pdf`;
+      this.exportPdf.exportElementToPdf('pdf-printable-content', filename);
     }
   }
 
@@ -454,6 +521,53 @@ export class ReportsPageComponent implements OnInit {
     return Array.from({length: 64}, () => 
       Math.floor(Math.random() * 16).toString(16)
     ).join('');
+  }
+
+  getDynamicSummary(session: SessionOut | null): string {
+    if (!session) return '';
+    const ira = session.ira_level?.toLowerCase() || 'baixo';
+    
+    if (ira === 'baixo') {
+      return 'A análise multimodal indica um cenário positivo e estável. Não foram identificados incidentes de risco. Recomenda-se manter a conduta atual e o acompanhamento contínuo.';
+    } else if (ira === 'moderado') {
+      return 'Foram identificados pontos de atenção na análise multimodal. É necessário acompanhamento mais próximo, reavaliação de conduta e maior atenção à comunicação.';
+    } else {
+      return 'ATENÇÃO: A análise multimodal indica um nível de risco elevado/crítico. Recomenda-se intervenção imediata, revisão clínica urgente e acionamento de equipe de apoio.';
+    }
+  }
+
+  formatScore(score: number | null | undefined): string {
+    if (score === null || score === undefined) return 'N/A';
+    return `${score}/100`;
+  }
+
+  getScoreClass(score: number | null | undefined): string {
+    if (score === null || score === undefined) return 'text-text-muted bg-surface2';
+    if (score >= 80) return 'text-success bg-success/10';
+    if (score >= 50) return 'text-warning bg-warning/10';
+    return 'text-danger-400 bg-danger-400/10';
+  }
+
+  getDynamicFactors(session: SessionOut | null): string[] {
+    if (!session) return [];
+    const factors = [];
+    if ((session.score_video || 0) >= 80) factors.push('Linguagem corporal e ambiente adequados');
+    if ((session.score_audio || 0) >= 80) factors.push('Comunicação clara e tom de voz acolhedor');
+    if ((session.score_document || 0) >= 80) factors.push('Documentação completa e aderente ao protocolo');
+    if (factors.length === 0) factors.push('Fatores positivos limitados identificados');
+    return factors;
+  }
+
+  getDynamicRecommendations(session: SessionOut | null): string[] {
+    if (!session) return [];
+    const ira = session.ira_level?.toLowerCase() || 'baixo';
+    if (ira === 'baixo') {
+      return ['Manter conduta atual', 'Continuar monitoramento contínuo', 'Reforçar orientações de alta se aplicável'];
+    } else if (ira === 'moderado') {
+      return ['Aumentar frequência de monitoramento', 'Reavaliar indicadores clínicos vitais', 'Revisar documentação e anotações ativamente'];
+    } else {
+      return ['Intervenção médica imediata', 'Acionar equipe multidisciplinar', 'Reavaliação completa de conduta'];
+    }
   }
 
   getRiskLabel(level: string | null | undefined): string {
@@ -475,6 +589,17 @@ export class ReportsPageComponent implements OnInit {
       case 'elevado': return 'text-danger-400';
       case 'critico': return 'text-danger-500';
       default: return 'text-text-muted';
+    }
+  }
+
+  getPrintRiskColorClass(level: string | null | undefined): string {
+    if (!level) return 'text-gray-500';
+    switch(level.toLowerCase()) {
+      case 'baixo': return 'text-green-600';
+      case 'moderado': return 'text-yellow-600';
+      case 'elevado': return 'text-orange-600';
+      case 'critico': return 'text-red-600';
+      default: return 'text-gray-500';
     }
   }
 

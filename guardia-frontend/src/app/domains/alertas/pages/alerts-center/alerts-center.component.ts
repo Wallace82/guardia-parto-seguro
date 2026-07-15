@@ -41,6 +41,7 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
       <!-- Filters -->
       <app-alert-filters 
         [filters]="currentFilters()" 
+        [counts]="alertCounts()"
         (filtersChange)="onFiltersChanged($event)">
       </app-alert-filters>
 
@@ -162,9 +163,28 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
     unacknowledgedOnly: true // Default to showing only actionable items
   });
 
+  alertCounts = computed(() => {
+    const all = this.alerts();
+    return {
+      all: all.length,
+      critical: all.filter(a => a.severity === 'critical').length,
+      moderate: all.filter(a => a.severity === 'moderate').length,
+      informative: 0
+    };
+  });
+
   // Computed signals for categorized alerts
-  criticalAlerts = computed(() => this.alerts().filter(a => a.severity === 'critical'));
-  moderateAlerts = computed(() => this.alerts().filter(a => a.severity === 'moderate'));
+  criticalAlerts = computed(() => {
+    const filter = this.currentFilters().severity;
+    if (filter !== 'all' && filter !== 'critical') return [];
+    return this.alerts().filter(a => a.severity === 'critical');
+  });
+  
+  moderateAlerts = computed(() => {
+    const filter = this.currentFilters().severity;
+    if (filter !== 'all' && filter !== 'moderate') return [];
+    return this.alerts().filter(a => a.severity === 'moderate');
+  });
 
   ngOnInit() {
     // Polling de 10 segundos
@@ -172,8 +192,7 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
       switchMap(() => {
         const filters = this.currentFilters();
-        const sev = filters.severity === 'all' ? undefined : filters.severity;
-        return this.alertsService.getAlerts(0, 50, sev as any, filters.unacknowledgedOnly).pipe(
+        return this.alertsService.getAlerts(0, 50, undefined, filters.unacknowledgedOnly).pipe(
           catchError(() => {
             console.error('Failed to poll alerts');
             return of({ items: [], total: 0 });
@@ -191,8 +210,7 @@ export class AlertsCenterPageComponent implements OnInit, OnDestroy {
       switchMap(() => {
         this.loading.set(true);
         const filters = this.currentFilters();
-        const sev = filters.severity === 'all' ? undefined : filters.severity;
-        return this.alertsService.getAlerts(0, 50, sev as any, filters.unacknowledgedOnly).pipe(
+        return this.alertsService.getAlerts(0, 50, undefined, filters.unacknowledgedOnly).pipe(
           catchError(() => of({ items: [], total: 0 }))
         );
       })

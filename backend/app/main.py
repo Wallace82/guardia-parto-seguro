@@ -13,6 +13,8 @@ from app.auth.router import router as auth_router
 from app.config import settings
 from app.sessions.router import router as sessions_router
 from app.sessions.analysis_router import router as analysis_router
+from app.audit.router import router as audit_router
+from app.settings.router import router as settings_router
 from app.middleware.logging import StructlogMiddleware
 
 # Configura o structlog para gerar JSON
@@ -82,6 +84,8 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(sessions_router, prefix="/api/v1/sessions", tags=["Sessions"])
 app.include_router(analysis_router)
 app.include_router(alerts_router, prefix="/api/v1/alerts", tags=["Alerts"])
+app.include_router(audit_router, prefix="/api/v1/audit", tags=["Audit"])
+app.include_router(settings_router, prefix="/api/v1/settings", tags=["Settings"])
 
 
 @app.get("/api/v1/health", tags=["Health"])

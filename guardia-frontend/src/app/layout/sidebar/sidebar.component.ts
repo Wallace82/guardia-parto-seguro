@@ -116,7 +116,7 @@ export class SidebarComponent {
   ];
 
   adminMenuItems: MenuItem[] = [
-    { icon: 'policy', label: 'Auditoria', route: '/admin' },
-    { icon: 'settings', label: 'Configurações', route: '/admin' },
+    { icon: 'policy', label: 'Auditoria', route: '/admin/auditoria' },
+    { icon: 'settings', label: 'Configurações', route: '/admin/configuracoes' },
   ];
 }

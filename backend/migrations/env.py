@@ -20,6 +20,7 @@ from app.sessions.models import Session, MediaFile
 from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis, RiskHistory
 from app.alerts.models import Alert
 from app.audit.models import AuditLog
+from app.settings.models import SystemSettings
 
 target_metadata = Base.metadata
 
