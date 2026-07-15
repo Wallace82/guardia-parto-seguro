@@ -36,7 +36,7 @@ export default {
           500: '#DC2626',
           600: '#b91c1c',
         },
-        // IRA levels
+        // IGA levels
         'ira-baixo':    '#16A34A',
         'ira-moderado': '#EAB308',
         'ira-critico':  '#DC2626',

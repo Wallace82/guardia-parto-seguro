@@ -169,7 +169,7 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                 </div>
                 <div class="w-full">
                   <div class="flex justify-between text-xs text-text-muted mb-1">
-                    <span>Score IRA</span>
+                    <span>Score IGA</span>
                     <span class="font-bold text-white">{{ activeSession()?.ira_score || 0 }}%</span>
                   </div>
                   <div class="w-full h-1.5 bg-bg rounded-full overflow-hidden">
@@ -351,7 +351,7 @@ import { ExportPdfService } from '../../services/export-pdf.service';
                 </p>
               </div>
               <div class="col-span-1 bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col items-center justify-center text-center">
-                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Risco (IRA)</h3>
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Risco (IGA)</h3>
                 <span class="text-xl font-bold mb-1" [ngClass]="getPrintRiskColorClass(activeSession()?.ira_level)">{{ getRiskLabel(activeSession()?.ira_level) }}</span>
                 <span class="text-5xl font-black text-gray-900">{{ activeSession()?.ira_score || 0 }}<span class="text-2xl text-gray-500">%</span></span>
               </div>
@@ -480,7 +480,7 @@ export class ReportsPageComponent implements OnInit {
       next: (session) => {
         this.activeSession.set(session);
         this.progress.set(40);
-        this.statusMessage.set('✍️ Estruturando layout e renderizando gráficos de IRA...');
+        this.statusMessage.set('✍️ Estruturando layout e renderizando gráficos de IGA...');
         
         setTimeout(() => {
           this.progress.set(80);

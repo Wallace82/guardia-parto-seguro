@@ -39,14 +39,14 @@
 - [x] Integrar MediaPipe para pose estimation
 - [x] Integrar YOLOv8 para detecção de objetos
 - [x] Implementar detecção de sangramento (OpenCV HSV)
-- [x] Implementar IRA scorer de vídeo
+- [x] Implementar IGA scorer de vídeo
 
 **Audio Domain (Integração AWS):**
 - [x] Configurar serviço FastAPI de áudio
 - [x] Integrar com `aws-domain` para Amazon Transcribe (STT + diarization)
 - [x] Integrar com `aws-domain` para Amazon Comprehend (sentimento + NER)
 - [x] Implementar detecção de keywords de risco
-- [x] Implementar IRA scorer de áudio
+- [x] Implementar IGA scorer de áudio
 - [x] Configurar rastreamento Git LFS (Large File Storage) para modelos de IA (.pt) e mídias de teste (.mp4)
 
 ---
@@ -62,11 +62,11 @@
 - [x] Integrar com `aws-domain` para Amazon Textract (OCR)
 - [x] Implementar extrator de campos obstétricos
 - [x] Implementar verificador de consistência e validador de consentimento
-- [x] Implementar IRA scorer documental
+- [x] Implementar IGA scorer documental
 
 **Risk Domain:**
 - [x] Configurar serviço FastAPI de risco
-- [x] Implementar motor de correlação multimodal e calculadora do IRA
+- [x] Implementar motor de correlação multimodal e calculadora do IGA
 - [x] Implementar analisador de tendências temporais e gerar justificativas
 
 ---
@@ -79,7 +79,7 @@
 
 **Dashboard (Streamlit):**
 - [x] Configurar aplicação Streamlit multipage (Dashboard, Login, Sessões)
-- [x] Implementar mapa de calor temporal do IRA e sincronização
+- [x] Implementar mapa de calor temporal do IGA e sincronização
 - [x] Implementar central de alertas
 
 **Report Domain:**
@@ -154,7 +154,7 @@ Adotamos **trunk-based development** com feature branches de curta duração (m�
 **Objetivo:** Especialista em extração documental médica utilizando Amazon Textract.
 
 ### 📊 Agent 7 — Risk Correlation Agent
-**Objetivo:** Calcular o IRA composto (0-100) utilizando regras de ponderação.
+**Objetivo:** Calcular o IGA composto (0-100) utilizando regras de ponderação.
 
 ### 🚀 Agent 8 — DevOps Agent
 **Objetivo:** Especialista em infraestrutura, CI/CD (GitHub Actions), Docker Compose (para LOCAL/DEV) e Amazon ECS Fargate (para HML/PRD).

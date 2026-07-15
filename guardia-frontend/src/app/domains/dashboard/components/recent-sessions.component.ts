@@ -55,9 +55,9 @@ import { SessionOut } from '../../sessoes/models/sessions.models';
               </td>
             </ng-container>
 
-            <!-- IRA Column -->
+            <!-- IGA Column -->
             <ng-container matColumnDef="ira">
-              <th mat-header-cell *matHeaderCellDef class="text-text-muted font-semibold text-xs tracking-wider uppercase border-b border-border"> IRA </th>
+              <th mat-header-cell *matHeaderCellDef class="text-text-muted font-semibold text-xs tracking-wider uppercase border-b border-border"> IGA </th>
               <td mat-cell *matCellDef="let element" class="border-b border-border/50">
                 @if (element.ira_score !== null) {
                   <span class="ira-badge" [ngClass]="'ira-badge--' + element.ira_level">

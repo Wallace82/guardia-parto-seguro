@@ -144,7 +144,7 @@ GET /api/v1/sessions/?status=processing → em processamento
 ### 4.1 Lista de Sessões
 
 - [ ] `SessionListPageComponent`
-- [ ] `SessionCardComponent` (título, patient_code, status, IRA)
+- [ ] `SessionCardComponent` (título, patient_code, status, IGA)
 - [ ] `StatusChipComponent`
 - [ ] Paginação (skip/limit)
 - [ ] Filtro por status
@@ -159,8 +159,8 @@ GET /api/v1/sessions/?status=processing → em processamento
 ### 4.3 Detalhe da Sessão
 
 - [ ] `SessionDetailPageComponent`
-- [ ] Exibe: status, IRA score, scores parciais, arquivos de mídia
-- [ ] `IraGaugeComponent` (gauge circular do IRA)
+- [ ] Exibe: status, IGA score, scores parciais, arquivos de mídia
+- [ ] `IraGaugeComponent` (gauge circular do IGA)
 - [ ] `RiskCardComponent` x3 (video, audio, document)
 - [ ] `MediaFilesListComponent` (lista arquivos com status)
 
@@ -316,7 +316,7 @@ main
 ```
 feat(auth): implement login page with JWT integration
 feat(sessoes): add session list with pagination
-feat(ia): create IRA gauge component
+feat(ia): create IGA gauge component
 fix(interceptor): handle 401 refresh token rotation
 refactor(shared): extract risk-card to shared components
 docs(sessoes): add LGPD warning to session create form

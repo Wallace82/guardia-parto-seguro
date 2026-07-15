@@ -49,10 +49,10 @@ import { CommonModule } from '@angular/common';
         <span class="text-3xl font-bold text-danger-500">{{ criticalAlerts }}</span>
       </div>
 
-      <!-- Average IRA -->
+      <!-- Average IGA -->
       <div class="metric-card animate-fade-in" style="animation-delay: 0.4s">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-text-muted text-xs font-bold uppercase tracking-wider">IRA Médio</span>
+          <span class="text-text-muted text-xs font-bold uppercase tracking-wider">IGA Médio</span>
           <div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center text-success">
             <mat-icon class="text-sm">trending_up</mat-icon>
           </div>

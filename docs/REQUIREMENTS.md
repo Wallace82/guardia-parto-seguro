@@ -10,7 +10,7 @@
 A proposta do GuardIA Parto Seguro é criar um ambiente obstétrico mais seguro, transparente e monitorado através do uso integrado de Inteligência Artificial multimodal. A solução atua como uma ferramenta de vigilância constante, autônoma e preventiva durante consultas, sessões clínicas e procedimentos de parto.
 
 ### O que é o sistema?
-Trata-se de uma plataforma tecnológica que processa de forma simultânea múltiplas fontes de dados para monitoramento do ambiente: vídeos (analisando postura, expressões faciais, movimentação e presença de anomalias, como sangramentos), áudio (transcrevendo falas e avaliando sentimentos e tom de voz) e documentos (fazendo leitura de prontuários e termos de consentimento). Com essas informações, o sistema gera de forma automática um Índice de Risco Assistencial (IRA).
+Trata-se de uma plataforma tecnológica que processa de forma simultânea múltiplas fontes de dados para monitoramento do ambiente: vídeos (analisando postura, expressões faciais, movimentação e presença de anomalias, como sangramentos), áudio (transcrevendo falas e avaliando sentimentos e tom de voz) e documentos (fazendo leitura de prontuários e termos de consentimento). Com essas informações, o sistema gera de forma automática um Índice GuardIA de Atenção (IGA).
 
 ### Quais problemas ele resolve?
 O GuardIA resolve a carência de auditoria em tempo real e de mecanismos proativos em saúde materna, detectando e alertando sobre:
@@ -53,7 +53,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RF-010** O sistema deve realizar análise temporal de vídeo para detectar padrões de comportamento suspeitos (OpenCV)
 - [x] **RF-011** O sistema deve detectar presença e identificação de pessoas no vídeo (face_recognition)
 - [x] **RF-012** O sistema deve analisar sangramento visível classificando-o por localização e intensidade estimada
-- [x] **RF-013** O sistema deve gerar um score de contribuição de vídeo para o IRA (0–100)
+- [x] **RF-013** O sistema deve gerar um score de contribuição de vídeo para o IGA (0–100)
 - [x] **RF-014** O sistema deve processar vídeos em background sem bloquear a interface do usuário
 
 ### 1.3 Análise de Áudio (Processamento via Nuvem - Amazon Web Services)
@@ -65,7 +65,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RF-019** O sistema deve identificar entidades clínicas relevantes no texto (NER): diagnósticos, medicamentos, procedimentos via Amazon Comprehend
 - [x] **RF-020** O sistema deve detectar verbalizações de dor, medo, ameaça ou constrangimento
 - [x] **RF-021** O sistema deve analisar o tom de voz e indicadores prosódicos de sofrimento
-- [x] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IRA (0–100)
+- [x] **RF-022** O sistema deve gerar um score de contribuição de áudio para o IGA (0–100)
 
 ### 1.4 Análise de Documentos (Processamento via Nuvem - Amazon Web Services)
 
@@ -74,20 +74,20 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 - [x] **RF-025** O sistema deve detectar inconsistências entre o prontuário e os dados da consulta (áudio/vídeo)
 - [x] **RF-026** O sistema deve identificar ausência de consentimento informado documentado
 - [x] **RF-027** O sistema deve validar completude do prontuário conforme checklist obstétrico
-- [x] **RF-028** O sistema deve gerar um score de contribuição documental para o IRA (0–100)
+- [x] **RF-028** O sistema deve gerar um score de contribuição documental para o IGA (0–100)
 
-### 1.5 Cálculo do IRA (Índice de Risco Assistencial)
+### 1.5 Cálculo do IGA (Índice GuardIA de Atenção)
 
-- [x] **RF-029** O sistema deve calcular o IRA como score composto ponderado: vídeo (40%) + áudio (35%) + documento (25%)
-- [x] **RF-030** O sistema deve classificar o IRA em três níveis: Baixo (0–39), Moderado (40–69), Crítico (70–100)
-- [x] **RF-031** O sistema deve gerar justificativas textuais para cada componente do IRA
-- [x] **RF-032** O sistema deve armazenar o histórico de IRA por paciente e por sessão
-- [x] **RF-033** O sistema deve calcular tendências do IRA ao longo do tempo para uma mesma paciente
+- [x] **RF-029** O sistema deve calcular o IGA como score composto ponderado: vídeo (40%) + áudio (35%) + documento (25%)
+- [x] **RF-030** O sistema deve classificar o IGA em três níveis: Baixo (0–39), Moderado (40–69), Crítico (70–100)
+- [x] **RF-031** O sistema deve gerar justificativas textuais para cada componente do IGA
+- [x] **RF-032** O sistema deve armazenar o histórico de IGA por paciente e por sessão
+- [x] **RF-033** O sistema deve calcular tendências do IGA ao longo do tempo para uma mesma paciente
 
 ### 1.6 Alertas e Notificações
 
-- [x] **RF-034** O sistema deve disparar alertas automáticos quando o IRA atingir nível Moderado ou Crítico
-- [x] **RF-035** O sistema deve enviar notificações por e-mail para o gestor responsável em casos de IRA Crítico
+- [x] **RF-034** O sistema deve disparar alertas automáticos quando o IGA atingir nível Moderado ou Crítico
+- [x] **RF-035** O sistema deve enviar notificações por e-mail para o gestor responsável em casos de IGA Crítico
 - [x] **RF-036** O sistema deve exibir alertas em tempo real no dashboard durante o processamento
 - [x] **RF-037** O sistema deve registrar todos os alertas com timestamp, responsável e ação tomada
 - [x] **RF-038** O sistema deve permitir que profissionais reconheçam e comentem os alertas
@@ -95,7 +95,7 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 ### 1.7 Relatórios
 
 - [x] **RF-039** O sistema deve gerar relatório completo de sessão em formato PDF
-- [x] **RF-040** O sistema deve gerar relatório executivo de IRA em formato Excel
+- [x] **RF-040** O sistema deve gerar relatório executivo de IGA em formato Excel
 - [x] **RF-041** O sistema deve gerar relatório de auditoria para ouvidoria
 - [x] **RF-042** O sistema deve suportar filtros de período, profissional, unidade e nível de risco nos relatórios
 - [x] **RF-043** O sistema deve incluir imagens-chave do vídeo e trechos da transcrição nos relatórios
@@ -103,8 +103,8 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 ### 1.8 Dashboard
 
 - [x] **RF-044** O sistema deve exibir dashboard multimodal com visão consolidada da sessão
-- [x] **RF-045** O sistema deve exibir mapa de calor temporal do IRA durante o vídeo
-- [x] **RF-046** O sistema deve exibir gráfico de tendência histórica do IRA por paciente
+- [x] **RF-045** O sistema deve exibir mapa de calor temporal do IGA durante o vídeo
+- [x] **RF-046** O sistema deve exibir gráfico de tendência histórica do IGA por paciente
 - [x] **RF-047** O sistema deve exibir lista de alertas ativos com filtros por severidade
 - [x] **RF-048** O sistema deve exibir transcrição sincronizada com o vídeo
 
@@ -144,10 +144,10 @@ O sistema atua como um verdadeiro guardião da vida e do bem-estar. Ao empoderar
 
 ## 3. Regras de Negócio
 
-- [x] **RN-001** IRA: O IRA deve ser calculado somente quando ao menos um tipo de análise (vídeo, áudio ou documento) for concluído
-- [x] **RN-002** IRA: Os pesos do IRA são: vídeo=0.40, áudio=0.35, documento=0.25. A soma sempre deve ser 1.0
-- [x] **RN-003** IRA: Se apenas um tipo de análise estiver disponível, o IRA deve ser normalizado para 100% daquele tipo
-- [x] **RN-004** Alertas: Alertas de nível Crítico (IRA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável
+- [x] **RN-001** IGA: O IGA deve ser calculado somente quando ao menos um tipo de análise (vídeo, áudio ou documento) for concluído
+- [x] **RN-002** IGA: Os pesos do IGA são: vídeo=0.40, áudio=0.35, documento=0.25. A soma sempre deve ser 1.0
+- [x] **RN-003** IGA: Se apenas um tipo de análise estiver disponível, o IGA deve ser normalizado para 100% daquele tipo
+- [x] **RN-004** Alertas: Alertas de nível Crítico (IGA ≥ 70) devem ser enviados obrigatoriamente ao gestor responsável
 - [x] **RN-005** Alertas: Um alerta não pode ser descartado sem que o responsável registre uma justificativa
 - [x] **RN-006** Sessões: Uma sessão clínica não pode ter mais de 3 arquivos de vídeo, 3 de áudio e 10 de documentos
 - [x] **RN-007** LGPD: Nenhum dado de paciente pode ser exibido sem que o profissional esteja autenticado e tenha permissão explícita (mecanismo de consentimento dinâmico e IAM)

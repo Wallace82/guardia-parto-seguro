@@ -33,7 +33,7 @@ Prover a infraestrutura central do sistema: autenticação, gerenciamento de ses
 - ✅ Gerencia usuários, sessões e alertas
 - ✅ Roteia requisições para os demais domínios
 - ❌ Não processa vídeo, áudio ou documentos diretamente
-- ❌ Não calcula IRA
+- ❌ Não calcula IGA
 
 ### Dependências
 - Security Domain (Auth, LGPD, Audit)
@@ -102,7 +102,7 @@ Processar vídeos clínicos de forma estritamente local (MVP) para detectar indi
 - Detecção de objetos de forma local (YOLOv8)
 - Detecção de sangramento por análise de cor (OpenCV)
 - Identificação de pessoas (face_recognition)
-- Geração de score de contribuição para o IRA
+- Geração de score de contribuição para o IGA
 
 ### Limites
 - ✅ Processa apenas arquivos de vídeo localmente
@@ -144,7 +144,7 @@ Transcrever e analisar áudios de consultas delegando o processamento para AWS, 
 - Extração de entidades clínicas (NER via Amazon Comprehend)
 - Detecção de verbalizações de risco (keywords, padrões)
 - Análise de tom e prosódia
-- Geração de score de contribuição para o IRA
+- Geração de score de contribuição para o IGA
 
 ### Dependências
 - AWS Integration Domain (para Transcribe, Comprehend e Storage no S3)
@@ -177,7 +177,7 @@ Processar documentos médicos (prontuários, exames, consentimentos) delegando p
 - Parsing de campos obstétricos
 - Validação de completude e consistência
 - Verificação de consentimento informado
-- Geração de score de contribuição para o IRA
+- Geração de score de contribuição para o IGA
 
 ### Dependências
 - AWS Integration Domain (para OCR via Textract)
@@ -201,15 +201,15 @@ document-domain/
 ## Domínio 5 — Risk Correlation Domain
 
 ### Objetivo
-Receber os scores parciais dos três domínios de análise e calcular o IRA (Índice de Risco Assistencial) composto, com justificativas e histórico.
+Receber os scores parciais dos três domínios de análise e calcular o IGA (Índice GuardIA de Atenção) composto, com justificativas e histórico.
 
 ### Responsabilidades
 - Receber scores de vídeo, áudio e documentos
 - Aplicar modelo de ponderação (40%/35%/25%)
-- Calcular o IRA final (0–100)
+- Calcular o IGA final (0–100)
 - Classificar o nível de risco (Baixo/Moderado/Crítico)
 - Gerar justificativas textuais por componente
-- Manter histórico de IRA por paciente
+- Manter histórico de IGA por paciente
 
 ### Banco de Dados: `risk_db`
 Tabelas: `ira_calculations`, `risk_components`, `risk_justifications`, `patient_risk_history`
@@ -219,7 +219,7 @@ Tabelas: `ira_calculations`, `risk_components`, `risk_justifications`, `patient_
 ## Domínio 6 — Reporting Domain
 
 ### Objetivo
-Gerar relatórios especializados em PDF e Excel a partir dos dados consolidados da sessão e do IRA.
+Gerar relatórios especializados em PDF e Excel a partir dos dados consolidados da sessão e do IGA.
 
 ### Responsabilidades
 - Gerar relatório completo de sessão (PDF)
@@ -236,7 +236,7 @@ Tabelas: `reports`, `report_sections`, `report_attachments`
 ## Domínio 7 — Dashboard Domain
 
 ### Objetivo
-Fornecer interface visual multimodal (Streamlit) para monitoramento em tempo real, histórico de IRA e central de alertas.
+Fornecer interface visual multimodal (Streamlit) para monitoramento em tempo real, histórico de IGA e central de alertas.
 
 ---
 

@@ -14,7 +14,7 @@ O Brasil registra altos índices de violência obstétrica e mortalidade materna
 **Impacto esperado:**
 - Redução de 40% nos casos não reportados de violência obstétrica
 - Detecção precoce de depressão pós-parto em até 72h após o parto
-- Auditoria assistencial automatizada com IRA (Índice de Risco Assistencial)
+- Auditoria assistencial automatizada com IGA (Índice GuardIA de Atenção)
 
 ### 1.2 Problema
 
@@ -29,7 +29,7 @@ O Brasil registra altos índices de violência obstétrica e mortalidade materna
 1. Detectar automaticamente indicadores de violência obstétrica via análise de vídeo e áudio
 2. Monitorar sinais de sofrimento psicológico e depressão pós-parto
 3. Analisar documentos médicos para detectar inconsistências e riscos
-4. Correlacionar múltiplas fontes de dados para calcular o IRA
+4. Correlacionar múltiplas fontes de dados para calcular o IGA
 5. Gerar relatórios e alertas acionáveis para equipes de saúde
 6. Fornecer dashboard multimodal em tempo quase real
 
@@ -39,7 +39,7 @@ O Brasil registra altos índices de violência obstétrica e mortalidade materna
 - Análise de vídeo clínico (câmeras de sala de parto e consulta)
 - Análise de áudio de consultas (com consentimento)
 - Processamento de documentos médicos (prontuários, exames)
-- Cálculo do IRA com base em múltiplas fontes
+- Cálculo do IGA com base em múltiplas fontes
 - Dashboard de monitoramento em tempo real
 - Sistema de alertas e notificações
 - Geração de relatórios especializados
@@ -86,7 +86,7 @@ C4Context
     System_Ext(aws_cw, "Amazon CloudWatch", "Auditoria e observabilidade")
 
     Rel(profissional, guardia, "Visualiza alertas e relatórios", "HTTPS")
-    Rel(gestor, guardia, "Monitora IRA e dashboard", "HTTPS")
+    Rel(gestor, guardia, "Monitora IGA e dashboard", "HTTPS")
     Rel(ouvidor, guardia, "Acessa relatórios de auditoria", "HTTPS")
     Rel(guardia, aws_transcribe, "Transcreve áudios e detecta anomalias", "HTTPS/TLS 1.3")
     Rel(guardia, aws_comprehend, "Analisa sentimentos e extrai entidades", "HTTPS/TLS 1.3")
@@ -113,7 +113,7 @@ C4Container
     Container(video_svc, "Video Service", "FastAPI :8001", "OpenCV, MediaPipe, DeepFace, YOLOv8")
     Container(audio_svc, "Audio Service", "FastAPI :8002", "Integra com AWS Integration para STT/NLP")
     Container(doc_svc, "Document Service", "FastAPI :8003", "Integra com AWS Integration para OCR")
-    Container(risk_svc, "Risk Service", "FastAPI :8004", "Cálculo do IRA")
+    Container(risk_svc, "Risk Service", "FastAPI :8004", "Cálculo do IGA")
     Container(report_svc, "Report Service", "FastAPI :8005", "Geração de PDF/Excel")
 
     ContainerDb(db_core, "Core DB", "PostgreSQL Local / RDS", "Sessões, alertas")
@@ -122,7 +122,7 @@ C4Container
     ContainerDb(db_video, "Video DB", "PostgreSQL Local / RDS", "Análises de vídeo")
     ContainerDb(db_audio, "Audio DB", "PostgreSQL Local / RDS", "Transcrições e análises de áudio")
     ContainerDb(db_doc, "Document DB", "PostgreSQL Local / RDS", "Documentos processados")
-    ContainerDb(db_risk, "Risk DB", "PostgreSQL Local / RDS", "Histórico de IRA")
+    ContainerDb(db_risk, "Risk DB", "PostgreSQL Local / RDS", "Histórico de IGA")
     ContainerDb(db_report, "Report DB", "PostgreSQL Local / RDS", "Relatórios gerados")
 
     Rel(user, frontend, "Acessa via browser", "HTTPS")
@@ -132,7 +132,7 @@ C4Container
     Rel(gateway, video_svc, "Delega análise de vídeo (Local)", "REST")
     Rel(gateway, audio_svc, "Delega análise de áudio", "REST")
     Rel(gateway, doc_svc, "Delega análise documental", "REST")
-    Rel(gateway, risk_svc, "Solicita cálculo de IRA", "REST")
+    Rel(gateway, risk_svc, "Solicita cálculo de IGA", "REST")
     Rel(gateway, report_svc, "Solicita geração de relatório", "REST")
     Rel(audio_svc, aws_svc, "Pede transcrição/sentimento", "REST")
     Rel(doc_svc, aws_svc, "Pede extração de texto OCR", "REST")
@@ -195,11 +195,11 @@ sequenceDiagram
     GW->>RS: POST /correlate (resultados multimodais)
     RS-->>GW: IRAResult {score, nivel_risco, justificativas}
 
-    GW->>RP: POST /generate (IRA + resultados)
+    GW->>RP: POST /generate (IGA + resultados)
     RP-->>GW: ReportURL
 
     GW-->>FE: SessionResult {ira, alertas, report_url}
-    FE-->>Prof: Dashboard atualizado com IRA e alertas
+    FE-->>Prof: Dashboard atualizado com IGA e alertas
 ```
 
 ---
@@ -236,8 +236,8 @@ flowchart TD
     D1 & D2 & D3 --> G[AudioAnalysisResult]
     E1 & E2 & E3 --> H[DocumentAnalysisResult]
 
-    F & G & H --> I[Risk Service - Correlação IRA]
-    I --> J{IRA Score}
+    F & G & H --> I[Risk Service - Correlação IGA]
+    I --> J{IGA Score}
     J -->|>= 70| K[🚨 ALERTA CRÍTICO]
     J -->|40-69| L[⚠️ ALERTA MODERADO]
     J -->|< 40| M[✅ BAIXO RISCO]
@@ -303,7 +303,7 @@ graph LR
     subgraph "Risk Domain"
     direction TB
         RISK_CORR[Correlation Engine]
-        IRA_CALC[IRA Calculator]
+        IRA_CALC[IGA Calculator]
         RISK_HIST[Risk History]
     end
 
@@ -395,8 +395,8 @@ O MVP será desenvolvido com foco nos ambientes LOCAL e DEV para agilidade e con
 **Decisão:** Cada serviço tem seu próprio banco de dados PostgreSQL (schemas separados na mesma instância para o ambiente de dev local, instâncias RDS dedicadas no alvo).  
 **Justificativa:** Isolamento de dados, evita acoplamento via banco compartilhado.
 
-### ADR-006: IRA como Score Composto
-**Decisão:** O IRA é calculado pelo Risk Service com base em pesos ponderados das contribuições de vídeo (40%), áudio (35%) e documentos (25%).  
+### ADR-006: IGA como Score Composto
+**Decisão:** O IGA é calculado pelo Risk Service com base em pesos ponderados das contribuições de vídeo (40%), áudio (35%) e documentos (25%).  
 **Justificativa:** Pesos baseados na literatura de detecção de violência obstétrica.
 
 ### ADR-007: Gerenciamento de Segredos (AWS Secrets Manager vs .env)

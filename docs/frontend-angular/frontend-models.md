@@ -298,7 +298,7 @@ export interface MediaUploadRequest {
 
 ---
 
-## 6. IRA / Risk Constants
+## 6. IGA / Risk Constants
 
 ```typescript
 // src/app/shared/constants/ira.constants.ts

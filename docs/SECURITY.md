@@ -54,7 +54,7 @@ O sistema utiliza JSON Web Tokens (JWT) com verificação assimétrica para gara
 
 **Perfis de Acesso:**
 1. **Admin:** Acesso técnico total. Gerencia integrações e usuários, mas **não** pode visualizar vídeos, áudios ou prontuários desanonimizados sem um token de consentimento de auditoria.
-2. **Médico / Enfermeiro:** Pode criar sessões, fazer uploads e visualizar métricas (IRA) **apenas** dos pacientes vinculados a eles ou de sua unidade (com consentimento do paciente).
+2. **Médico / Enfermeiro:** Pode criar sessões, fazer uploads e visualizar métricas (IGA) **apenas** dos pacientes vinculados a eles ou de sua unidade (com consentimento do paciente).
 3. **Gestor Hospitalar:** Pode visualizar dashboards agregados e o mapa de calor de risco institucional, mas acessa detalhes sensíveis anonimizados.
 4. **Auditor / Ouvidor:** Acessa logs do `Security Domain` e relatórios de auditoria imutáveis (com hash SHA-256) em caso de denúncia de violência obstétrica.
 
@@ -68,7 +68,7 @@ Para fins de LGPD e segurança médica, a rastreabilidade é total. O `Security 
 - Autenticações (Sucesso/Falha).
 - Acessos de leitura a sessões (Quem visualizou o vídeo e quando).
 - Disparos de Alertas e Reconhecimentos (Quem ignorou um alerta crítico e a justificativa).
-- Uploads e modificações de estado do IRA.
+- Uploads e modificações de estado do IGA.
 
 **Formato do Log (JSON Estruturado no CloudWatch):**
 ```json

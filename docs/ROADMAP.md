@@ -24,20 +24,20 @@ gantt
     YOLOv8 + Sangramento             :done, b3, after b2, 7d
     Audio Service + Amazon Transcribe:done, b4, 2024-01-22, 7d
     Amazon Comprehend + NER          :done, b5, after b4, 7d
-    Scorers IRA                      :done, b6, 2024-02-12, 7d
+    Scorers IGA                      :done, b6, 2024-02-12, 7d
 
     section Evandro Rosa Sampaio (Dev 3)
     Document Service Base            :done, c1, 2024-01-15, 7d
     Amazon Textract                  :done, c2, after c1, 7d
     Validações e Consistência        :done, c3, after c2, 7d
-    Risk Service + IRA Básico        :done, c4, 2024-01-22, 7d
-    IRA Composto + Tendências        :done, c5, after c4, 14d
+    Risk Service + IGA Básico        :done, c4, 2024-01-22, 7d
+    IGA Composto + Tendências        :done, c5, after c4, 14d
     Justificativas Textuais          :done, c6, 2024-02-12, 7d
 
     section Gustavo Octaviano (Dev 4)
     Dashboard Base + Login           :done, d1, 2024-01-15, 7d
     Upload + Status de Sessão        :done, d2, after d1, 7d
-    IRA Gauge + Alertas              :done, d3, after d2, 7d
+    IGA Gauge + Alertas              :done, d3, after d2, 7d
     Report Service + PDF             :done, d4, 2024-01-29, 7d
     Excel + Auditoria                :done, d5, after d4, 7d
     Dashboard Histórico Completo     :done, d6, 2024-02-12, 14d
@@ -130,13 +130,13 @@ gantt
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
 | **Dev 1** | Orquestrador multimodal | Ao fazer upload, os 3 serviços de análise são chamados em paralelo |
-| **Dev 1** | Sistema de notificações por e-mail | E-mail enviado ao gestor para IRA crítico (testado com mock) |
+| **Dev 1** | Sistema de notificações por e-mail | E-mail enviado ao gestor para IGA crítico (testado com mock) |
 | **Dev 2** | MediaPipe Holistic integrado | Pose landmarks detectados e classificados (normal/defensivo) |
 | **Dev 2** | YOLOv8 integrado | Objetos detectados em frame de teste com bounding boxes |
 | **Dev 2** | Speaker Diarization (Amazon Transcribe) | Transcrição com Speaker_0 e Speaker_1 identificados |
 | **Dev 3** | Checklist de completude de prontuário | Score de completude (0-100) calculado para prontuário de teste |
-| **Dev 3** | Risk Service com IRA básico (um componente) | IRA calculado corretamente com apenas score de vídeo |
-| **Dev 4** | IRA Gauge no dashboard | Indicador visual do IRA (0-100) renderiza com cores corretas |
+| **Dev 3** | Risk Service com IGA básico (um componente) | IGA calculado corretamente com apenas score de vídeo |
+| **Dev 4** | IGA Gauge no dashboard | Indicador visual do IGA (0-100) renderiza com cores corretas |
 | **Dev 4** | Report Service básico (PDF) | PDF gerado com dados de sessão de teste |
 
 ---
@@ -150,14 +150,14 @@ gantt
 
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
-| **Dev 1** | Motor de alertas funcionando | Alerta disparado automaticamente quando IRA ≥ 40 |
+| **Dev 1** | Motor de alertas funcionando | Alerta disparado automaticamente quando IGA ≥ 40 |
 | **Dev 1** | Endpoint de reconhecimento de alertas | PATCH /alerts/{id}/acknowledge atualiza status |
 | **Dev 1** | Security Domain funcional | Rotas de auditoria e validação JWT RBAC funcionais |
 | **Dev 2** | Detecção de sangramento (OpenCV HSV) | Sangramento detectado em frame de teste com cor vermelha |
-| **Dev 2** | IRA Scorer de vídeo | Score de vídeo normalizado (0-100) retornado pela API |
+| **Dev 2** | IGA Scorer de vídeo | Score de vídeo normalizado (0-100) retornado pela API |
 | **Dev 2** | Amazon Comprehend (sentimento + NER) | Sentimento e entidades clínicas extraídos da transcrição |
 | **Dev 3** | Validação de consentimento informado | Campo consentimento verificado e resultado armazenado |
-| **Dev 3** | IRA composto com 2+ componentes | IRA calculado corretamente com vídeo + áudio |
+| **Dev 3** | IGA composto com 2+ componentes | IGA calculado corretamente com vídeo + áudio |
 | **Dev 4** | Central de alertas no dashboard | Lista de alertas com filtros por severidade e status |
 | **Dev 4** | Download de PDF via dashboard | Usuário clica e faz download do relatório PDF |
 
@@ -174,16 +174,16 @@ gantt
 |---|---|---|
 | **Dev 1** | Cobertura de testes ≥ 80% no backend | ✅ Concluído (`pytest --cov` com sucesso e 100% pass) |
 | **Dev 1** | AWS Integration Domain finalizado | ✅ Concluído (Conexões aos serviços cognitivos da AWS finalizadas) |
-| **Dev 2** | IRA Scorer de áudio completo | ✅ Concluído (Score inclui sentimento + keywords + prosódia) |
+| **Dev 2** | IGA Scorer de áudio completo | ✅ Concluído (Score inclui sentimento + keywords + prosódia) |
 | **Dev 2** | Cobertura de testes ≥ 80% no video-domain e audio-domain | ✅ Concluído (Verificado no CI) |
-| **Dev 3** | IRA Scorer documental completo | ✅ Concluído (Score inclui completude + inconsistências + consentimento) |
-| **Dev 3** | Análise de tendências do IRA | ✅ Concluído (Gráfico de tendência retornado pelo Risk Service) |
-| **Dev 4** | Relatório Excel executivo | ✅ Concluído (Planilha com IRA, alertas e resumo da sessão) |
+| **Dev 3** | IGA Scorer documental completo | ✅ Concluído (Score inclui completude + inconsistências + consentimento) |
+| **Dev 3** | Análise de tendências do IGA | ✅ Concluído (Gráfico de tendência retornado pelo Risk Service) |
+| **Dev 4** | Relatório Excel executivo | ✅ Concluído (Planilha com IGA, alertas e resumo da sessão) |
 | **Dev 4** | Relatório de auditoria com hash SHA-256 | ✅ Concluído (Hash registrado no banco após geração) |
 
 ---
 
-## Semana 6 — IRA Composto e Dashboard Final
+## Semana 6 — IGA Composto e Dashboard Final
 
 **Período:** Dias 36–42  
 **Tema:** "Experiência Completa"
@@ -192,12 +192,12 @@ gantt
 
 | Dev | Entregável | Critério de Aceite |
 |---|---|---|
-| **Dev 1** | Integração completa de ponta a ponta | ✅ Concluído (Upload → Análises → IRA → Alerta → Relatório em sequência) |
+| **Dev 1** | Integração completa de ponta a ponta | ✅ Concluído (Upload → Análises → IGA → Alerta → Relatório em sequência) |
 | **Dev 2** | Fluxo completo vídeo + áudio sem erros | ✅ Concluído (Sessão com vídeo e áudio processada sem erros) |
-| **Dev 3** | IRA com os 3 componentes e justificativas textuais | ✅ Concluído (Justificativas por componente retornadas pela API) |
+| **Dev 3** | IGA com os 3 componentes e justificativas textuais | ✅ Concluído (Justificativas por componente retornadas pela API) |
 | **Dev 3** | Cobertura ≥ 80% no document-domain e risk-domain | ✅ Concluído (Verificado no CI) |
-| **Dev 4** | Dashboard completo com mapa de calor temporal | ✅ Concluído (Heatmap do IRA ao longo do tempo do vídeo renderizado) |
-| **Dev 4** | Dashboard com histórico da paciente | ✅ Concluído (Gráfico de tendência histórica do IRA da paciente) |
+| **Dev 4** | Dashboard completo com mapa de calor temporal | ✅ Concluído (Heatmap do IGA ao longo do tempo do vídeo renderizado) |
+| **Dev 4** | Dashboard com histórico da paciente | ✅ Concluído (Gráfico de tendência histórica do IGA da paciente) |
 
 ---
 
@@ -237,7 +237,7 @@ gantt
 
 | Entregável | Responsável | Critério de Aceite |
 |---|---|---|
-| Dataset de demonstração | Dev 2 + Dev 3 | ✅ Concluído (3 sessões de demo com diferentes níveis de IRA) |
+| Dataset de demonstração | Dev 2 + Dev 3 | ✅ Concluído (3 sessões de demo com diferentes níveis de IGA) |
 | Vídeo de demonstração (5 min) | Dev 4 | ✅ Concluído (Gravação do fluxo completo de uso) |
 | Tag v1.0.0 no GitHub | Dev 1 | ✅ Concluído (Release publicada com changelog) |
 | Slides da apresentação | Todos | ✅ Concluído (Cobertura de todos os tópicos do roteiro) |
@@ -253,7 +253,7 @@ gantt
 | 🏁 **M1 — Hello World** | Fim Semana 1 | Todos os serviços rodando localmente |
 | 🔐 **M2 — Auth + Upload** | Fim Semana 2 | Auth JWT + primeiras análises |
 | 🤖 **M3 — MVP Funcional** | Fim Semana 4 | Fluxo completo funcionando |
-| 📊 **M4 — IRA Completo** | Fim Semana 6 | IRA com 3 componentes e dashboard |
+| 📊 **M4 — IGA Completo** | Fim Semana 6 | IGA com 3 componentes e dashboard |
 | ✅ **M5 — Release v1.0.0** | Fim Semana 8 | Sistema pronto para apresentação |
 
 ---

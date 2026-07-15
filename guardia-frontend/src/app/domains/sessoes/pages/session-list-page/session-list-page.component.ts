@@ -67,7 +67,7 @@ import { SessionEditDialogComponent } from '../../components/session-edit-dialog
               </ng-container>
 
               <ng-container matColumnDef="ira">
-                <th mat-header-cell *matHeaderCellDef class="text-text-muted uppercase text-xs"> IRA </th>
+                <th mat-header-cell *matHeaderCellDef class="text-text-muted uppercase text-xs"> IGA </th>
                 <td mat-cell *matCellDef="let s" class="border-b border-border/50">
                   @if (s.ira_score !== null) {
                     <span class="ira-badge" [ngClass]="'ira-badge--' + s.ira_level">

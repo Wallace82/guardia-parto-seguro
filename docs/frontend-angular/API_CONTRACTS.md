@@ -462,8 +462,8 @@ formData.append('media_type', 'video');
       "session_id": 42,
       "alert_type": "ira_critico",
       "severity": "critical",
-      "title": "IRA Crítico Detectado",
-      "description": "IRA = 82.3 — Risco crítico detectado na sessão",
+      "title": "IGA Crítico Detectado",
+      "description": "IGA = 82.3 — Risco crítico detectado na sessão",
       "ira_score": 82.3,
       "is_acknowledged": false,
       "acknowledged_by": null,
@@ -557,10 +557,10 @@ Para erros de validação (422):
 
 ---
 
-## 7. IRA — Índice de Risco Assistencial
+## 7. IGA — Índice GuardIA de Atenção
 
 ```
-Fórmula: IRA = (score_video × 0.40) + (score_audio × 0.35) + (score_document × 0.25)
+Fórmula: IGA = (score_video × 0.40) + (score_audio × 0.35) + (score_document × 0.25)
 
 Classificação:
   0.0  – 39.9 → ira_level: "baixo"    (verde)

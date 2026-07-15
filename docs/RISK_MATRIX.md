@@ -29,7 +29,7 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
-| **RP-001** | Prazo de 8 semanas insuficiente para todos os domínios | 2 | 3 | 🔴 6 | Priorizar o fluxo core (vídeo + IRA + dashboard); ter MVP funcional na semana 4; features secundárias na lista de backlog | Todos |
+| **RP-001** | Prazo de 8 semanas insuficiente para todos os domínios | 2 | 3 | 🔴 6 | Priorizar o fluxo core (vídeo + IGA + dashboard); ter MVP funcional na semana 4; features secundárias na lista de backlog | Todos |
 | **RP-002** | Desenvolvedor indisponível por doença ou compromisso | 2 | 3 | 🔴 6 | Documentação completa de cada domínio; pair programming chave para compartilhar conhecimento; Dev 1 conhece todos os serviços | Wallace Gomes |
 | **RP-003** | Escopo inflando durante o desenvolvimento (scope creep) | 3 | 2 | 🟡 6 | Requisitos congelados após semana 1; toda mudança passa pelo PO Agent; backlog documentado para v2.0 | Todos |
 | **RP-004** | Falta de dados reais para testar o sistema | 3 | 2 | 🟡 6 | Criar dataset sintético de demonstração (vídeos, áudios e documentos fictícios mas realistas) na semana 1 | Paulo Roberto Gonçalves + Evandro Rosa Sampaio |
@@ -65,7 +65,7 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 
 | ID | Risco | Prob. | Impacto | Criticidade | Mitigação | Responsável |
 |---|---|---|---|---|---|---|
-| **RQ-001** | IRA gera score errado por pesos incorretos | 2 | 3 | 🔴 6 | Testes unitários extensivos **(Cobertura implementada no backend)**; revisão da fórmula por todos | Evandro Rosa Sampaio |
+| **RQ-001** | IGA gera score errado por pesos incorretos | 2 | 3 | 🔴 6 | Testes unitários extensivos **(Cobertura implementada no backend)**; revisão da fórmula por todos | Evandro Rosa Sampaio |
 | **RQ-002** | Sistema detecta violência onde não há (falso positivo) causando problema na demonstração | 2 | 3 | 🔴 6 | Sempre apresentar confidence scores; dashboards mostram "indicativo de risco", não "diagnóstico"; disclaimers claros no sistema | Gustavo Octaviano |
 | **RQ-003** | Sistema não detecta violência real (falso negativo) | 2 | 3 | 🔴 6 | Thresholds conservadores (prefere falso positivo a negativo); sistema é de apoio, não substitui avaliação humana | Paulo Roberto Gonçalves + Evandro Rosa Sampaio |
 
@@ -76,12 +76,12 @@ Criticidade ≥ 6: 🔴 Crítico | 4–5: 🟡 Moderado | ## Riscos Técnicos
 ### Semana 4 — Ponto de Decisão GO/NO-GO
 
 Na semana 4, avaliar:
-1. O fluxo ponta a ponta funciona (vídeo → IRA → alerta)?
+1. O fluxo ponta a ponta funciona (vídeo → IGA → alerta)?
 2. Os principais domínios estão integrados?
 3. A equipe está dentro do cronograma?
 
 **Se NO-GO:** Reduzir escopo para MVP mínimo:
-- Manter: Video Domain + Core + Dashboard + IRA
+- Manter: Video Domain + Core + Dashboard + IGA
 - Adiar para v2.0: Audio Domain completo, Document Domain, Report avançado
 
 ### Semana 6 — Ponto de Decisão DEMO QUALITY

@@ -57,9 +57,9 @@ A identidade do GuardIA é **dark mode por padrão**, transmitindo:
 }
 ```
 
-### Mapeamento IRA → Cor
+### Mapeamento IGA → Cor
 ```scss
-// IRA Risk Level Colors
+// IGA Risk Level Colors
 --ira-baixo:    #10B981;  // Verde
 --ira-moderado: #F59E0B;  // Âmbar
 --ira-critico:  #EF4444;  // Vermelho
@@ -138,7 +138,7 @@ export class RiskCardComponent {
 }
 ```
 
-### 5.2 IraGauge — Medidor circular do IRA
+### 5.2 IraGauge — Medidor circular do IGA
 
 ```typescript
 @Component({
@@ -159,7 +159,7 @@ export class RiskCardComponent {
       </svg>
       <div class="ira-gauge__value">
         <span class="score">{{ score() | number:'1.1-1' }}</span>
-        <span class="label">IRA</span>
+        <span class="label">IGA</span>
         <span class="level" [style.color]="color()">{{ level() | uppercase }}</span>
       </div>
     </div>
@@ -544,7 +544,7 @@ $guardia-theme: mat.define-dark-theme((
 | Detalhes clínicos     | `--font-size-sm`, cor `--color-text-muted` (idade • paridade • IG) |
 | Sala / Leito          | Duas colunas com label `--font-size-xs` em `--color-text-subtle` e valor `--font-size-2xl` `font-weight: 700` |
 | Início TP             | Label + hora em `--font-size-lg`, tempo decorrido em `--color-text-muted` |
-| Status IA             | Chip com ícone `check_circle`, background semitransparente baseado no nível IRA, border-radius `--radius-2xl` |
+| Status IA             | Chip com ícone `check_circle`, background semitransparente baseado no nível IGA, border-radius `--radius-2xl` |
 
 ---
 

@@ -114,7 +114,7 @@ backend/
 | Video Analysis | 8001 | video_db (5433) | Dev 2 | FastAPI, OpenCV, YOLOv8, DeepFace, MediaPipe |
 | Audio Analysis | 8002 | audio_db (5433) | Dev 2 | FastAPI, AWS Transcribe, AWS Comprehend |
 | Document Analysis | 8003 | document_db (5433) | Dev 3 | FastAPI, AWS Textract |
-| Risk Correlation | 8004 | risk_db (5433) | Dev 3 | FastAPI, cálculo ponderado IRA |
+| Risk Correlation | 8004 | risk_db (5433) | Dev 3 | FastAPI, cálculo ponderado IGA |
 | Report Generation | 8005 | report_db (5433) | Dev 4 | FastAPI, reportlab, jinja2 |
 | Security | 8006 | security_db (5433) | Dev 5 | FastAPI, LGPD, IAM |
 | AWS Integration | 8007 | - | Dev 5 | FastAPI, boto3 (S3, Textract, Transcribe, CloudWatch) |
@@ -301,7 +301,7 @@ SECRET_KEY=<jwt_secret>
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
-# IRA Thresholds (útil para UI de risco)
+# IGA Thresholds (útil para UI de risco)
 IRA_THRESHOLD_MODERATE=40.0
 IRA_THRESHOLD_CRITICAL=70.0
 
@@ -356,7 +356,7 @@ As seguintes APIs estão documentadas em API_SPEC.md mas NÃO têm router no có
 | Upload multipart usa Form(), não JSON | MÉDIA | Angular usa FormData, não JSON.stringify |
 | Sessão analysis retorna null se não completed | BAIXA | Tratar estados: pending/processing/error |
 | Domínios especializados não respondendo | BAIXA | Orchestrator tem fallback gracioso com mensagens padrão |
-| IRA Thresholds: moderado >= 40, crítico >= 70 | INFO | Usar essas constantes na UI para codificação de cores |
+| IGA Thresholds: moderado >= 40, crítico >= 70 | INFO | Usar essas constantes na UI para codificação de cores |
 
 ---
 
@@ -369,12 +369,12 @@ Session Status Flow:
 MediaFile Status Flow:
   uploaded → processing → analyzed / error
 
-IRA Risk Levels:
+IGA Risk Levels:
   0–39.9  → baixo    (verde)
   40–69.9 → moderado (amarelo)
   70–100  → critico  (vermelho)
 
-IRA Weights (fixos no backend):
+IGA Weights (fixos no backend):
   video:    40%
   audio:    35%
   document: 25%

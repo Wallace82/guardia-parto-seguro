@@ -180,7 +180,7 @@ Lista alertas com filtros.
       "session_id": "...",
       "severity": "critical",
       "alert_type": "ira_critico",
-      "description": "IRA = 82.3 — Risco crítico detectado na sessão",
+      "description": "IGA = 82.3 — Risco crítico detectado na sessão",
       "triggered_at": "2024-01-15T10:45:00-03:00",
       "is_acknowledged": false
     }
@@ -414,7 +414,7 @@ Inicia análise documental.
 ## 5. Risk Correlation API — Porta 8004
 
 #### POST `/api/v1/risk/correlate`
-Calcula o IRA composto.
+Calcula o IGA composto.
 
 **Request:**
 ```json

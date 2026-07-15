@@ -48,9 +48,9 @@
 
 ### Solução (1 min)
 
-> *"O GuardIA é uma plataforma multimodal de Inteligência Artificial que processa simultaneamente vídeo clínico, áudio de consultas e documentos médicos — calculando em tempo quase real o Índice de Risco Assistencial (IRA) e gerando alertas automáticos para equipes de saúde."*
+> *"O GuardIA é uma plataforma multimodal de Inteligência Artificial que processa simultaneamente vídeo clínico, áudio de consultas e documentos médicos — calculando em tempo quase real o Índice GuardIA de Atenção (IGA) e gerando alertas automáticos para equipes de saúde."*
 
-**Diagrama:** Fluxo visual (Vídeo + Áudio + Documento → IA → IRA → Alertas)
+**Diagrama:** Fluxo visual (Vídeo + Áudio + Documento → IA → IGA → Alertas)
 
 ---
 
@@ -76,7 +76,7 @@
 ### Destaque de Decisões Arquiteturais (30s)
 - Microsserviços por domínio → desenvolvimento paralelo sem conflitos
 - Banco isolado por domínio → zero acoplamento de dados
-- IRA composto ponderado (vídeo 40% + áudio 35% + documento 25%)
+- IGA composto ponderado (vídeo 40% + áudio 35% + documento 25%)
 
 ---
 
@@ -99,20 +99,20 @@
 - Mostrar status "Processando..." em tempo real
 
 ### Cena 4 — Resultados da Análise (2 min)
-- Aguardar ou mostrar sessão pré-processada com IRA já calculado
-- **IRA Score:** mostrar gauge em 72.5 (CRÍTICO, vermelho)
+- Aguardar ou mostrar sessão pré-processada com IGA já calculado
+- **IGA Score:** mostrar gauge em 72.5 (CRÍTICO, vermelho)
 - Expandir cada componente:
   - 🎥 Vídeo: 75/100 — "Expressões de dor detectadas em 3 momentos"
   - 🎙️ Áudio: 68/100 — "2 verbalizações de sofrimento, sentimento negativo dominante"
   - 📄 Documento: 40/100 — "Consentimento ausente, 3 campos obrigatórios faltando"
 - Mostrar transcrição sincronizada com timestamp de risco destacado
-- Mostrar mapa de calor temporal do IRA ao longo do vídeo
+- Mostrar mapa de calor temporal do IGA ao longo do vídeo
 
 ### Cena 5 — Alertas e Relatório (1 min)
 - Mostrar alerta CRÍTICO gerado automaticamente
 - Reconhecer alerta com justificativa
 - Gerar PDF do relatório
-- Mostrar primeira página do PDF com IRA e justificativas
+- Mostrar primeira página do PDF com IGA e justificativas
 
 ---
 
@@ -161,7 +161,7 @@ sentiment = comprehend_client.detect_sentiment(Text=text, LanguageCode='pt')
 
 ### O que foi entregue (45s)
 - ✅ Plataforma multimodal completa (vídeo + áudio + documento)
-- ✅ IRA calculado com 3 componentes e justificativas
+- ✅ IGA calculado com 3 componentes e justificativas
 - ✅ Dashboard em tempo real com alertas
 - ✅ Relatórios PDF/Excel gerados automaticamente
 - ✅ Arquitetura desacoplada para 4 devs em paralelo
@@ -187,8 +187,8 @@ sentiment = comprehend_client.detect_sentiment(Text=text, LanguageCode='pt')
 **"Como vocês garantem a privacidade da paciente?"**
 > Nomes são armazenados apenas como hash SHA-256. Nunca exibimos dados identificáveis sem autenticação e permissão. Consentimento é verificado antes de qualquer processamento. Compliant com LGPD.
 
-**"O IRA é suficientemente preciso para uso real?"**
-> Na versão atual, o IRA é uma ferramenta de apoio à decisão, não um diagnóstico. Toda análise apresenta confidence scores e o sistema é explícito sobre suas limitações. O próximo passo seria validação com especialistas clínicos.
+**"O IGA é suficientemente preciso para uso real?"**
+> Na versão atual, o IGA é uma ferramenta de apoio à decisão, não um diagnóstico. Toda análise apresenta confidence scores e o sistema é explícito sobre suas limitações. O próximo passo seria validação com especialistas clínicos.
 
 **"Como o sistema escala para múltiplos hospitais?"**
 > A arquitetura de microsserviços permite que cada serviço escale independentemente. Para múltiplos hospitais, cada instituição poderia ter sua instância ou compartilhar a plataforma com isolamento de dados por tenant.
@@ -197,8 +197,8 @@ sentiment = comprehend_client.detect_sentiment(Text=text, LanguageCode='pt')
 
 ## Dicas para a Gravação
 
-1. **Ambiente de demo:** Usar sessão pré-processada para a parte do IRA (não esperar processamento ao vivo)
-2. **Dados de demo:** Preparar 3 sessões com IRA Baixo, Moderado e Crítico
+1. **Ambiente de demo:** Usar sessão pré-processada para a parte do IGA (não esperar processamento ao vivo)
+2. **Dados de demo:** Preparar 3 sessões com IGA Baixo, Moderado e Crítico
 3. **Vídeo demo:** Usar arquivo de vídeo curto (2 min) para não esperar muito
 4. **Qualidade visual:** Dashboard em tela cheia, fonte grande, modo escuro
 5. **Narração:** Cada desenvolvedor narra sua área de responsabilidade
