@@ -105,6 +105,8 @@ Além dos riscos gerais (dor ignorada, violência física), você DEVE identific
 - Falta de consentimento informado (realizar procedimentos sem explicar ou pedir permissão clara).
 - Comunicação não humanizada (frieza, falta de empatia, impaciência, descaso).
 
+Para cada achado, classifique o "impacto" como "POSITIVO" (se for acolhedor, humanizado, comunicação clara) ou "ATENCAO" (se for abusivo, frio, descaso, dor, violência).
+
 Transcrição: "{transcription_text}"
 
 Retorne um JSON válido estritamente com o seguinte formato:
@@ -113,7 +115,8 @@ Retorne um JSON válido estritamente com o seguinte formato:
   "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito/humanizado, e 0.0 é péssimo/frio),
   "key_findings": [
     {{
-      "description": "Breve frase descrevendo o achado, ex: 'Comentário inadequado detectado: ...', 'Linguagem invasiva identificada', ou 'Falta de consentimento informado'",
+      "description": "Breve frase descrevendo o achado, ex: 'Comunicação acolhedora e respeitosa identificada' ou 'Linguagem invasiva identificada'",
+      "impacto": "POSITIVO|ATENCAO",
       "confidence": (número decimal de 0.0 a 1.0)
     }}
   ]
@@ -136,6 +139,7 @@ Retorne um JSON válido estritamente com o seguinte formato:
                                     "type": "semantic_analysis",
                                     "timestamp_seconds": duration_seconds / 2.0,
                                     "description": f"IA (Semântica): {finding.get('description', '')}",
+                                    "impacto": finding.get("impacto", "ATENCAO"),
                                     "confidence": finding.get("confidence", 0.9)
                                 })
                             log.info("openai_analysis_success", ira_score=ira_score)

@@ -277,7 +277,13 @@ async def get_session_analysis(
             for finding in key_findings:
                 desc = finding.get("description", "")
                 role = "paciente" if "dor" in desc.lower() or "paciente" in desc.lower() else "profissional"
-                sentiment = "negative" if "dor" in desc.lower() or "não" in desc.lower() else "neutral"
+                impact = finding.get("impacto", "")
+                if impact == "POSITIVO":
+                    sentiment = "positive"
+                elif impact == "ATENCAO":
+                    sentiment = "negative"
+                else:
+                    sentiment = "negative" if "dor" in desc.lower() or "não" in desc.lower() else "neutral"
                 segments.append({
                     "speaker": finding.get("type", "Speaker_1").title(),
                     "role": role,
@@ -359,13 +365,17 @@ async def get_session_analysis(
             factors["attention"].append("Vídeo: Possível tensão ou postura defensiva detectada")
 
     has_audio_attention = False
+    has_audio_positive = False
     if transcription and transcription.get("segments"):
         for seg in transcription["segments"]:
             if seg.get("sentiment") == "negative":
                 factors["attention"].append(f"Áudio: {seg.get('text')}")
                 has_audio_attention = True
+            elif seg.get("sentiment") == "positive":
+                factors["positive"].append(f"Áudio: {seg.get('text')}")
+                has_audio_positive = True
                 
-    if not has_audio_attention and session.score_audio is not None:
+    if not has_audio_attention and not has_audio_positive and session.score_audio is not None:
         if session.score_audio < 50:
             factors["positive"].append("Áudio: Sem verbalização de dor")
         else:

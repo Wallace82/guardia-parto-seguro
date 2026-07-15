@@ -92,10 +92,18 @@ class VideoProcessor:
                                         # Evitar flood de alertas (só avisa se o último foi há mais de 10 segs)
                                         last_time = key_findings[-1]["timestamp_seconds"] if key_findings else -100
                                         if current_second - last_time > 10:
+                                            nome_emocao = dominant
+                                            if dominant == 'angry':
+                                                nome_emocao = 'dor/esforço (angry)'
+                                            elif dominant == 'sad':
+                                                nome_emocao = 'desconforto/tristeza (sad)'
+                                            elif dominant == 'fear':
+                                                nome_emocao = 'tensão/medo (fear)'
+                                                
                                             key_findings.append({
                                                 "type": "emotion",
                                                 "timestamp_seconds": round(current_second, 1),
-                                                "description": f"Sinais de {dominant} detectados na face (confiança {round(em[dominant], 1)}%)",
+                                                "description": f"Sinais de {nome_emocao} detectados na face (confiança {round(em[dominant], 1)}%)",
                                                 "confidence": round(em[dominant] / 100.0, 2)
                                             })
                             except Exception as e:
@@ -126,8 +134,10 @@ class VideoProcessor:
                 # Calcula a média das emoções negativas e positivas
                 avg_negative = sum((e.get('fear', 0) + e.get('sad', 0) + e.get('angry', 0)) for e in emotions_list) / len(emotions_list)
                 avg_positive = sum((e.get('happy', 0) + e.get('neutral', 0)) for e in emotions_list) / len(emotions_list)
-                # Score de emoção de 0 a 100 (representando Risco). Se dor/medo dominar, risco alto.
-                emotion_score = round(min(100.0, max(0.0, avg_negative * 1.5 + (100 - avg_positive) * 0.5)), 1)
+                # Score de emoção de 0 a 100 (representando Risco).
+                # Em um ambiente de pré-parto, dor e esforço (angry/sad/fear) são normais e esperados. 
+                # Portanto, o peso das expressões "negativas" não deve disparar o risco de forma agressiva.
+                emotion_score = round(min(100.0, max(0.0, avg_negative * 0.4 + (100 - avg_positive) * 0.2)), 1)
             else:
                 # Se arquivo nao for encontrado ou nao tiver rostos, score de risco basal
                 emotion_score = 30.0

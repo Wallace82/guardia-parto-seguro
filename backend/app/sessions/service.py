@@ -329,6 +329,18 @@ class SessionService:
         session.score_audio = fusion_result["sources"].get("audio")
         session.score_document = fusion_result["sources"].get("document")
         session.score_notes = fusion_result["sources"].get("notes")
+        
+        # Sincroniza o Risco Extrapolado (calculado com contexto transmodal) de volta para as mídias
+        from app.sessions.models import MediaFile
+        media_files_res = await self.db.execute(select(MediaFile).where(MediaFile.session_id == session_id))
+        media_files = media_files_res.scalars().all()
+        for m in media_files:
+            if m.media_type == "video" and session.score_video is not None:
+                m.analysis_score = session.score_video
+            elif m.media_type == "audio" and session.score_audio is not None:
+                m.analysis_score = session.score_audio
+            elif m.media_type == "document" and session.score_document is not None:
+                m.analysis_score = session.score_document
 
         await self.db.commit()
 

@@ -10,19 +10,19 @@ async def main():
         db_gen = get_db()
         db = await anext(db_gen)
         
-        # Get media for session 20
-        res = await db.execute(select(MediaFile).where(MediaFile.session_id == 20, MediaFile.media_type == "audio"))
-        audio_media = res.scalars().first()
+        # Get video media for session 20
+        res = await db.execute(select(MediaFile).where(MediaFile.session_id == 20, MediaFile.media_type == "video"))
+        video_media = res.scalars().first()
         
-        if audio_media:
-            print(f"Reprocessando audio {audio_media.id} da sessao 20...")
+        if video_media:
+            print(f"Reprocessando video {video_media.id} da sessao 20...")
             client = DomainClient()
-            res = await client.analyze_audio(20, audio_media.id, audio_media.blob_url)
-            print("Analyze Audio Response:", res)
+            res = await client.analyze_video(20, video_media.id, video_media.blob_url)
+            print("Analyze Video Response:", res)
             
-            # Wait a few seconds for audio-service to process it in background
-            print("Aguardando 10 segundos para o audio-service terminar...")
-            await asyncio.sleep(10)
+            # Wait a few seconds for video-service to process it in background
+            print("Aguardando 20 segundos para o video-service terminar...")
+            await asyncio.sleep(20)
             
             # Now trigger the recalculation in core-api
             from app.sessions.service import SessionService
@@ -31,7 +31,7 @@ async def main():
             await service._recalculate_session_risk(20)
             print("Concluido!")
         else:
-            print("Sessao 20 sem audio.")
+            print("Sessao 20 sem video.")
     except Exception as e:
         print(f"Error: {e}")
 

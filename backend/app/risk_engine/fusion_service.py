@@ -61,6 +61,15 @@ class RiskFusionEngine:
             if scores:
                 score_document = sum(scores) / len(scores)
                 
+        # Correlação Transmodal (Cross-modal correlation)
+        # Regra solicitada: Se o áudio detecta um risco alto/agressivo, o cenário todo é de risco.
+        # Portanto, o score do vídeo deve subir para se equiparar à gravidade revelada pelo áudio.
+        # Porém, se o áudio for tranquilo, o vídeo MANTÉM seus critérios originais (violência silenciosa).
+        if score_audio >= 60.0 and score_video > 0.0:
+            if score_video < score_audio:
+                # Puxa o risco do vídeo fortemente (iguala ou chega muito perto)
+                score_video = score_audio
+                
         # Consolidado
         total_weight = 0.0
         final_score = 0.0
