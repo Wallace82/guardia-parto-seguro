@@ -548,16 +548,15 @@ async def get_session_report_pdf(
     pdf.ln(5)
     
     # Classificação de Risco
-    pdf.set_font("helvetica", "B", 14)
-    pdf.cell(0, 10, "Classificacao de Risco (IRA)", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("helvetica", "", 12)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Classificacao de Risco (IGA)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Arial", "", 12)
     
     ira_score = f"{session.ira_score:.1f}%" if session.ira_score is not None else "N/A"
     ira_level = session.ira_level.upper() if session.ira_level else "N/A"
     
     pdf.cell(0, 8, f"Nivel de Risco: {ira_level}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Score IRA: {ira_score}", new_x="LMARGIN", new_y="NEXT")
-    
+    pdf.cell(0, 8, f"Score IGA: {ira_score}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
     
     # Detalhes de Score

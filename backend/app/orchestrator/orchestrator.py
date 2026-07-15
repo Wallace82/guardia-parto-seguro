@@ -272,8 +272,8 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     session_id=session_id,
                     alert_type=AlertType.ira_threshold.value,
                     severity=alert_severity.value,
-                    title=f"Risco {risk_level.title()} — IRA composto {ira_score}",
-                    description=" | ".join(desc_parts) if desc_parts else f"IRA composto atingiu o limiar de risco: {ira_score}.",
+                    title=f"Risco {risk_level.title()} — IGA composto {ira_score}",
+                    description=" | ".join(desc_parts) if desc_parts else f"IGA composto atingiu o limiar de risco: {ira_score}.",
                     ira_score=ira_score
                 )
                 
