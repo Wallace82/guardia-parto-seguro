@@ -298,6 +298,7 @@ REGRAS DE ANÁLISE:
 4. Identifique fatores de vulnerabilidade.
 5. Avalie qualidade da comunicação registrada.
 6. Gere um índice de atenção assistencial (IRA).
+7. Para cada indicador, classifique seu impacto ("POSITIVO" ou "ATENCAO"). Se o indicador representar segurança, confiança ou normalidade, é POSITIVO. Se representar vulnerabilidade, medo, dor ou pressão de terceiros (ex: "pressão do parceiro"), é ATENCAO.
 O IRA é um indicador auxiliar e não substitui avaliação profissional.
 
 ---
@@ -322,7 +323,8 @@ Retorne sempre em JSON:
     {{
       "tipo":"",
       "descricao":"",
-      "intensidade":"BAIXA|MEDIA|ALTA"
+      "intensidade":"BAIXA|MEDIA|ALTA",
+      "impacto":"POSITIVO|ATENCAO"
     }}
  ],
  "aspectos_emocionais": {{
@@ -364,7 +366,7 @@ Anotações Clínicas: "{data.notes}"
         if result.get("indicadores_identificados"):
             analysis_text += "**Indicadores Identificados:**\n"
             for ind in result.get("indicadores_identificados", []):
-                analysis_text += f"- {ind.get('tipo', 'Outro')}: {ind.get('descricao', '')} (Intensidade: {ind.get('intensidade', '')})\n"
+                analysis_text += f"- {ind.get('tipo', 'Outro')}: {ind.get('descricao', '')} (Impacto: {ind.get('impacto', 'ATENCAO')}, Intensidade: {ind.get('intensidade', '')})\n"
             analysis_text += "\n"
             
         if result.get("aspectos_emocionais", {}).get("identificados"):

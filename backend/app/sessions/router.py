@@ -436,11 +436,12 @@ async def get_session_analysis(
             # Indicadores identificados (Anotações)
             for ind in estruturado.get("indicadores_identificados", []):
                 desc = ind.get("descricao", "")
+                impacto = ind.get("impacto", "ATENCAO").upper()
                 if desc:
-                    if ind.get("intensidade", "BAIXA").upper() in ["ALTA", "MEDIA"]:
-                        factors["attention"].append(f"Anotações: {desc}")
-                    else:
+                    if impacto == "POSITIVO":
                         factors["positive"].append(f"Anotações: {desc}")
+                    else:
+                        factors["attention"].append(f"Anotações: {desc}")
                         
             # Fatores de risco (Anotações)
             for risk in estruturado.get("fatores_risco", []):

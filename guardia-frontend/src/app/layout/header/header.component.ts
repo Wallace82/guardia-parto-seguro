@@ -5,10 +5,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { AuthStore } from '../../domains/auth/store/auth.store';
 
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { ProfileDialogComponent } from './profile-dialog.component';
+
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [MatIconModule, MatMenuModule, MatButtonModule, MatDividerModule],
+  imports: [CommonModule, RouterModule, MatDialogModule, MatIconModule, MatMenuModule, MatButtonModule, MatDividerModule],
   template: `
     <header class="h-16 bg-surface/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-20 w-full">
       <!-- Title Area (Left) -->
@@ -20,7 +25,7 @@ import { AuthStore } from '../../domains/auth/store/auth.store';
       <div class="flex items-center gap-4">
         
         <!-- Notifications -->
-        <button mat-icon-button class="text-text-muted relative">
+        <button mat-icon-button routerLink="/alertas" class="text-text-muted relative hover:text-white transition-colors">
           <mat-icon>notifications</mat-icon>
           <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-danger-500 rounded-full border-2 border-surface"></span>
         </button>
@@ -44,11 +49,11 @@ import { AuthStore } from '../../domains/auth/store/auth.store';
             <div class="text-sm font-medium text-white">{{ authStore.userName() }}</div>
             <div class="text-xs text-text-muted capitalize">{{ authStore.userRole() }}</div>
           </div>
-          <button mat-menu-item>
+          <button mat-menu-item (click)="openProfile()">
             <mat-icon class="text-text-muted">person</mat-icon>
             <span class="text-white">Meu Perfil</span>
           </button>
-          <button mat-menu-item>
+          <button mat-menu-item routerLink="/admin/configuracoes" *ngIf="authStore.userRole() === 'admin' || authStore.userRole() === 'gestor'">
             <mat-icon class="text-text-muted">settings</mat-icon>
             <span class="text-white">Preferências</span>
           </button>
@@ -65,6 +70,7 @@ import { AuthStore } from '../../domains/auth/store/auth.store';
 })
 export class HeaderComponent {
   public readonly authStore = inject(AuthStore);
+  private readonly dialog = inject(MatDialog);
 
   getInitials(): string {
     const name = this.authStore.userName();
@@ -74,5 +80,12 @@ export class HeaderComponent {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  openProfile() {
+    this.dialog.open(ProfileDialogComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container'
+    });
   }
 }
