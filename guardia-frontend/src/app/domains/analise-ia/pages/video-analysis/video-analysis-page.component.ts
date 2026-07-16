@@ -11,7 +11,6 @@ import { AnalysisService } from '../../services/analysis.service';
 import { SessionsService } from '../../../sessoes/services/sessions.service';
 import { SessionAnalysisOut } from '../../models/analysis.models';
 import { SessionOut, MediaFile } from '../../../sessoes/models/sessions.models';
-import { EmotionMeterComponent } from '../../../../shared/components/emotion-meter.component';
 import { PersonCardComponent } from '../../components/person-card.component';
 import { environment } from '../../../../../environments/environment';
 import { StorageService } from '../../../../core/services/storage.service';
@@ -37,7 +36,7 @@ interface TimelineEvent {
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule,
     MatProgressSpinnerModule,
-    EmotionMeterComponent, PersonCardComponent
+    PersonCardComponent
   ],
   template: `
     <div class="p-6 lg:p-8 max-w-[1600px] mx-auto min-h-screen">
@@ -435,7 +434,7 @@ export class VideoAnalysisPageComponent implements OnInit, OnDestroy {
     { name: 'Profissional de Saúde', role: 'medico' },
   ];
 
-  currentVideoFile = computed(() => {
+  currentVideoFile = computed<VideoFileData | null>(() => {
     const files = this.videoFiles();
     const idx = this.selectedVideoIndex();
     return files[idx] || null;

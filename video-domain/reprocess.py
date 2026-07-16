@@ -10,12 +10,13 @@ def run():
     processor = VideoProcessor()
     
     videos = [
-        ("21", "147", "file:////shared_media/21_video_cena_1.mp4"),
-        ("21", "149", "file:////shared_media/21_video_cena_2.mp4"),
-        ("21", "151", "file:////shared_media/21_video_cena_3.mp4"),
+        {"session_id": 19, "media_id": 160, "blob_url": "file:////shared_media/19_video_video_ira_alto.mp4"}
     ]
     
-    for sess, media, url in videos:
+    for video in videos:
+        sess = video["session_id"]
+        media = video["media_id"]
+        url = video["blob_url"]
         print(f"Processing {media}...")
         processor.process_video(sess, media, url)
         print(f"Finished {media}")

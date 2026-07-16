@@ -176,7 +176,7 @@ class VideoProcessor:
                             subprocess.run([
                                 "ffmpeg", "-y", "-i", temp_out_path, "-i", file_path,
                                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                                "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0?",
+                                "-c:a", "copy", "-map", "0:v:0", "-map", "1:a:0?",
                                 annotated_out_path
                             ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                             log.info("annotated_video_ready", path=annotated_out_path)
