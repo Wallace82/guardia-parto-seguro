@@ -130,9 +130,12 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
               <h4 class="text-sm font-bold text-white">Vídeo</h4>
               <p class="text-xs text-text-muted mb-4 font-mono">{{ videoFiles().length }} arquivo(s)</p>
               @if (videoFiles().length > 0) {
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-success/15 text-success text-xs font-semibold rounded-full w-full justify-center mb-3">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> Processado
                 </span>
+                <a mat-stroked-button color="primary" class="w-full !rounded-full text-xs" [routerLink]="['/analise/video', sessionId]">
+                  Ver Vídeo
+                </a>
               } @else {
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface2 text-text-muted text-xs font-semibold rounded-full w-full justify-center">
                   Não enviado

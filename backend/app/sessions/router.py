@@ -149,6 +149,75 @@ async def delete_media_file(
     await AuditService.log_action(db, action="delete_media_file", resource=f"media_{media_id}", user_id=current_user.id)
 
 
+@router.get(
+    "/{session_id}/media/{media_id}/download",
+    summary="Baixar/streamar um arquivo de mídia",
+)
+async def download_media_file(
+    session_id: int,
+    media_id: int,
+    db: DB,
+    token: str = Query(None),
+):
+    """
+    Retorna o arquivo de mídia para reprodução no frontend.
+    Suporta streaming de vídeo/áudio.
+    """
+    from fastapi.responses import FileResponse
+    from sqlalchemy import select
+    from app.sessions.models import MediaFile
+    from jose import JWTError, jwt
+    from app.config import settings
+    from fastapi import HTTPException
+    import os
+
+    # Validate token from query param (video elements don't send Authorization header)
+    if not token:
+        raise HTTPException(status_code=401, detail="Token ausente")
+    try:
+        jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    result = await db.execute(
+        select(MediaFile).where(MediaFile.id == media_id, MediaFile.session_id == session_id)
+    )
+    media_file = result.scalar_one_or_none()
+    if not media_file:
+        raise HTTPException(status_code=404, detail="Arquivo de mídia não encontrado")
+
+    # Extract the physical path from the blob_url
+    blob_url = media_file.blob_url or ""
+    if blob_url.startswith("file:////"):
+        file_path = "/" + blob_url[len("file:////"):]
+    elif blob_url.startswith("file:///"):
+        file_path = blob_url[len("file:///"):]
+    elif blob_url.startswith("file://"):
+        file_path = blob_url[len("file://"):]
+    else:
+        file_path = blob_url
+
+    # Check for annotated version first
+    annotated_path = file_path.replace(".mp4", "_annotated.mp4")
+    if os.path.exists(annotated_path):
+        file_path = annotated_path
+    elif not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado no storage: {media_file.filename}")
+
+    # Determine content type
+    content_type = media_file.content_type or "application/octet-stream"
+    if media_file.media_type == "video" and "video" not in content_type:
+        content_type = "video/mp4"
+    elif media_file.media_type == "audio" and "audio" not in content_type:
+        content_type = "audio/mpeg"
+
+    return FileResponse(
+        path=file_path,
+        media_type=content_type,
+        filename=media_file.filename,
+    )
+
+
 @router.post(
     "/{session_id}/media",
     response_model=MediaFileOut,

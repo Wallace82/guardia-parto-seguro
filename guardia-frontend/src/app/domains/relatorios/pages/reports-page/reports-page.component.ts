@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { SessionsService } from '../../../sessoes/services/sessions.service';
 import { SessionOut } from '../../../sessoes/models/sessions.models';
 import { ExportPdfService } from '../../services/export-pdf.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-reports-page',
@@ -451,21 +452,31 @@ export class ReportsPageComponent implements OnInit {
 
   activeSession = signal<SessionOut | null>(null);
 
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit() {
-    this.sessionsService.getSessions(0, 100).subscribe({
-      next: (res) => {
-        const completed = res.items.filter(s => s.status === 'completed');
-        this.completedSessions.set(completed);
-        
-        if (completed.length > 0) {
-          this.selectedSessionId = completed[0].id;
+    this.route.queryParams.subscribe(params => {
+      const qId = params['session_id'] ? parseInt(params['session_id'], 10) : null;
+      
+      this.sessionsService.getSessions(0, 100).subscribe({
+        next: (res) => {
+          const completed = res.items.filter(s => s.status === 'completed');
+          this.completedSessions.set(completed);
+          
+          if (completed.length > 0) {
+            if (qId && completed.find(s => s.id === qId)) {
+              this.selectedSessionId = qId;
+            } else {
+              this.selectedSessionId = completed[0].id;
+            }
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          this.snackBar.open('Erro ao carregar sessões.', 'Fechar');
+          this.loading.set(false);
         }
-        this.loading.set(false);
-      },
-      error: () => {
-        this.snackBar.open('Erro ao carregar sessões.', 'Fechar');
-        this.loading.set(false);
-      }
+      });
     });
   }
 

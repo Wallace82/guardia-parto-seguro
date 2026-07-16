@@ -63,9 +63,7 @@ export class QuickActionsComponent {
 
   actions: QuickAction[] = [
     { icon: 'videocam', label: 'Ver vídeo ao vivo', id: 'video' },
-    { icon: 'description', label: 'Gerar relatório', id: 'report' },
-    { icon: 'rate_review', label: 'Avaliar caso', id: 'evaluate' },
-    { icon: 'edit_note', label: 'Observação', id: 'note' },
-    { icon: 'history', label: 'Histórico do paciente', id: 'history' },
+    { icon: 'timeline', label: 'Ver linha do tempo completa', id: 'evaluate' },
+    { icon: 'description', label: 'Gerar relatório', id: 'report' }
   ];
 }

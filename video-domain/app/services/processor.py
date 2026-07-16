@@ -42,6 +42,7 @@ class VideoProcessor:
 
             mp_pose = mp.solutions.pose
             pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+            mp_drawing = mp.solutions.drawing_utils
 
             total_frames = 0
             fps = 30.0
@@ -59,15 +60,28 @@ class VideoProcessor:
                     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                     fps = cap.get(cv2.CAP_PROP_FPS)
                     if fps <= 0: fps = 30.0
+                    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                     duration_seconds = total_frames / fps
                     
                     log.info("video_opened", total_frames=total_frames, fps=fps, duration=duration_seconds)
+                    
+                    # Prepare VideoWriter for the annotated video
+                    temp_out_path = file_path + ".temp_out.mp4"
+                    annotated_out_path = file_path.replace(".mp4", "_annotated.mp4")
+                    
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                    out = cv2.VideoWriter(temp_out_path, fourcc, fps, (width, height))
                     
                     sample_rate = settings.VIDEO_FRAME_SAMPLE_RATE # ex: 1 frame a cada segundo
                     frame_skip = int(fps / sample_rate) if sample_rate > 0 else int(fps)
                     if frame_skip < 1: frame_skip = 1
                     
                     frame_count = 0
+                    
+                    last_face_region = None
+                    last_dominant_emotion = None
+                    last_pose_landmarks = None
                     
                     while cap.isOpened():
                         ret, frame = cap.read()
@@ -86,6 +100,9 @@ class VideoProcessor:
                                     em = res[0]['emotion']
                                     dominant = res[0]['dominant_emotion']
                                     emotions_list.append(em)
+                                    
+                                    last_face_region = res[0].get('region')
+                                    last_dominant_emotion = dominant
                                     
                                     # Gera alerta para picos de medo/dor (angry/fear/sad)
                                     if dominant in ['fear', 'sad', 'angry'] and em[dominant] > 60.0:
@@ -115,6 +132,9 @@ class VideoProcessor:
                                 pose_results = pose.process(rgb_frame)
                                 if pose_results.pose_landmarks:
                                     pose_visible_frames += 1
+                                    last_pose_landmarks = pose_results.pose_landmarks
+                                else:
+                                    last_pose_landmarks = None
                             except Exception as e:
                                 pass
                                 
@@ -123,10 +143,48 @@ class VideoProcessor:
                                 log.warning("max_frames_reached", max_frames=settings.MAX_FRAMES_PER_ANALYSIS)
                                 break
                                 
+                        # --- DRAW OVERLAYS FOR ALL FRAMES ---
+                        # Draw pose
+                        if last_pose_landmarks:
+                            mp_drawing.draw_landmarks(frame, last_pose_landmarks, mp_pose.POSE_CONNECTIONS)
+                            
+                        # Draw face region & emotion
+                        if last_face_region and last_dominant_emotion:
+                            x = last_face_region.get('x', 0)
+                            y = last_face_region.get('y', 0)
+                            w = last_face_region.get('w', 0)
+                            h = last_face_region.get('h', 0)
+                            
+                            if w > 0 and h > 0:
+                                color = (0, 0, 255) if last_dominant_emotion in ['angry', 'sad', 'fear'] else (0, 255, 0)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                                cv2.putText(frame, last_dominant_emotion.upper(), (x, y - 10), 
+                                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
+                        
+                        out.write(frame)
                         frame_count += 1
                     
                     cap.release()
+                    out.release()
                     pose.close()
+                    
+                    # Convert tmp video to final web-playable mp4 using ffmpeg (h264)
+                    if os.path.exists(temp_out_path):
+                        log.info("encoding_annotated_video", output=annotated_out_path)
+                        try:
+                            import subprocess
+                            subprocess.run([
+                                "ffmpeg", "-y", "-i", temp_out_path, "-i", file_path,
+                                "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                                "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0?",
+                                annotated_out_path
+                            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            log.info("annotated_video_ready", path=annotated_out_path)
+                        except Exception as encode_err:
+                            log.error("failed_to_encode_video", error=str(encode_err))
+                        finally:
+                            if os.path.exists(temp_out_path):
+                                os.remove(temp_out_path)
                     
             # 4. Agregação e Cálculo de Scores
             emotion_score = 0.0
@@ -134,12 +192,8 @@ class VideoProcessor:
                 # Calcula a média das emoções negativas e positivas
                 avg_negative = sum((e.get('fear', 0) + e.get('sad', 0) + e.get('angry', 0)) for e in emotions_list) / len(emotions_list)
                 avg_positive = sum((e.get('happy', 0) + e.get('neutral', 0)) for e in emotions_list) / len(emotions_list)
-                # Score de emoção de 0 a 100 (representando Risco).
-                # Em um ambiente de pré-parto, dor e esforço (angry/sad/fear) são normais e esperados. 
-                # Portanto, o peso das expressões "negativas" não deve disparar o risco de forma agressiva.
                 emotion_score = round(min(100.0, max(0.0, avg_negative * 0.4 + (100 - avg_positive) * 0.2)), 1)
             else:
-                # Se arquivo nao for encontrado ou nao tiver rostos, score de risco basal
                 emotion_score = 30.0
                 
             # Pose Score:
@@ -147,14 +201,12 @@ class VideoProcessor:
             if analyzed_frames > 0:
                 visibility_ratio = pose_visible_frames / analyzed_frames
                 if visibility_ratio < 0.3:
-                    # Baixa visibilidade pode indicar postura curvada defensiva, oclusão ou ausência
                     pose_score = 65.0 
                 else:
                     pose_score = 25.0
             else:
                 pose_score = 30.0
             
-            # Objetos e Sangramento (YOLO desativado por padrão na PoC para otimizar VRAM/Download)
             object_risk_score = 0.0
             bleeding_score = 0.0
             

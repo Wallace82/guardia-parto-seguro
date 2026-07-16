@@ -363,8 +363,7 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     switch (actionId) {
       case 'report':
         if (session) {
-          this.exportPdf.exportDashboardReport();
-          this.snackBar.open('Gerando relatório...', 'OK', { duration: 2000 });
+          window.location.href = `/relatorios?session_id=${session.id}`;
         }
         break;
       case 'video':
@@ -376,12 +375,6 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
         if (session) {
           window.location.href = `/analise/multimodal/${session.id}`;
         }
-        break;
-      case 'note':
-        this.snackBar.open('Observações em desenvolvimento.', 'OK', { duration: 2000 });
-        break;
-      case 'history':
-        this.snackBar.open('Histórico do paciente em desenvolvimento.', 'OK', { duration: 2000 });
         break;
     }
   }
