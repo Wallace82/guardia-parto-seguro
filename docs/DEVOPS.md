@@ -242,7 +242,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-### Frontend Streamlit
+### Frontend Angular 18+
 
 ```dockerfile
 FROM python:3.11-slim AS runtime
@@ -261,7 +261,7 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s \
   CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+CMD ["Angular 18+", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
 ```
 
 ---

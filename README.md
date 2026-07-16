@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B?logo=streamlit)](https://streamlit.io/)
+[![Angular 18+](https://img.shields.io/badge/Angular 18+-1.35+-FF4B4B?logo=Angular 18+)](https://Angular 18+.io/)
 [![AWS](https://img.shields.io/badge/AWS-Cloud-232F3E?logo=amazon-aws)](https://aws.amazon.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -21,7 +21,7 @@ O **GuardIA Parto Seguro** é uma plataforma acadêmica de inteligência artific
 - 🏠 Indicadores de violência doméstica
 - 🩸 Sangramento anômalo
 - ⚠️ Desvios em procedimentos obstétricos
-- 📊 Indicadores de Risco Assistencial (IRA)
+- 📊 Indicadores de Risco Assistencial (IGA)
 
 A solução utiliza uma **Arquitetura Híbrida** (MVP Local + AWS), processando simultaneamente **vídeos clínicos**, **áudios de consultas**, **documentos médicos** e **histórico do paciente**. As aplicações e bancos rodam localmente, enquanto os serviços cognitivos e de IA avançada são delegados via API à AWS, gerando alertas automáticos e relatórios especializados, com rígidos controles de **Segurança e conformidade LGPD**.
 
@@ -39,11 +39,11 @@ guardia-parto-seguro/
 ├── infrastructure/          # ☁️ Scripts e IaC (Infrastructure as Code) para AWS
 ├── docs/                    # 📚 Documentação completa do projeto
 ├── backend/                 # 🔐 Core Platform + API Gateway (FastAPI)
-├── frontend/                # 🖥️ Dashboard Multimodal (Streamlit)
+├── frontend/                # 🖥️ Dashboard Multimodal (Angular 18+)
 ├── video-domain/            # 🎥 Domínio Local de Visão Computacional (OpenCV/YOLOv8/DeepFace)
 ├── audio-domain/            # 🎙️ Domínio de Análise de Áudio (delegado ao Amazon Transcribe/Comprehend)
 ├── document-domain/         # 📄 Domínio de Análise de Documentos (delegado ao Amazon Textract)
-├── risk-domain/             # 📊 Domínio de Correlação de Risco (IRA)
+├── risk-domain/             # 📊 Domínio de Correlação de Risco (IGA)
 ├── report-domain/           # 📋 Domínio de Relatórios
 ├── aws-domain/              # 🌩️ AWS Integration Domain (S3, AWS AI, Secrets Manager, CloudWatch)
 ├── security-domain/         # 🛡️ Security Domain (LGPD, IAM, Anonimização, Crypto)
@@ -119,7 +119,17 @@ chmod +x start.sh
 ./start.sh --build
 ```
 
-### 5. Acesse e Teste os Serviços
+### 5. Inicie o Frontend (Angular)
+
+Como o frontend Angular não roda no Docker localmente para facilitar o desenvolvimento, você precisa iniciá-lo separadamente:
+
+```bash
+cd guardia-frontend
+npm install
+npm start # ou ng serve
+```
+
+### 6. Acesse e Teste os Serviços
 
 | Serviço | URL | Descrição |
 |---|---|---|
@@ -130,7 +140,7 @@ chmod +x start.sh
 
 #### 🧪 Testando a Inteligência Artificial na Prática (Dashboard & Postman)
 
-O fluxo completo de upload e análise multimodal pode ser operado de forma simples e visual diretamente pelo **Dashboard Streamlit**. Caso prefira testar os endpoints de integração individualmente, disponibilizamos nossa Collection do Postman:
+O fluxo completo de upload e análise multimodal pode ser operado de forma simples e visual diretamente pelo **Dashboard Angular 18+**. Caso prefira testar os endpoints de integração individualmente, disponibilizamos nossa Collection do Postman:
 1. Abra o Postman.
 2. Importe o arquivo na raiz do projeto: `docs/postman/GuardIA_AWS_Domain.postman_collection.json`.
 3. Siga o passo a passo das requisições na ordem (Gerar URL -> Fazer Upload do PDF -> Analisar no Textract -> Obter Resultados).
@@ -234,7 +244,7 @@ Para garantir escalabilidade, isolamento de domínios e alta performance assínc
 *   **Módulo de Anonimização & LGPD**: Criptografia AES-256 (S3 Encryption), mascaramento e hash unidirecional para identificadores sensíveis.
 
 ### 3. 🖥️ Contexto de Frontend & Geração de Relatórios
-*   **Streamlit**, **Plotly**, **Pandas**: Criação de dashboard, gráficos de risco e análise iterativa.
+*   **Angular 18+**, **Plotly**, **Pandas**: Criação de dashboard, gráficos de risco e análise iterativa.
 *   **reportlab**, **openpyxl**, **Jinja2**: Geração de PDFs (auditoria) e planilhas, com relatórios dinâmicos.
 
 ### 4. ⚙️ Contexto de Infraestrutura & Integração com Nuvem

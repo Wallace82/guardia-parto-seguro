@@ -83,7 +83,7 @@ gantt
 | **Dev 2** | Scaffold do `audio-domain/` com FastAPI básico | `GET /api/v1/audio/health` retorna 200 |
 | **Dev 3** | Scaffold do `document-domain/` com FastAPI básico | `GET /api/v1/documents/health` retorna 200 |
 | **Dev 3** | Scaffold do `risk-domain/` com FastAPI básico | `GET /api/v1/risk/health` retorna 200 |
-| **Dev 4** | Scaffold do `frontend/` Streamlit com tela de login | Tela de login renderiza sem erro |
+| **Dev 4** | Scaffold do `frontend/` Angular 18+ com tela de login | Tela de login renderiza sem erro |
 | **Dev 4** | Scaffold do `report-domain/` com FastAPI básico | `GET /api/v1/reports/health` retorna 200 |
 
 ### Critérios de Aceite da Semana
@@ -116,7 +116,7 @@ gantt
 | **Dev 3** | Amazon Textract integrado | Extração de texto de PDF de prontuário funcionando |
 | **Dev 3** | Extrator de campos obstétricos | Campos chave (CID, medicamentos, data) extraídos corretamente |
 | **Dev 4** | Página de sessões no dashboard | Lista de sessões com status visível |
-| **Dev 4** | Upload de mídia via dashboard | Upload de arquivo a partir do Streamlit funciona |
+| **Dev 4** | Upload de mídia via dashboard | Upload de arquivo a partir do Angular 18+ funciona |
 
 ---
 

@@ -284,7 +284,7 @@ CREATE TABLE video.video_results (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID NOT NULL REFERENCES video.video_jobs(id),
     session_id UUID NOT NULL,
-    ira_score NUMERIC(5,2) NOT NULL,
+    iga_score NUMERIC(5,2) NOT NULL,
     emotion_score NUMERIC(5,2),
     pose_score NUMERIC(5,2),
     object_risk_score NUMERIC(5,2),
@@ -371,7 +371,7 @@ CREATE TABLE audio.audio_scores (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID NOT NULL REFERENCES audio.audio_jobs(id),
     session_id UUID NOT NULL,
-    ira_score NUMERIC(5,2) NOT NULL,
+    iga_score NUMERIC(5,2) NOT NULL,
     sentiment_score NUMERIC(5,2),
     risk_keyword_score NUMERIC(5,2),
     prosody_score NUMERIC(5,2),
@@ -412,7 +412,7 @@ CREATE TABLE document.document_results (
     raw_text TEXT,
     extracted_fields JSONB DEFAULT '{}',
     completeness_score NUMERIC(5,2),
-    ira_score NUMERIC(5,2) NOT NULL,
+    iga_score NUMERIC(5,2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
@@ -455,7 +455,7 @@ CREATE TABLE risk.ira_calculations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     session_id UUID NOT NULL UNIQUE,
     patient_id UUID NOT NULL,
-    ira_score NUMERIC(5,2) NOT NULL,
+    iga_score NUMERIC(5,2) NOT NULL,
     risk_level risk.risk_level NOT NULL,
     video_score NUMERIC(5,2),
     video_weight NUMERIC(4,2) DEFAULT 0.40,
@@ -481,7 +481,7 @@ CREATE TABLE risk.patient_risk_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id UUID NOT NULL,
     session_id UUID NOT NULL,
-    ira_score NUMERIC(5,2) NOT NULL,
+    iga_score NUMERIC(5,2) NOT NULL,
     risk_level risk.risk_level NOT NULL,
     session_date TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()

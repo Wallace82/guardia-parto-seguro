@@ -236,7 +236,7 @@ Tabelas: `reports`, `report_sections`, `report_attachments`
 ## Domínio 7 — Dashboard Domain
 
 ### Objetivo
-Fornecer interface visual multimodal (Streamlit) para monitoramento em tempo real, histórico de IGA e central de alertas.
+Fornecer interface visual multimodal (Angular 18+) para monitoramento em tempo real, histórico de IGA e central de alertas.
 
 ---
 

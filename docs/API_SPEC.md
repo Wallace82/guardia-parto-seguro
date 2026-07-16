@@ -123,7 +123,7 @@ Retorna detalhes e status completo da sessão.
     }
   ],
   "ira_result": {
-    "ira_score": 72.5,
+    "iga_score": 72.5,
     "risk_level": "critico",
     "calculated_at": "2024-01-15T10:45:00-03:00"
   },
@@ -253,7 +253,7 @@ Retorna resultado completo da análise de vídeo.
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
   "job_id": "550e8400-e29b-41d4-a716-446655440020",
   "status": "completed",
-  "ira_score": 68.4,
+  "iga_score": 68.4,
   "components": {
     "emotion_score": 75.2,
     "pose_score": 60.1,
@@ -314,7 +314,7 @@ Retorna resultado completo com transcrição.
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
-  "ira_score": 55.2,
+  "iga_score": 55.2,
   "transcription": {
     "full_text": "Médico: Vamos fazer o procedimento agora. Paciente: Tá doendo muito, por favor...",
     "language": "pt-BR",
@@ -376,7 +376,7 @@ Inicia análise documental.
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
-  "ira_score": 35.0,
+  "iga_score": 35.0,
   "document_type": "prontuario",
   "extracted_fields": {
     "patient_name_hash": "abc123...",
@@ -431,7 +431,7 @@ Calcula o IGA composto.
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440002",
-  "ira_score": 56.3,
+  "iga_score": 56.3,
   "risk_level": "moderado",
   "calculation": {
     "video_contribution": 27.36,

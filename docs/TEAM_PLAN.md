@@ -77,8 +77,8 @@
 
 #### Tarefas
 
-**Dashboard (Streamlit):**
-- [x] Configurar aplicação Streamlit multipage (Dashboard, Login, Sessões)
+**Dashboard (Angular 18+):**
+- [x] Configurar aplicação Angular 18+ multipage (Dashboard, Login, Sessões)
 - [x] Implementar mapa de calor temporal do IGA e sincronização
 - [x] Implementar central de alertas
 

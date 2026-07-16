@@ -69,7 +69,7 @@
 | Visão | OpenCV + DeepFace + MediaPipe + YOLOv8 |
 | Voz/NLP | Amazon Transcribe + Amazon Comprehend |
 | Docs | Amazon Textract |
-| Frontend | Streamlit |
+| Frontend | Angular 18+ |
 | Cloud | AWS (S3, Secrets Manager, CloudWatch) |
 | Banco | PostgreSQL |
 

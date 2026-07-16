@@ -1,6 +1,6 @@
 # Modelo de Dados (Evidências Hierárquicas)
 
-O sistema mudou da abordagem achatada (colunas `score_video`, `ira_score` em `sessions`) para uma abordagem relacional 1:N.
+O sistema mudou da abordagem achatada (colunas `score_video`, `iga_score` em `sessions`) para uma abordagem relacional 1:N.
 
 ## Entidades Principais
 1. **Session**: Retém apenas metadados do atendimento (status, datas, paciente, profissional).

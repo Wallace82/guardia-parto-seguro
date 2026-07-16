@@ -106,7 +106,7 @@ C4Container
 
     Person(user, "Usuário", "Profissional de Saúde / Gestor / Auditor")
 
-    Container(frontend, "Dashboard", "Streamlit", "Interface multimodal de monitoramento")
+    Container(frontend, "Dashboard", "Angular 18+", "Interface multimodal de monitoramento")
     Container(gateway, "API Gateway", "FastAPI :8000", "Roteamento e orquestração")
     Container(security_svc, "Security Domain", "FastAPI :8006", "Auth, IAM, Criptografia, Anonimização LGPD")
     Container(aws_svc, "AWS Integration Domain", "FastAPI :8007", "Gateway para serviços AWS (S3, IA, Auditoria)")
@@ -170,7 +170,7 @@ C4Component
 ```mermaid
 sequenceDiagram
     actor Prof as Profissional
-    participant FE as Dashboard (Streamlit)
+    participant FE as Dashboard (Angular 18+)
     participant GW as API Gateway
     participant VS as Video Service
     participant AS as Audio Service
@@ -188,12 +188,12 @@ sequenceDiagram
         GW->>DS: POST /analyze (documentos)
     end
 
-    VS-->>GW: VideoAnalysisResult {ira_contribuicao, alertas}
-    AS-->>GW: AudioAnalysisResult {ira_contribuicao, alertas}
-    DS-->>GW: DocumentAnalysisResult {ira_contribuicao, alertas}
+    VS-->>GW: VideoAnalysisResult {iga_contribuicao, alertas}
+    AS-->>GW: AudioAnalysisResult {iga_contribuicao, alertas}
+    DS-->>GW: DocumentAnalysisResult {iga_contribuicao, alertas}
 
     GW->>RS: POST /correlate (resultados multimodais)
-    RS-->>GW: IRAResult {score, nivel_risco, justificativas}
+    RS-->>GW: IGAResult {score, nivel_risco, justificativas}
 
     GW->>RP: POST /generate (IGA + resultados)
     RP-->>GW: ReportURL
@@ -244,7 +244,7 @@ flowchart TD
 
     I --> N[Report Service]
     N --> O[PDF/Excel Report]
-    K & L & M --> P[Dashboard Streamlit]
+    K & L & M --> P[Dashboard Angular 18+]
     O --> P
     
     K & L & M & O --> AUDIT[Security Domain - Registra no Amazon CloudWatch]
@@ -344,7 +344,7 @@ graph LR
 | Camada | Tecnologia | Versão | Propósito |
 |---|---|---|---|
 | Backend API | FastAPI | 0.110+ | API Gateway e serviços de domínio |
-| Frontend | Streamlit | 1.35+ | Dashboard interativo |
+| Frontend | Angular 18+ | 1.35+ | Dashboard interativo |
 | Visão Computacional | OpenCV | 4.9+ | Processamento de frames de vídeo |
 | Análise Facial | DeepFace | 0.0.91+ | Detecção de emoções faciais |
 | Pose Estimation | MediaPipe | 0.10+ | Análise de postura corporal |
