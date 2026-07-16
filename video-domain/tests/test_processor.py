@@ -64,7 +64,7 @@ class TestVideoProcessorSuccess:
         assert result is not None
         assert result["status"] == "completed"
         assert result["session_id"] == "session-456"
-        assert 45.0 <= result["ira_score"] <= 85.0
+        assert 45.0 <= result["iga_score"] <= 85.0
         assert result["total_frames"] == 300
         assert result["analyzed_frames"] == 10
         assert "components" in result
@@ -99,7 +99,7 @@ class TestVideoProcessorSuccess:
         with patch("app.services.processor.time.sleep", return_value=None):
             processor.process_video("s1", "s1", "file:///shared_media/test.mp4")
             # Limpa o resultado para a segunda execução
-            score1 = processor.get_result("s1")["ira_score"]
+            score1 = processor.get_result("s1")["iga_score"]
 
         # Reseta mocks
         mock_cv2.reset_mock()
@@ -114,7 +114,7 @@ class TestVideoProcessorSuccess:
 
         with patch("app.services.processor.time.sleep", return_value=None):
             processor.process_video("s2", "s2", "file:///shared_media/test.mp4")
-            score2 = processor.get_result("s2")["ira_score"]
+            score2 = processor.get_result("s2")["iga_score"]
 
         assert score1 == score2  # Mesmo arquivo = mesmo score
 

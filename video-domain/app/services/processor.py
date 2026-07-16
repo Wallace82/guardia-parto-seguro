@@ -210,13 +210,13 @@ class VideoProcessor:
             object_risk_score = 0.0
             bleeding_score = 0.0
             
-            # IRA Composto de Vídeo
-            dynamic_ira = round((emotion_score * 0.7) + (pose_score * 0.3), 1)
+            # IGA Composto de Vídeo
+            dynamic_iga = round((emotion_score * 0.7) + (pose_score * 0.3), 1)
             
             result_dict = {
                 "session_id": session_id,
                 "status": "completed",
-                "ira_score": dynamic_ira,
+                "iga_score": dynamic_iga,
                 "components": {
                     "emotion_score": emotion_score,
                     "pose_score": pose_score,
@@ -231,7 +231,7 @@ class VideoProcessor:
             
             _RESULTS_DB[media_id] = result_dict
             _RESULTS_DB[session_id] = result_dict
-            log.info("video_processing_completed", session_id=session_id, media_id=media_id, ira_score=dynamic_ira)
+            log.info("video_processing_completed", session_id=session_id, media_id=media_id, iga_score=dynamic_iga)
             
         except Exception as e:
             log.exception("video_processing_failed", session_id=session_id, error=str(e))

@@ -317,7 +317,7 @@ async def get_session_analysis(
         session_id, current_user.id, current_user.role
     )
     
-    if session.status != "completed" and session.ira_score is None:
+    if session.status != "completed" and session.iga_score is None:
         return {
             "session_id": session_id,
             "status": session.status,
@@ -532,11 +532,11 @@ async def get_session_analysis(
                 factors["attention"].append(f"Qualidade das Anotações: {qualidade.get('observacao')}")
 
     # A recomendação principal pode vir do maior score ou da analise geral
-    if session.ira_score and session.ira_score >= 70:
+    if session.iga_score and session.iga_score >= 70:
         factors["recommendation"] = "Risco alto identificado. Intervenção imediata recomendada."
-    elif session.ira_score and session.ira_score >= 40:
+    elif session.iga_score and session.iga_score >= 40:
         factors["recommendation"] = "Risco moderado. Aumentar vigilância e revisar analgesia."
-    elif session.ira_score is not None:
+    elif session.iga_score is not None:
         factors["recommendation"] = "Baixo risco. Manter monitoramento regular."
     else:
         factors["recommendation"] = "Recomendação não disponível (cálculo pendente)."
@@ -562,7 +562,7 @@ async def get_dashboard_metrics(
     db: DB,
 ):
     """
-    Retorna total de sessões, alertas críticos pendentes, média de IRA 
+    Retorna total de sessões, alertas críticos pendentes, média de IGA 
     e um breakdown mensal básico para montar o gráfico.
     """
     metrics = await SessionService(db).get_dashboard_metrics()
@@ -621,11 +621,11 @@ async def get_session_report_pdf(
     pdf.cell(0, 10, "Classificacao de Risco (IGA)", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Arial", "", 12)
     
-    ira_score = f"{session.ira_score:.1f}%" if session.ira_score is not None else "N/A"
-    ira_level = session.ira_level.upper() if session.ira_level else "N/A"
+    iga_score = f"{session.iga_score:.1f}%" if session.iga_score is not None else "N/A"
+    iga_level = session.iga_level.upper() if session.iga_level else "N/A"
     
-    pdf.cell(0, 8, f"Nivel de Risco: {ira_level}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Score IGA: {ira_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Nivel de Risco: {iga_level}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Score IGA: {iga_score}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
     
     # Detalhes de Score

@@ -62,7 +62,7 @@ async def analyze(data: VideoAnalyzeRequest, background_tasks: BackgroundTasks):
     summary="Consultar resultado da análise",
     description=(
         "Retorna o resultado completo da análise de vídeo para o identificador informado (media_id ou session_id), "
-        "incluindo IRA score, sub-scores por componente e achados relevantes."
+        "incluindo IGA score, sub-scores por componente e achados relevantes."
     ),
 )
 async def results(job_id: str):

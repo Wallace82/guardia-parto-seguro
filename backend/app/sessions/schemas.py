@@ -57,8 +57,8 @@ class SessionOut(BaseModel):
     patient_code: str
     professional_id: int
     status: str
-    ira_score: float | None
-    ira_level: str | None
+    iga_score: float | None
+    iga_level: str | None
     score_video: float | None
     score_audio: float | None
     score_document: float | None

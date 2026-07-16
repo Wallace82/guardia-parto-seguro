@@ -92,7 +92,7 @@ class VideoResultsResponse(BaseModel):
     """Resultado completo da análise de vídeo (GET /results/{session_id})."""
     session_id: str
     status: str
-    ira_score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Score de contribuição para o IRA (0-100)")
+    iga_score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Score de contribuição para o IGA (0-100)")
     components: Optional[VideoComponents] = None
     total_frames: Optional[int] = Field(default=None, ge=0)
     analyzed_frames: Optional[int] = Field(default=None, ge=0)
@@ -104,7 +104,7 @@ class VideoResultsResponse(BaseModel):
         "example": {
             "session_id": "550e8400-e29b-41d4-a716-446655440002",
             "status": "completed",
-            "ira_score": 68.4,
+            "iga_score": 68.4,
             "components": {
                 "emotion_score": 75.2,
                 "pose_score": 60.1,

@@ -71,7 +71,7 @@ async def process_notes_background(session_id: int, notes: str):
                 doc_score = session.score_document
                 final_doc_score = max(doc_score or 0.0, clinical_risk_score)
                 
-                # Recalcular IRA
+                # Recalcular IGA
                 risk_res = await client.correlate_risk(
                     session_id=session_id,
                     patient_code=session.patient_code,
@@ -79,8 +79,8 @@ async def process_notes_background(session_id: int, notes: str):
                     audio_score=session.score_audio,
                     document_score=final_doc_score
                 )
-                session.ira_score = risk_res.get("ira_score", 0.0)
-                session.ira_level = risk_res.get("risk_level", "baixo")
+                session.iga_score = risk_res.get("iga_score", 0.0)
+                session.iga_level = risk_res.get("risk_level", "baixo")
             
             await db.commit()
             return analysis_text
@@ -290,7 +290,7 @@ class SessionService:
         await self.db.delete(media_file)
         await self.db.commit()
 
-        # Recalcular os índices e o IRA da sessão
+        # Recalcular os índices e o IGA da sessão
         await self._recalculate_session_risk(session.id)
 
     async def _recalculate_session_risk(self, session_id: int):
@@ -314,16 +314,16 @@ class SessionService:
             list(video_analyses), list(audio_analyses), list(doc_analyses), session.notes
         )
         
-        session.ira_score = fusion_result["globalScore"]
+        session.iga_score = fusion_result["globalScore"]
         risk_level = fusion_result["riskLevel"].lower()
         if risk_level == "medium":
-            session.ira_level = "moderado"
+            session.iga_level = "moderado"
         elif risk_level == "high":
-            session.ira_level = "critico"
+            session.iga_level = "critico"
         elif risk_level == "low":
-            session.ira_level = "baixo"
+            session.iga_level = "baixo"
         else:
-            session.ira_level = risk_level
+            session.iga_level = risk_level
 
         session.score_video = fusion_result["sources"].get("video")
         session.score_audio = fusion_result["sources"].get("audio")
@@ -360,9 +360,9 @@ class SessionService:
         )
         critical_alerts = result_alerts.scalar() or 0
         
-        # Média IRA
+        # Média IGA
         result_ira = await self.db.execute(
-            select(func.avg(Session.ira_score)).where(Session.ira_score.isnot(None))
+            select(func.avg(Session.iga_score)).where(Session.iga_score.isnot(None))
         )
         avg_ira = result_ira.scalar() or 0.0
         

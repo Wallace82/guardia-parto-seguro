@@ -24,7 +24,7 @@ from app.database import Base
 class SessionStatus(str, enum.Enum):
     pending = "pending"         # criada, aguardando mídia
     processing = "processing"   # análise em andamento
-    completed = "completed"     # IRA calculado
+    completed = "completed"     # IGA calculado
     error = "error"             # falha no processamento
 
 
@@ -56,10 +56,10 @@ class Session(Base):
         nullable=False,
     )
 
-    # IRA calculado (preenchido após processamento)
+    # IGA calculado (preenchido após processamento)
     # DEPRECATED: Estes campos flat serão migrados para as novas tabelas de análise (Etapa 2).
-    ira_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    ira_level: Mapped[str | None] = mapped_column(String(20), nullable=True)  # baixo/moderado/critico
+    iga_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    iga_level: Mapped[str | None] = mapped_column(String(20), nullable=True)  # baixo/moderado/critico
     score_video: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_audio: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_document: Mapped[float | None] = mapped_column(Float, nullable=True)

@@ -12,12 +12,12 @@ from app.database import Base
 
 
 class AlertSeverity(str, enum.Enum):
-    moderate = "moderate"   # IRA 40-69
-    critical = "critical"   # IRA >= 70
+    moderate = "moderate"   # IGA 40-69
+    critical = "critical"   # IGA >= 70
 
 
 class AlertType(str, enum.Enum):
-    ira_threshold = "ira_threshold"         # IRA ultrapassou limiar
+    ira_threshold = "ira_threshold"         # IGA ultrapassou limiar
     video_anomaly = "video_anomaly"         # anomalia detectada no vídeo
     audio_keyword = "audio_keyword"         # keyword de risco detectada
     document_inconsistency = "document_inconsistency"  # inconsistência documental
@@ -39,7 +39,7 @@ class Alert(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    ira_score: Mapped[float | None] = mapped_column(nullable=True)
+    iga_score: Mapped[float | None] = mapped_column(nullable=True)
 
     # Controle de reconhecimento
     is_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

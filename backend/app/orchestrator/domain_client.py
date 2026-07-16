@@ -110,7 +110,7 @@ class DomainClient:
         audio_score: Optional[float] = None,
         document_score: Optional[float] = None
     ) -> Dict[str, Any]:
-        """Calcula o IRA composto no risk-service."""
+        """Calcula o IGA Composto no risk-service."""
         url = f"{settings.RISK_SERVICE_URL}/api/v1/risk/correlate"
         payload = {
             "session_id": str(session_id),

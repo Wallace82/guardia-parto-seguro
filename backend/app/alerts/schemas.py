@@ -13,7 +13,7 @@ class AlertCreateRequest(BaseModel):
     severity: str
     title: str = Field(max_length=255)
     description: str
-    ira_score: float | None = None
+    iga_score: float | None = None
 
 
 class AlertAcknowledgeRequest(BaseModel):
@@ -29,7 +29,7 @@ class AlertOut(BaseModel):
     severity: str
     title: str
     description: str
-    ira_score: float | None
+    iga_score: float | None
     is_acknowledged: bool
     acknowledged_by: int | None
     acknowledged_at: datetime | None

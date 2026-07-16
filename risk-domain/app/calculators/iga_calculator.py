@@ -1,6 +1,6 @@
 """
-GuardIA — IRA Calculator
-Cálculo do Índice de Risco Assistencial com pesos ponderados
+GuardIA — IGA Calculator
+Cálculo do Índice GuardIA de Atenção com pesos ponderados
 """
 from dataclasses import dataclass
 from enum import Enum
@@ -14,7 +14,7 @@ class RiskLevel(str, Enum):
 
 
 @dataclass
-class IRAInput:
+class IGAInput:
     session_id: str
     patient_id: str
     video_score: Optional[float] = None   # 0.0 – 100.0
@@ -23,10 +23,10 @@ class IRAInput:
 
 
 @dataclass
-class IRAResult:
+class IGAResult:
     session_id: str
     patient_id: str
-    ira_score: float
+    iga_score: float
     risk_level: RiskLevel
     video_contribution: Optional[float]
     audio_contribution: Optional[float]
@@ -47,19 +47,19 @@ THRESHOLD_MODERATE = 40.0
 THRESHOLD_CRITICAL = 70.0
 
 
-def calculate_ira(data: IRAInput) -> IRAResult:
+def calculate_iga(data: IGAInput) -> IGAResult:
     """
-    Calcula o IRA (Índice de Risco Assistencial) com base nos scores
+    Calcula o IGA (Índice GuardIA de Atenção) com base nos scores
     parciais dos domínios de vídeo, áudio e documentos.
 
     Aplica regras de normalização de peso quando algum componente
     está ausente (RN-003).
 
     Args:
-        data: IRAInput com os scores parciais disponíveis.
+        data: IGAInput com os scores parciais disponíveis.
 
     Returns:
-        IRAResult com o score final, nível de risco e contribuições.
+        IGAResult com o score final, nível de risco e contribuições.
     """
     available = {}
     if data.video_score is not None:
@@ -70,21 +70,21 @@ def calculate_ira(data: IRAInput) -> IRAResult:
         available["document"] = data.document_score
 
     if not available:
-        raise ValueError("Ao menos um score deve estar disponível para calcular o IRA")
+        raise ValueError("Ao menos um score deve estar disponível para calcular o IGA")
 
     # Calcular pesos normalizados para os componentes disponíveis
     total_base_weight = sum(BASE_WEIGHTS[k] for k in available.keys())
     normalized_weights = {k: BASE_WEIGHTS[k] / total_base_weight for k in available.keys()}
 
-    # Calcular contribuições e IRA
+    # Calcular contribuições e IGA
     contributions = {k: available[k] * normalized_weights[k] for k in available.keys()}
-    ira_score = sum(contributions.values())
-    ira_score = max(0.0, min(100.0, round(ira_score, 2)))
+    iga_score = sum(contributions.values())
+    iga_score = max(0.0, min(100.0, round(iga_score, 2)))
 
     # Classificar nível de risco
-    if ira_score >= THRESHOLD_CRITICAL:
+    if iga_score >= THRESHOLD_CRITICAL:
         risk_level = RiskLevel.CRITICO
-    elif ira_score >= THRESHOLD_MODERATE:
+    elif iga_score >= THRESHOLD_MODERATE:
         risk_level = RiskLevel.MODERADO
     else:
         risk_level = RiskLevel.BAIXO
@@ -96,10 +96,10 @@ def calculate_ira(data: IRAInput) -> IRAResult:
     else:
         note = "Score calculado com todos os 3 componentes."
 
-    return IRAResult(
+    return IGAResult(
         session_id=data.session_id,
         patient_id=data.patient_id,
-        ira_score=ira_score,
+        iga_score=iga_score,
         risk_level=risk_level,
         video_contribution=contributions.get("video"),
         audio_contribution=contributions.get("audio"),

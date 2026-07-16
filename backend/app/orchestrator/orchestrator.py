@@ -1,6 +1,6 @@
 """
 GuardIA — Multimodal Orchestration Service
-Coordena o fluxo paralelo de análises, cálculo do IRA e disparo de alertas.
+Coordena o fluxo paralelo de análises, cálculo do IGA e disparo de alertas.
 """
 import asyncio
 import structlog
@@ -21,7 +21,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
     """
     Executa a orquestração multimodal da sessão em background:
     1. Chama serviços de vídeo, áudio e documento em paralelo (se as mídias existirem)
-    2. Consolida os resultados individuais e chama o risk-service para calcular o IRA
+    2. Consolida os resultados individuais e chama o risk-service para calcular o IGA
     3. Registra os scores calculados na sessão
     4. Dispara alertas para a engine de alertas se o risco for moderado ou crítico
     5. Solicita a geração do relatório de sessão
@@ -100,7 +100,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         for _ in range(120):
                             results_data = await client.get_video_results(vf.id)
                             if results_data.get("status") == "completed":
-                                vf.analysis_score = results_data.get("ira_score")
+                                vf.analysis_score = results_data.get("iga_score")
                                 vf.status = MediaStatus.analyzed
                                 
                                 # Salva na tabela detalhada
@@ -138,7 +138,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         for _ in range(120):
                             results_data = await client.get_audio_results(audio_file.id)
                             if results_data.get("status") == "completed":
-                                audio_file.analysis_score = results_data.get("ira_score")
+                                audio_file.analysis_score = results_data.get("iga_score")
                                 audio_file.status = MediaStatus.analyzed
                                 
                                 # Salva na tabela detalhada
@@ -147,7 +147,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                                     arquivo_audio=audio_file.filename,
                                     transcricao=results_data.get("transcription"),
                                     sentiment_score=results_data.get("components", {}).get("sentiment_score"),
-                                    anxiety_score=results_data.get("ira_score"),
+                                    anxiety_score=results_data.get("iga_score"),
                                     eventos={"key_findings": results_data.get("key_findings", [])}
                                 )
                                 db.add(a_analysis)
@@ -170,7 +170,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     doc_file.status = MediaStatus.error
                     doc_file.error_message = str(doc_res)
                 else:
-                    doc_file.analysis_score = doc_res.get("ira_score")
+                    doc_file.analysis_score = doc_res.get("iga_score")
                     doc_file.status = MediaStatus.analyzed
                     
                     # Salva na tabela detalhada
@@ -180,7 +180,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         tipo_documento=doc_res.get("document_type"),
                         texto_extraido=doc_res.get("ocr_text"),
                         entidades_detectadas=doc_res.get("extracted_fields"),
-                        clinical_risk_score=doc_res.get("ira_score"),
+                        clinical_risk_score=doc_res.get("iga_score"),
                         fatores_identificados={
                             "consistency_checks": doc_res.get("consistency_checks"),
                             "estruturado": doc_res.get("extracted_fields"),
@@ -221,7 +221,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             ]
             document_score = max(all_doc_scores) if all_doc_scores else None
 
-            # Chamar Risk Service para calcular o IRA
+            # Chamar Risk Service para calcular o IGA
             log.info("correlating_risk", session_id=session_id, scores={
                 "video": video_score, "audio": audio_score, "document": document_score
             })
@@ -234,12 +234,12 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                 document_score=document_score
             )
             
-            ira_score = risk_res.get("ira_score", 0.0)
+            iga_score = risk_res.get("iga_score", 0.0)
             risk_level = risk_res.get("risk_level", "baixo")
             
             # Atualizar os scores provisoriamente
-            session.ira_score = ira_score
-            session.ira_level = risk_level
+            session.iga_score = iga_score
+            session.iga_level = risk_level
             session.score_video = video_score
             session.score_audio = audio_score
             session.score_document = document_score
@@ -254,11 +254,11 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                 await SessionService(db)._recalculate_session_risk(session_id)
             except Exception as re_err:
                 log.error("orchestrator_recalculate_failed", session_id=session_id, error=str(re_err))
-            log.info("orchestration_completed", session_id=session_id, ira_score=ira_score, level=risk_level)
+            log.info("orchestration_completed", session_id=session_id, iga_score=iga_score, level=risk_level)
 
             # Disparar Alertas se o risco for moderado ou crítico
             if risk_level in ("moderado", "critico"):
-                log.info("triggering_alert", session_id=session_id, level=risk_level, score=ira_score)
+                log.info("triggering_alert", session_id=session_id, level=risk_level, score=iga_score)
                 alert_severity = AlertSeverity.critical if risk_level == "critico" else AlertSeverity.moderate
                 
                 # Consolidar justificativas em descrição
@@ -272,9 +272,9 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     session_id=session_id,
                     alert_type=AlertType.ira_threshold.value,
                     severity=alert_severity.value,
-                    title=f"Risco {risk_level.title()} — IGA composto {ira_score}",
-                    description=" | ".join(desc_parts) if desc_parts else f"IGA composto atingiu o limiar de risco: {ira_score}.",
-                    ira_score=ira_score
+                    title=f"Risco {risk_level.title()} — IGA composto {iga_score}",
+                    description=" | ".join(desc_parts) if desc_parts else f"IGA composto atingiu o limiar de risco: {iga_score}.",
+                    iga_score=iga_score
                 )
                 
                 alert_service = AlertService(db)

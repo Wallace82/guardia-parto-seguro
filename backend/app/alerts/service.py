@@ -38,7 +38,7 @@ class AlertService:
             severity=data.severity,
             title=data.title,
             description=data.description,
-            ira_score=data.ira_score,
+            iga_score=data.iga_score,
         )
         self.db.add(alert)
         await self.db.flush()
@@ -147,7 +147,7 @@ class AlertService:
             <p><strong>Tipo:</strong> {alert.alert_type}</p>
             <p><strong>Título:</strong> {alert.title}</p>
             <p><strong>Descrição:</strong> {alert.description}</p>
-            <p><strong>Score IRA:</strong> {alert.ira_score or "N/A"}</p>
+            <p><strong>Score IGA:</strong> {alert.iga_score or "N/A"}</p>
             <p><strong>Data/Hora:</strong> {alert.created_at}</p>
             <hr>
             <p style="color:#6b7280;font-size:12px;">

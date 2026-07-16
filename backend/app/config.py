@@ -40,9 +40,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     ALERT_EMAIL_GESTOR: str = ""
 
-    # IRA Thresholds
-    IRA_THRESHOLD_MODERATE: float = 40.0
-    IRA_THRESHOLD_CRITICAL: float = 70.0
+    # IGA Thresholds
+    IGA_THRESHOLD_MODERATE: float = 40.0
+    IGA_THRESHOLD_CRITICAL: float = 70.0
 
     # Upload limits
     MAX_VIDEO_SIZE_MB: int = 2000

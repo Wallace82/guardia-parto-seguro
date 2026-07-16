@@ -93,9 +93,9 @@ def upgrade() -> None:
     # --- DATA MIGRATION (ETAPA 7) ---
     op.execute("""
         INSERT INTO risk_history (patient_code, session_id, score, nivel)
-        SELECT patient_code, id, ira_score, COALESCE(ira_level, 'MEDIUM') 
+        SELECT patient_code, id, iga_score, COALESCE(iga_level, 'MEDIUM') 
         FROM sessions 
-        WHERE ira_score IS NOT NULL
+        WHERE iga_score IS NOT NULL
     """)
     op.execute("""
         INSERT INTO video_analysis (session_id, arquivo_video, emotion_score)

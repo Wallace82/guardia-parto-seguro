@@ -7,7 +7,7 @@ async def main():
         db_gen = get_db()
         db = await anext(db_gen)
         
-        await db.execute(text("UPDATE alerts SET title = REPLACE(title, 'IRA', 'IGA'), description = REPLACE(description, 'IRA', 'IGA');"))
+        await db.execute(text("UPDATE alerts SET title = REPLACE(title, 'IGA', 'IGA'), description = REPLACE(description, 'IGA', 'IGA');"))
         await db.commit()
         
         print("Alertas atualizados com sucesso.")
