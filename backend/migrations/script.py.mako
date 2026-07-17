@@ -8,7 +8,7 @@ Create Date: ${create_date}
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sorrows
+import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.

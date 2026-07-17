@@ -11,6 +11,8 @@ import { SessionsService } from '../../services/sessions.service';
 import { SessionOut } from '../../models/sessions.models';
 import { SessionEditDialogComponent } from '../../components/session-edit-dialog.component';
 
+import { Subject, timer, switchMap, takeUntil, catchError, of } from 'rxjs';
+
 @Component({
   selector: 'app-session-list-page',
   standalone: true,
@@ -134,9 +136,32 @@ export class SessionListPageComponent implements OnInit {
   totalElements = signal(0);
   pageSize = signal(20);
   pageIndex = signal(0);
+  
+  private destroy$ = new Subject<void>();
 
   ngOnInit() {
     this.loadSessions();
+    
+    // Auto-refresh every 10 seconds
+    timer(10000, 10000).pipe(
+      takeUntil(this.destroy$),
+      switchMap(() => {
+        const skip = this.pageIndex() * this.pageSize();
+        return this.sessionsService.getSessions(skip, this.pageSize()).pipe(
+          catchError(() => of(null))
+        );
+      })
+    ).subscribe(res => {
+      if (res) {
+        this.sessions.set(res.items);
+        this.totalElements.set(res.total);
+      }
+    });
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadSessions() {

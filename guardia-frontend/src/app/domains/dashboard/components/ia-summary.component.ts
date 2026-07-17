@@ -77,7 +77,7 @@ export class IaSummaryComponent {
 
   description = computed(() => {
     const score = this.iraScore();
-    const scoreText = score !== null ? ` (IGA: ${score.toFixed(1)})` : '';
+    const scoreText = score != null ? ` (IGA: ${score.toFixed(1)})` : '';
     switch (this.iraLevel()) {
       case 'critico':
         return `Indicadores de risco elevados detectados${scoreText}. Ação imediata recomendada.`;

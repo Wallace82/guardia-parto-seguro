@@ -19,6 +19,10 @@ export interface AlertOut {
   dismissed_at: string | null;
   email_sent: boolean;
   created_at: string;
+  participant_id?: string;
+  role?: string;
+  confidence?: number;
+  related_object?: string;
 }
 
 export interface PaginatedAlerts {

@@ -105,17 +105,22 @@ Além dos riscos gerais (dor ignorada, violência física), você DEVE identific
 - Falta de consentimento informado (realizar procedimentos sem explicar ou pedir permissão clara).
 - Comunicação não humanizada (frieza, falta de empatia, impaciência, descaso).
 
-Para cada achado, classifique o "impacto" como "POSITIVO" (se for acolhedor, humanizado, comunicação clara) ou "ATENCAO" (se for abusivo, frio, descaso, dor, violência).
+Como a transcrição não possui marcação de locutores, tente deduzir quem está falando com base no contexto (ex: "PACIENTE", "EQUIPE_MEDICA_1", "ACOMPANHANTE").
+
+Para cada achado ou fala importante, classifique o "impacto" como "POSITIVO" ou "ATENCAO" e associe ao participante.
 
 Transcrição: "{transcription_text}"
 
 Retorne um JSON válido estritamente com o seguinte formato:
 {{
-  "ira_score": (número decimal de 0.0 a 100.0, onde 100.0 é risco crítico/violência/abuso extremo, e 0.0 é totalmente seguro e humanizado),
-  "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito/humanizado, e 0.0 é péssimo/frio),
+  "ira_score": (número decimal de 0.0 a 100.0, onde 100.0 é risco crítico/violência/abuso extremo),
+  "sentiment_score": (número decimal de 0.0 a 100.0, onde 100.0 é acolhimento perfeito),
   "key_findings": [
     {{
-      "description": "Breve frase descrevendo o achado, ex: 'Comunicação acolhedora e respeitosa identificada' ou 'Linguagem invasiva identificada'",
+      "participant_id": "PACIENTE|EQUIPE_MEDICA_1|ACOMPANHANTE",
+      "role": "PACIENTE|EQUIPE_MEDICA_1|ACOMPANHANTE",
+      "speech": "Texto da fala (se aplicável)",
+      "description": "Breve frase descrevendo o achado",
       "impacto": "POSITIVO|ATENCAO",
       "confidence": (número decimal de 0.0 a 1.0)
     }}
@@ -135,8 +140,12 @@ Retorne um JSON válido estritamente com o seguinte formato:
                             sentiment_score = float(result_json.get("sentiment_score", 70.0))
                             
                             for finding in result_json.get("key_findings", []):
+                                role = finding.get("role", "UNKNOWN")
                                 key_findings.append({
                                     "type": "semantic_analysis",
+                                    "participant_id": finding.get("participant_id", role),
+                                    "role": role,
+                                    "speech": finding.get("speech", ""),
                                     "timestamp_seconds": duration_seconds / 2.0,
                                     "description": f"IA (Semântica): {finding.get('description', '')}",
                                     "impacto": finding.get("impacto", "ATENCAO"),

@@ -5,7 +5,7 @@ Alert: alerta gerado automaticamente pelo motor de risco
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -40,6 +40,12 @@ class Alert(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     iga_score: Mapped[float | None] = mapped_column(nullable=True)
+    
+    # Participante e Contexto (novo)
+    participant_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    related_object: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     # Controle de reconhecimento
     is_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

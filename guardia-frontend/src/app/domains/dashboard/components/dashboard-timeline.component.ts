@@ -9,6 +9,7 @@ export interface TimelineEvent {
   classification: string;
   type: 'positive' | 'neutral' | 'warning' | 'critical';
   technology?: string;
+  participantId?: string;
 }
 
 @Component({
@@ -48,13 +49,16 @@ export interface TimelineEvent {
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-0.5">
                         <span class="text-sm font-semibold text-text-muted font-mono">{{ event.time }}</span>
+                        @if (event.participantId) {
+                          <span class="text-xs font-bold text-info ml-1 flex items-center gap-1"><mat-icon class="!text-[12px] !w-[12px] !h-[12px]">person</mat-icon> {{ event.participantId }}</span>
+                        }
                         @if (event.technology) {
                           <span class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface2 text-text-muted border border-border">
                             {{ event.technology }}
                           </span>
                         }
                       </div>
-                      <p class="text-sm text-white leading-snug">{{ event.description }}</p>
+                      <p class="text-sm text-white leading-snug mt-1">{{ event.description }}</p>
                     </div>
                     <span class="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap"
                       [class]="chipClass(event.type)">

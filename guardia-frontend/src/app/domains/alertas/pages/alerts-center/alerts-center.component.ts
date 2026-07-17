@@ -83,6 +83,18 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                         <span class="text-xs text-text-muted font-mono">{{ alert.created_at | date:'HH:mm' }}</span>
                       </div>
                       <p class="text-white text-sm mb-3">{{ alert.description }}</p>
+                      @if (alert.role || alert.participant_id) {
+                        <p class="text-xs text-info font-bold mb-3 flex items-center gap-1 flex-wrap">
+                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person</mat-icon>
+                          Envolvido: {{ alert.role || alert.participant_id }} 
+                          @if (alert.confidence) {
+                            <span class="text-text-muted font-normal">({{ alert.confidence * 100 | number:'1.0-0' }}% confiança)</span>
+                          }
+                          @if (alert.related_object) {
+                            <span class="text-warning-500 font-bold ml-2">Objeto Detectado: {{ alert.related_object }}</span>
+                          }
+                        </p>
+                      }
                       <div class="flex items-center justify-between">
                         <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
                         <div class="flex items-center gap-3">
@@ -119,6 +131,18 @@ import { AlertFiltersComponent, AlertFilterValues } from '../../components/alert
                         <span class="text-xs text-text-muted font-mono">{{ alert.created_at | date:'HH:mm' }}</span>
                       </div>
                       <p class="text-white text-sm mb-3">{{ alert.description }}</p>
+                      @if (alert.role || alert.participant_id) {
+                        <p class="text-xs text-info font-bold mb-3 flex items-center gap-1 flex-wrap">
+                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person</mat-icon>
+                          Envolvido: {{ alert.role || alert.participant_id }} 
+                          @if (alert.confidence) {
+                            <span class="text-text-muted font-normal">({{ alert.confidence * 100 | number:'1.0-0' }}% confiança)</span>
+                          }
+                          @if (alert.related_object) {
+                            <span class="text-warning-500 font-bold ml-2">Objeto Detectado: {{ alert.related_object }}</span>
+                          }
+                        </p>
+                      }
                       <div class="flex items-center justify-between">
                         <p class="text-xs text-text-muted">Paciente: {{ alert.patient_code || '---' }} • {{ alert.session_title || 'Sessão ' + alert.session_id }}</p>
                         <div class="flex items-center gap-3">

@@ -9,8 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
 from app.sessions.models import Session, SessionStatus, MediaFile, MediaStatus
-from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis
-from app.alerts.models import AlertSeverity, AlertType
+from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis, VideoParticipant, ParticipantEvent
+from app.alerts.models import AlertSeverity, AlertType, Alert
 from app.alerts.service import AlertService
 from app.alerts.schemas import AlertCreateRequest
 from app.orchestrator.domain_client import DomainClient
@@ -114,6 +114,44 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                                     eventos_detectados={"key_findings": results_data.get("key_findings", [])}
                                 )
                                 db.add(v_analysis)
+                                await db.flush() # Para pegar o v_analysis.id
+                                
+                                # Salva os participantes e eventos
+                                participant_map = {}
+                                for p_data in results_data.get("participants", []):
+                                    vp = VideoParticipant(
+                                        video_id=v_analysis.id,
+                                        participant_id=p_data.get("participant_id"),
+                                        face_id=p_data.get("face_id"),
+                                        role=p_data.get("role"),
+                                        confidence=p_data.get("confidence"),
+                                        first_frame=p_data.get("first_frame"),
+                                        last_frame=p_data.get("last_frame")
+                                    )
+                                    db.add(vp)
+                                    participant_map[vp.face_id] = vp
+                                    
+                                for ev in results_data.get("key_findings", []):
+                                    db.add(ParticipantEvent(
+                                        participant_id=ev.get("face_id", ev.get("participant_id", ev.get("role", "UNKNOWN"))),
+                                        event_type=ev.get("type", "emotion"),
+                                        emotion=ev.get("emotion"),
+                                        timestamp=str(ev.get("timestamp_seconds", "0.0")),
+                                        confidence=ev.get("confidence")
+                                    ))
+                                    
+                                from app.sessions.analysis_models import ParticipantObject
+                                for po in results_data.get("participant_objects", []):
+                                    db.add(ParticipantObject(
+                                        video_id=v_analysis.id,
+                                        participant_id=po.get("participant_id", po.get("face_id")),
+                                        face_id=po.get("face_id"),
+                                        object_name=po.get("object_name"),
+                                        confidence=po.get("confidence"),
+                                        interaction_type=po.get("interaction_type"),
+                                        timestamp=str(po.get("timestamp", "0.0")),
+                                        frame=po.get("frame", 0)
+                                    ))
                                 break
                             elif results_data.get("status") in ["error", "failed"]:
                                 raise Exception(results_data.get("message") or results_data.get("error", "Video analysis error"))
@@ -151,6 +189,16 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                                     eventos={"key_findings": results_data.get("key_findings", [])}
                                 )
                                 db.add(a_analysis)
+                                
+                                for ev in results_data.get("key_findings", []):
+                                    db.add(ParticipantEvent(
+                                        participant_id=ev.get("participant_id", ev.get("role", "UNKNOWN")),
+                                        event_type=ev.get("type", "speech"),
+                                        speech=ev.get("speech", ""),
+                                        alert_level=ev.get("impacto", "ATENCAO"),
+                                        timestamp=str(ev.get("timestamp_seconds", "0.0")),
+                                        confidence=ev.get("confidence")
+                                    ))
                                 break
                             elif results_data.get("status") in ["error", "failed"]:
                                 raise Exception(results_data.get("message") or results_data.get("error", "Audio analysis error"))
@@ -191,6 +239,15 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     db.add(d_analysis)
 
             await db.commit()
+
+            # Cross-Modal Participant Fusion (Refinar papéis do vídeo usando transcrição do áudio)
+            try:
+                from app.orchestrator.participant_fusion import ParticipantFusionEngine
+                fusion_engine = ParticipantFusionEngine(db)
+                await fusion_engine.fuse_participants(session_id)
+            except Exception as e:
+                log.error("participant_fusion_error", session_id=session_id, error=str(e))
+
 
             # Se todos os arquivos de mídia deram erro, a sessão falha
             any_success = any(
@@ -268,17 +325,82 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     if data.get("text"):
                         desc_parts.append(f"[{component.upper()}] {data['text']}")
                 
-                alert_req = AlertCreateRequest(
-                    session_id=session_id,
-                    alert_type=AlertType.ira_threshold.value,
-                    severity=alert_severity.value,
-                    title=f"Risco {risk_level.title()} — IGA composto {iga_score}",
-                    description=" | ".join(desc_parts) if desc_parts else f"IGA composto atingiu o limiar de risco: {iga_score}.",
-                    iga_score=iga_score
-                )
+                # Check for specific participant context from events
+                events_result = await db.execute(select(ParticipantEvent).order_by(ParticipantEvent.timestamp))
+                recent_events = events_result.scalars().all()
                 
-                alert_service = AlertService(db)
-                await alert_service.create_alert(alert_req)
+                from app.sessions.analysis_models import ParticipantObject
+                objects_result = await db.execute(select(ParticipantObject).order_by(ParticipantObject.timestamp.desc()))
+                recent_objects = objects_result.scalars().all()
+                
+                def get_recent_object(pid: str) -> str:
+                    for obj in recent_objects:
+                        if obj.participant_id == pid:
+                            return obj.object_name
+                    return None
+                
+                if recent_events:
+                    # Gerar um alerta por participante com alto risco
+                    for ev in recent_events:
+                        rel_obj = get_recent_object(ev.participant_id)
+                        if ev.event_type == 'emotion' and ev.emotion in ['fear', 'angry', 'sad']:
+                            alert_req = AlertCreateRequest(
+                                session_id=session_id,
+                                alert_type=AlertType.video_anomaly.value,
+                                severity=alert_severity.value,
+                                title=f"⚠ {ev.participant_id} - Risco Detectado",
+                                description=f"Estado de {ev.emotion} elevado detectado. Horário: {ev.timestamp}s",
+                                iga_score=iga_score
+                            )
+                            alert = Alert(
+                                session_id=alert_req.session_id,
+                                alert_type=alert_req.alert_type,
+                                severity=alert_req.severity,
+                                title=alert_req.title,
+                                description=alert_req.description,
+                                iga_score=alert_req.iga_score,
+                                participant_id=ev.participant_id,
+                                role=ev.participant_id,
+                                confidence=ev.confidence,
+                                related_object=rel_obj
+                            )
+                            db.add(alert)
+                            
+                        elif ev.event_type == 'semantic_analysis' and ev.alert_level == 'ATENCAO':
+                            alert_req = AlertCreateRequest(
+                                session_id=session_id,
+                                alert_type=AlertType.audio_keyword.value,
+                                severity=alert_severity.value,
+                                title=f"⚠ {ev.participant_id} - Anomalia de Áudio",
+                                description=f"Comentário/Fala inadequada. Horário: {ev.timestamp}s",
+                                iga_score=iga_score
+                            )
+                            alert = Alert(
+                                session_id=alert_req.session_id,
+                                alert_type=alert_req.alert_type,
+                                severity=alert_req.severity,
+                                title=alert_req.title,
+                                description=alert_req.description,
+                                iga_score=alert_req.iga_score,
+                                participant_id=ev.participant_id,
+                                role=ev.participant_id,
+                                confidence=ev.confidence,
+                                related_object=rel_obj
+                            )
+                            db.add(alert)
+                else:
+                    alert_req = AlertCreateRequest(
+                        session_id=session_id,
+                        alert_type=AlertType.ira_threshold.value,
+                        severity=alert_severity.value,
+                        title=f"Risco {risk_level.title()} — IGA composto {iga_score}",
+                        description=" | ".join(desc_parts) if desc_parts else f"IGA composto atingiu o limiar de risco: {iga_score}.",
+                        iga_score=iga_score
+                    )
+                    
+                    alert_service = AlertService(db)
+                    await alert_service.create_alert(alert_req)
+                
                 await db.commit()
 
             # Solicitar geração de relatório

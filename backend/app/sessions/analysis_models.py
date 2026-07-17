@@ -111,3 +111,67 @@ class RiskHistory(Base):
     )
 
     session: Mapped["Session"] = relationship("Session")
+
+
+class VideoParticipant(Base):
+    __tablename__ = "video_participants"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    video_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("video_analysis.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    participant_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    face_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    speaker_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    role: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    first_frame: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_frame: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    video_analysis: Mapped["VideoAnalysis"] = relationship("VideoAnalysis")
+
+
+class ParticipantEvent(Base):
+    __tablename__ = "participant_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    participant_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, index=True
+    )
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    emotion: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    body_language: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    speech: Mapped[Text | None] = mapped_column(Text, nullable=True)
+    alert_level: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    timestamp: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class ParticipantObject(Base):
+    __tablename__ = "participant_objects"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    video_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("video_analysis.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    participant_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    face_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    object_name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    interaction_type: Mapped[str | None] = mapped_column(String(64), nullable=True) # e.g. "manipulando", "proximo"
+    timestamp: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    frame: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    video_analysis: Mapped["VideoAnalysis"] = relationship("VideoAnalysis")

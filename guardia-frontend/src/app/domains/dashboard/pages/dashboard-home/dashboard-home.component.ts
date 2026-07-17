@@ -94,6 +94,27 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
               Nenhuma sessão ativa encontrada.
             </div>
           }
+          
+          <!-- Painel Lateral: Participantes (só exibe se houver dados de participantes na analise) -->
+          @if (analysis()?.participants?.length) {
+            <div class="mt-4 animate-fade-in flex flex-col gap-4">
+              <h3 class="text-sm font-bold text-text-muted uppercase tracking-wider px-2">Participantes Detectados</h3>
+              <div class="flex flex-col gap-3">
+                @for (p of analysis()?.participants; track p.id) {
+                  <div class="glass-card p-4 transition-all hover:bg-surface2/50 border-l-4"
+                       [ngClass]="getParticipantBorder(p.role)">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-white text-sm m-0">{{ getParticipantIcon(p.role) }} {{ p.role }}</h4>
+                    </div>
+                    <div class="flex flex-col gap-1 text-xs text-text-muted">
+                      <span>Confiança: {{ p.confidence | number:'1.0-0' }}%</span>
+                      <span>Eventos detectados: {{ getParticipantEventCount(p.participant_id) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Conteúdo Principal do Dashboard -->
@@ -260,6 +281,28 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     });
   }
   
+  getParticipantIcon(role: string): string {
+    const r = role.toUpperCase();
+    if (r === 'PACIENTE') return '👩';
+    if (r === 'ACOMPANHANTE') return '👨';
+    if (r.includes('EQUIPE_MEDICA') || r.includes('MEDICO') || r.includes('MEDICA')) return '👨‍⚕️';
+    if (r.includes('ENFERMEIRA') || r.includes('ENFERMAGEM')) return '👩‍⚕️';
+    return '👤';
+  }
+  
+  getParticipantBorder(role: string): string {
+    const r = role.toUpperCase();
+    if (r === 'PACIENTE') return 'border-l-primary-500';
+    if (r === 'ACOMPANHANTE') return 'border-l-success';
+    if (r.includes('EQUIPE_MEDICA')) return 'border-l-info';
+    return 'border-l-border';
+  }
+
+  getParticipantEventCount(participantId: string): number {
+    if (!this.analysis()?.participant_events) return 0;
+    return this.analysis()!.participant_events!.filter(e => e.participant_id === participantId).length;
+  }
+  
   private extractScoresFromAnalysis(analysis: SessionAnalysisOut) {
     if (analysis.video_analyses) {
       const keys = Object.keys(analysis.video_analyses);
@@ -311,42 +354,103 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
 
   private buildTimelineFromAnalysis(analysis: SessionAnalysisOut) {
     const events: TimelineEvent[] = [];
-
-    // Build from video findings
-    if (analysis.video_findings && analysis.video_findings.length > 0) {
-      for (const finding of analysis.video_findings.slice(0, 6)) {
-        const mins = Math.floor(finding.timestamp_seconds / 60);
-        const secs = Math.floor(finding.timestamp_seconds % 60);
+    
+    // Build from participant events if available (New Flow)
+    if (analysis.participant_events && analysis.participant_events.length > 0) {
+      for (const ev of analysis.participant_events) {
+        let ts = 0;
+        if (ev.timestamp && !isNaN(parseFloat(ev.timestamp))) {
+          ts = parseFloat(ev.timestamp);
+        }
+        const mins = Math.floor(ts / 60);
+        const secs = Math.floor(ts % 60);
         const time = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        let type: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
+        let desc = ev.event_type;
+        if (ev.event_type === 'emotion') {
+           type = (ev.emotion === 'fear' || ev.emotion === 'angry' || ev.emotion === 'sad') ? 'warning' : 'neutral';
+           desc = `Emoção detectada: ${ev.emotion}`;
+        } else if (ev.event_type === 'speech') {
+           type = ev.alert_level === 'ATENCAO' ? 'warning' : 'positive';
+           desc = `Fala: ${ev.speech || 'Comentário inadequado'}`;
+        }
 
         events.push({
           time,
-          description: finding.description,
-          classification: finding.type,
-          type: finding.confidence > 0.8 ? 'warning' : finding.confidence > 0.5 ? 'neutral' : 'positive',
-          technology: 'Visão Computacional'
+          description: desc,
+          classification: ev.event_type,
+          type: type,
+          technology: ev.event_type === 'emotion' ? 'Visão Computacional' : 'IA Semântica',
+          participantId: ev.participant_id
+        });
+      }
+    }
+    
+    // Build from participant objects if available
+    if (analysis.participant_objects && analysis.participant_objects.length > 0) {
+      for (const obj of analysis.participant_objects) {
+        let ts = 0;
+        if (obj.timestamp && !isNaN(parseFloat(obj.timestamp))) {
+          ts = parseFloat(obj.timestamp);
+        }
+        const mins = Math.floor(ts / 60);
+        const secs = Math.floor(ts % 60);
+        const time = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        let type: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
+        let desc = obj.interaction_type === 'manipulando' 
+           ? `Manipulação de ${obj.object_name}`
+           : `Próximo a ${obj.object_name}`;
+           
+        events.push({
+          time,
+          description: desc,
+          classification: 'Detecção de Objeto',
+          type: type,
+          technology: 'YOLOv8',
+          participantId: obj.participant_id
         });
       }
     }
 
-    // Build from transcription segments
-    if (analysis.transcription?.segments && analysis.transcription.segments.length > 0) {
-      for (const seg of analysis.transcription.segments.slice(0, 4)) {
-        const mins = Math.floor(seg.start / 60);
-        const secs = Math.floor(seg.start % 60);
-        const time = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (events.length === 0) {
+      // Build from video findings (Legacy fallback)
+      if (analysis.video_findings && analysis.video_findings.length > 0) {
+        for (const finding of analysis.video_findings.slice(0, 6)) {
+          const mins = Math.floor(finding.timestamp_seconds / 60);
+          const secs = Math.floor(finding.timestamp_seconds % 60);
+          const time = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-        const shortText = seg.text.length > 60 ? seg.text.substring(0, 57) + '...' : seg.text;
+          events.push({
+            time,
+            description: finding.description,
+            classification: finding.type,
+            type: finding.confidence > 0.8 ? 'warning' : finding.confidence > 0.5 ? 'neutral' : 'positive',
+            technology: 'Visão Computacional'
+          });
+        }
+      }
 
-        events.push({
-          time,
-          description: shortText,
-          classification: seg.sentiment === 'positive' ? 'Interação positiva' :
-                          seg.sentiment === 'negative' ? 'Atenção necessária' : 'Condição estável',
-          type: seg.sentiment === 'positive' ? 'positive' :
-                seg.sentiment === 'negative' ? 'warning' : 'neutral',
-          technology: 'IA Semântica'
-        });
+      // Build from transcription segments (Legacy fallback)
+      if (analysis.transcription?.segments && analysis.transcription.segments.length > 0) {
+        for (const seg of analysis.transcription.segments.slice(0, 4)) {
+          const mins = Math.floor(seg.start / 60);
+          const secs = Math.floor(seg.start % 60);
+          const time = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+          const shortText = seg.text.length > 60 ? seg.text.substring(0, 57) + '...' : seg.text;
+
+          events.push({
+            time,
+            description: shortText,
+            classification: seg.sentiment === 'positive' ? 'Interação positiva' :
+                            seg.sentiment === 'negative' ? 'Atenção necessária' : 'Condição estável',
+            type: seg.sentiment === 'positive' ? 'positive' :
+                  seg.sentiment === 'negative' ? 'warning' : 'neutral',
+            technology: 'IA Semântica'
+          });
+        }
       }
     }
 
@@ -354,7 +458,7 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     events.sort((a, b) => a.time.localeCompare(b.time));
 
     if (events.length > 0) {
-      this.timelineEvents.set(events.slice(0, 6));
+      this.timelineEvents.set(events.slice(0, 10));
     }
   }
 

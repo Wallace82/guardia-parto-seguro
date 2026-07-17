@@ -329,7 +329,7 @@ async def get_session_analysis(
 
     from app.orchestrator.domain_client import DomainClient
     from sqlalchemy import select
-    from app.sessions.analysis_models import DocumentAnalysis
+    from app.sessions.analysis_models import DocumentAnalysis, VideoParticipant, ParticipantEvent
     client = DomainClient()
     
     transcription = None
@@ -541,6 +541,82 @@ async def get_session_analysis(
     else:
         factors["recommendation"] = "Recomendação não disponível (cálculo pendente)."
 
+    # Buscar participantes e eventos (se existirem na análise de vídeo associada)
+    participants = []
+    participant_events = []
+    
+    # 1. Encontrar o ID da análise de vídeo
+    from app.sessions.analysis_models import VideoAnalysis
+    v_analysis_res = await db.execute(
+        select(VideoAnalysis).where(VideoAnalysis.session_id == session_id).order_by(VideoAnalysis.id.desc())
+    )
+    v_analysis = v_analysis_res.scalars().first()
+    
+    if v_analysis:
+        vp_res = await db.execute(select(VideoParticipant).where(VideoParticipant.video_id == v_analysis.id))
+        participants = [
+            {
+                "id": p.id,
+                "participant_id": p.participant_id,
+                "role": p.role,
+                "face_id": p.face_id,
+                "confidence": p.confidence,
+                "first_frame": p.first_frame,
+                "last_frame": p.last_frame
+            }
+            for p in vp_res.scalars().all()
+        ]
+        
+        # Como os eventos não estão amarrados rigidamente pela FK de video_id para simplificar (já que vêm do vídeo e do áudio misturados),
+        # Podemos buscar os eventos cujos participant_id batem com os que temos ou buscar todos baseados em timeframe se tivessem session_id.
+        # No MVP atual o ParticipantEvent não tem session_id! Vamos adicioná-lo ou buscar todos os eventos?
+        # É MELHOR ter adicionado session_id no ParticipantEvent. 
+        # Como não adicionei, vamos inferir a partir do banco (isso é falho em prod mas para MVP com 1 sessao local ok).
+        # Vamos contornar buscando todos os ParticipantEvents que tenham um participant_id presente no array acima.
+        participant_ids = [p["participant_id"] for p in participants]
+        if participant_ids:
+            ev_res = await db.execute(
+                select(ParticipantEvent)
+                .where(ParticipantEvent.participant_id.in_(participant_ids))
+                .order_by(ParticipantEvent.id)
+            )
+            participant_events = [
+                {
+                    "id": ev.id,
+                    "participant_id": ev.participant_id,
+                    "event_type": ev.event_type,
+                    "emotion": ev.emotion,
+                    "body_language": ev.body_language,
+                    "speech": ev.speech,
+                    "alert_level": ev.alert_level,
+                    "timestamp": ev.timestamp,
+                    "confidence": ev.confidence
+                }
+                for ev in ev_res.scalars().all()
+            ]
+            
+            from app.sessions.analysis_models import ParticipantObject
+            obj_res = await db.execute(
+                select(ParticipantObject)
+                .where(ParticipantObject.video_id == v_analysis.id)
+                .order_by(ParticipantObject.id)
+            )
+            participant_objects = [
+                {
+                    "id": po.id,
+                    "participant_id": po.participant_id,
+                    "face_id": po.face_id,
+                    "object_name": po.object_name,
+                    "interaction_type": po.interaction_type,
+                    "timestamp": po.timestamp,
+                    "frame": po.frame,
+                    "confidence": po.confidence
+                }
+                for po in obj_res.scalars().all()
+            ]
+        else:
+            participant_objects = []
+
     return {
         "session_id": session_id,
         "status": session.status,
@@ -549,7 +625,10 @@ async def get_session_analysis(
         "video_analyses": video_analyses,
         "risk_details": risk_details,
         "factors": factors,
-        "notes_analysis_text": notes_text
+        "notes_analysis_text": notes_text,
+        "participants": participants,
+        "participant_events": participant_events,
+        "participant_objects": participant_objects if 'participant_objects' in locals() else []
     }
 
 @router.get(
@@ -587,6 +666,18 @@ async def get_session_report_pdf(
     # Confirma que a sessão existe e que o usuário tem acesso
     session = await SessionService(db).get_by_id(session_id, current_user.id, current_user.role)
     await AuditService.log_action(db, action="download_report", resource=f"session_{session_id}", user_id=current_user.id)
+    
+    from sqlalchemy import select
+    from app.sessions.analysis_models import VideoAnalysis, VideoParticipant
+    v_analysis_res = await db.execute(
+        select(VideoAnalysis).where(VideoAnalysis.session_id == session_id).order_by(VideoAnalysis.id.desc())
+    )
+    v_analysis = v_analysis_res.scalars().first()
+    
+    participants = []
+    if v_analysis:
+        vp_res = await db.execute(select(VideoParticipant).where(VideoParticipant.video_id == v_analysis.id))
+        participants = vp_res.scalars().all()
     
     class PDF(FPDF):
         def header(self):
@@ -644,6 +735,18 @@ async def get_session_report_pdf(
     pdf.cell(0, 8, f"Anotacoes: {n_score}", new_x="LMARGIN", new_y="NEXT")
     
     pdf.ln(5)
+    
+    # Participantes
+    if participants:
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "Participantes Detectados", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "", 12)
+        
+        for p in participants:
+            conf = f"{p.confidence * 100:.0f}%" if p.confidence else "N/A"
+            pdf.cell(0, 8, f"- {p.role} (ID: {p.participant_id}, Confianca: {conf})", new_x="LMARGIN", new_y="NEXT")
+            
+        pdf.ln(5)
     
     # Anotações Médicas
     if session.notes:

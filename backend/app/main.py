@@ -5,7 +5,7 @@ FastAPI Application Entry Point
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.alerts.router import router as alerts_router
@@ -64,20 +64,29 @@ Use `POST /api/v1/auth/login` para obter um Bearer token e inclua-o no header:
     lifespan=lifespan,
 )
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200",   # Angular dev server
-        "http://localhost:4300",   # Angular alternativo
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Security Headers Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Observabilidade e Logs
 app.add_middleware(StructlogMiddleware)
+
+# CORS (Must be the last added so it is the outermost middleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
