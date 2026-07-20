@@ -54,11 +54,24 @@ class TestIRACalculationAllComponents:
 
     def test_ira_formula_correctness(self, base_session):
         """Verificar fórmula: vídeo*0.40 + áudio*0.35 + documento*0.25"""
+        # audio = 60.0, não sofre o desconto de contexto (60 > 30)
         data = IGAInput(**base_session, video_score=80.0, audio_score=60.0, document_score=40.0)
         result = calculate_iga(data)
 
         expected = (80.0 * 0.40) + (60.0 * 0.35) + (40.0 * 0.25)
         assert abs(result.iga_score - expected) < 0.01
+
+    def test_contextual_discount_on_calm_audio(self, base_session):
+        """Vídeo alto com áudio baixo deve atenuar o impacto do vídeo e não gerar alerta crítico."""
+        data = IGAInput(**base_session, video_score=100.0, audio_score=20.0, document_score=0.0)
+        result = calculate_iga(data)
+
+        # Regra de atenuação: vídeo cai para 0.20, áudio sobe para 0.55. Documento continua 0.25.
+        # Score = (100 * 0.20) + (20 * 0.55) + (0 * 0.25) = 20 + 11 = 31
+        # 31 é BAIXO
+        assert abs(result.iga_score - 31.0) < 0.01
+        assert result.risk_level == RiskLevel.BAIXO
+        assert "Peso de vídeo atenuado" in result.calculation_notes
 
     def test_ira_max_score(self, base_session):
         """IGA máximo deve ser 100."""
@@ -83,7 +96,7 @@ class TestIRAMissingComponents:
         result = calculate_iga(data)
 
         assert result.iga_score == 75.0
-        assert result.risk_level == RiskLevel.MODERADO
+        assert result.risk_level == RiskLevel.CRITICO
         assert result.audio_contribution is None
         assert result.document_contribution is None
         assert "video" in result.calculation_notes.lower() or "componente" in result.calculation_notes.lower()
@@ -122,8 +135,8 @@ class TestIRAMissingComponents:
 class TestIRAThresholds:
     def test_threshold_moderate_lower_bound(self, base_session):
         """Score exato de 40.0 deve ser MODERADO."""
-        data = IGAInput(**base_session, video_score=100.0, audio_score=0.0, document_score=0.0)
-        # video_score=100 * 1.0 = 100 (único componente)
+        # Se usássemos áudio=0.0 (como o comentário original sugeria), a atenuação de vídeo ocorreria.
+        # Como o teste só passa video_score, não há áudio, logo não há desconto de contexto.
         data_exact = IGAInput(**base_session, video_score=THRESHOLD_MODERATE)
         result = calculate_iga(data_exact)
         assert result.risk_level == RiskLevel.MODERADO

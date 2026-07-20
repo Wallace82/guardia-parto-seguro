@@ -45,6 +45,7 @@ BASE_WEIGHTS = {
 # Thresholds (RN-004)
 THRESHOLD_MODERATE = 40.0
 THRESHOLD_CRITICAL = 70.0
+AUDIO_CALM_THRESHOLD = 30.0
 
 
 def calculate_iga(data: IGAInput) -> IGAResult:
@@ -72,9 +73,19 @@ def calculate_iga(data: IGAInput) -> IGAResult:
     if not available:
         raise ValueError("Ao menos um score deve estar disponível para calcular o IGA")
 
+    # Copiar pesos base para não mutar estado global
+    current_weights = dict(BASE_WEIGHTS)
+    context_note = ""
+
+    # Regra de Atenuação Contextual: se o áudio estiver calmo, reduzir peso de vídeo
+    if "audio" in available and available["audio"] <= AUDIO_CALM_THRESHOLD and "video" in available:
+        current_weights["video"] = 0.20
+        current_weights["audio"] = 0.55
+        context_note = " Peso de vídeo atenuado devido à comunicação verbal positiva (Audio Score baixo)."
+
     # Calcular pesos normalizados para os componentes disponíveis
-    total_base_weight = sum(BASE_WEIGHTS[k] for k in available.keys())
-    normalized_weights = {k: BASE_WEIGHTS[k] / total_base_weight for k in available.keys()}
+    total_base_weight = sum(current_weights[k] for k in available.keys())
+    normalized_weights = {k: current_weights[k] / total_base_weight for k in available.keys()}
 
     # Calcular contribuições e IGA
     contributions = {k: available[k] * normalized_weights[k] for k in available.keys()}
@@ -95,6 +106,8 @@ def calculate_iga(data: IGAInput) -> IGAResult:
         note = f"Score calculado sem: {', '.join(missing)}. Pesos normalizados para {len(available)} componente(s)."
     else:
         note = "Score calculado com todos os 3 componentes."
+        
+    note += context_note
 
     return IGAResult(
         session_id=data.session_id,

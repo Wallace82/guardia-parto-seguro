@@ -56,11 +56,16 @@ interface TimelineEvent {
           </p>
         </div>
         <div class="flex items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-            [class]="globalRiskBadgeClass()">
-            <mat-icon class="!text-sm !w-3.5 !h-3.5">{{ globalRiskIcon() }}</mat-icon>
-            IGA: {{ session()?.iga_score?.toFixed(1) || 'N/A' }}
-          </span>
+          <div class="flex items-center gap-3 px-4 py-2 rounded-xl" [class]="globalRiskBadgeClass()">
+            <mat-icon class="!text-3xl">{{ globalRiskIcon() }}</mat-icon>
+            <div>
+              <span class="block text-[11px] uppercase tracking-widest font-bold opacity-80">Índice GuardIA (IGA)</span>
+              <div class="flex items-baseline gap-2">
+                <span class="block text-2xl font-black">{{ session()?.iga_score != null ? (session()?.iga_score | number:'1.0-1') : 'N/A' }}</span>
+                <span class="block text-sm font-semibold capitalize">- {{ session()?.iga_level || 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

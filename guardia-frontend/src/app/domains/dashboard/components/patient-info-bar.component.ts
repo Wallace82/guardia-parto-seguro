@@ -47,12 +47,15 @@ import { SessionOut } from '../../sessoes/models/sessions.models';
       <div class="w-px h-10 bg-border hidden lg:block"></div>
 
       <!-- Status IA -->
-      <div class="flex items-center gap-2 px-4 py-2 rounded-full"
+      <div class="flex items-center gap-3 px-5 py-2.5 rounded-xl"
         [class]="statusBgClass()">
-        <mat-icon class="!text-xl" [style.color]="statusColor()">{{ statusIcon() }}</mat-icon>
+        <mat-icon class="!text-3xl" [style.color]="statusColor()">{{ statusIcon() }}</mat-icon>
         <div>
-          <span class="block text-xs text-text-subtle font-medium">Status IA</span>
-          <span class="block text-sm font-bold" [style.color]="statusColor()">{{ statusLabel() }}</span>
+          <span class="block text-[11px] uppercase tracking-widest font-bold opacity-80" [style.color]="statusColor()">Índice GuardIA (IGA)</span>
+          <div class="flex items-baseline gap-2">
+            <span class="block text-2xl font-black" [style.color]="statusColor()">{{ session()?.iga_score | number:'1.0-1' }}</span>
+            <span class="block text-sm font-semibold" [style.color]="statusColor()">- {{ statusLabel() }}</span>
+          </div>
         </div>
       </div>
     </div>

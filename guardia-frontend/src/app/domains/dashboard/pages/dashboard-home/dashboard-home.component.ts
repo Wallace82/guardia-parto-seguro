@@ -81,9 +81,9 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
                   </div>
                   <div class="flex flex-col gap-1 text-xs text-text-muted">
                     <span class="flex items-center gap-1"><mat-icon class="!text-[14px] !w-[14px] !h-[14px]">meeting_room</mat-icon> {{ session.patient_code || 'Sala Não Informada' }}</span>
-                    <span class="flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [ngClass]="getIgaColor(session.iga_level)">{{ getIgaIcon(session.iga_level) }}</mat-icon> 
-                      Risco: {{ session.iga_level === 'critico' ? 'Crítico' : session.iga_level === 'moderado' ? 'Atenção' : 'Baixo' }}
+                    <span class="flex items-center gap-1 font-medium" [ngClass]="getIgaColor(session.iga_level)">
+                      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ getIgaIcon(session.iga_level) }}</mat-icon> 
+                      IGA: {{ session.iga_score | number:'1.0-1' }} ({{ session.iga_level === 'critico' ? 'Crítico' : session.iga_level === 'moderado' ? 'Atenção' : 'Baixo' }})
                     </span>
                   </div>
                 </div>
