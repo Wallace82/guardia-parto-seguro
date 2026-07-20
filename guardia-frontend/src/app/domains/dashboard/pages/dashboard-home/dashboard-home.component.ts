@@ -82,8 +82,8 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
                   <div class="flex flex-col gap-1 text-xs text-text-muted">
                     <span class="flex items-center gap-1"><mat-icon class="!text-[14px] !w-[14px] !h-[14px]">meeting_room</mat-icon> {{ session.patient_code || 'Sala Não Informada' }}</span>
                     <span class="flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [ngClass]="getIraColor(session.ira_level)">{{ getIraIcon(session.ira_level) }}</mat-icon> 
-                      Risco: {{ session.ira_level === 'critico' ? 'Crítico' : session.ira_level === 'moderado' ? 'Atenção' : 'Baixo' }}
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [ngClass]="getIgaColor(session.iga_level)">{{ getIgaIcon(session.iga_level) }}</mat-icon> 
+                      Risco: {{ session.iga_level === 'critico' ? 'Crítico' : session.iga_level === 'moderado' ? 'Atenção' : 'Baixo' }}
                     </span>
                   </div>
                 </div>
@@ -116,7 +116,7 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
               [scoreVideo]="riskSummary()?.sources?.video || activeSession()!.score_video"
               [scoreAudio]="riskSummary()?.sources?.audio || activeSession()!.score_audio"
               [scoreDocument]="riskSummary()?.sources?.document || activeSession()!.score_document"
-              [iraScore]="riskSummary()?.globalScore || activeSession()!.ira_score"
+              [iraScore]="riskSummary()?.globalScore || activeSession()!.iga_score"
               [emotionScore]="emotionScore()"
               [poseScore]="poseScore()"
               [commScore]="commScore()"
@@ -132,8 +132,8 @@ import { ExportPdfService } from '../../../relatorios/services/export-pdf.servic
               </div>
               <div class="xl:col-span-2 min-h-[360px]">
                 <app-ia-summary
-                  [iraLevel]="activeSession()!.ira_level"
-                  [iraScore]="activeSession()!.ira_score"
+                  [iraLevel]="activeSession()!.iga_level"
+                  [iraScore]="activeSession()!.iga_score"
                   [sessionId]="activeSession()!.id"
                 />
               </div>
@@ -297,13 +297,13 @@ export class DashboardHomePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  getIraColor(level: string | null | undefined): string {
+  getIgaColor(level: string | null | undefined): string {
     if (level === 'critico') return 'text-danger-500';
     if (level === 'moderado') return 'text-warning';
     return 'text-success';
   }
 
-  getIraIcon(level: string | null | undefined): string {
+  getIgaIcon(level: string | null | undefined): string {
     if (level === 'critico') return 'error';
     if (level === 'moderado') return 'warning';
     return 'check_circle';

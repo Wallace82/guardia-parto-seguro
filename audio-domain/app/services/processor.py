@@ -80,8 +80,8 @@ class AudioProcessor:
                         log.warning("openai_fallback", reason="Sem API KEY ou sem texto transcrito")
                         text_lower = transcription_text.lower()
                         if "dor" in text_lower or "ajuda" in text_lower or "socorro" in text_lower:
-                            ira_score = 60.0
-                            sentiment_score = 40.0
+                            ira_score = 85.0
+                            sentiment_score = 15.0
                             key_findings.append({
                                 "type": "verbalization",
                                 "timestamp_seconds": duration_seconds / 2.0,

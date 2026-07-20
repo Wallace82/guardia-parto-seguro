@@ -162,19 +162,19 @@ import { ActivatedRoute } from '@angular/router';
               <div class="bg-surface2/40 p-6 rounded-xl border border-border flex flex-col items-center justify-center">
                 <h3 class="text-sm font-bold text-white mb-4 self-start">Classificação de risco</h3>
                 <div class="flex items-center gap-4 mb-4">
-                  <mat-icon [ngClass]="getRiskColorClass(activeSession()?.ira_level)" class="!text-5xl !w-12 !h-12">{{ getRiskIcon(activeSession()?.ira_level) }}</mat-icon>
+                  <mat-icon [ngClass]="getRiskColorClass(activeSession()?.iga_level)" class="!text-5xl !w-12 !h-12">{{ getRiskIcon(activeSession()?.iga_level) }}</mat-icon>
                   <div>
-                    <span class="block text-xl font-bold" [ngClass]="getRiskColorClass(activeSession()?.ira_level)">{{ getRiskLabel(activeSession()?.ira_level) }}</span>
-                    <span class="block text-3xl font-black text-white">{{ activeSession()?.ira_score || 0 }}%</span>
+                    <span class="block text-xl font-bold" [ngClass]="getRiskColorClass(activeSession()?.iga_level)">{{ getRiskLabel(activeSession()?.iga_level) }}</span>
+                    <span class="block text-3xl font-black text-white">{{ activeSession()?.iga_score || 0 }}%</span>
                   </div>
                 </div>
                 <div class="w-full">
                   <div class="flex justify-between text-xs text-text-muted mb-1">
                     <span>Score IGA</span>
-                    <span class="font-bold text-white">{{ activeSession()?.ira_score || 0 }}%</span>
+                    <span class="font-bold text-white">{{ activeSession()?.iga_score || 0 }}%</span>
                   </div>
                   <div class="w-full h-1.5 bg-bg rounded-full overflow-hidden">
-                    <div class="h-full bg-primary-500 rounded-full transition-all" [style.width.%]="activeSession()?.ira_score || 0"></div>
+                    <div class="h-full bg-primary-500 rounded-full transition-all" [style.width.%]="activeSession()?.iga_score || 0"></div>
                   </div>
                 </div>
               </div>
@@ -353,8 +353,8 @@ import { ActivatedRoute } from '@angular/router';
               </div>
               <div class="col-span-1 bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col items-center justify-center text-center">
                 <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Risco (IGA)</h3>
-                <span class="text-xl font-bold mb-1" [ngClass]="getPrintRiskColorClass(activeSession()?.ira_level)">{{ getRiskLabel(activeSession()?.ira_level) }}</span>
-                <span class="text-5xl font-black text-gray-900">{{ activeSession()?.ira_score || 0 }}<span class="text-2xl text-gray-500">%</span></span>
+                <span class="text-xl font-bold mb-1" [ngClass]="getPrintRiskColorClass(activeSession()?.iga_level)">{{ getRiskLabel(activeSession()?.iga_level) }}</span>
+                <span class="text-5xl font-black text-gray-900">{{ activeSession()?.iga_score || 0 }}<span class="text-2xl text-gray-500">%</span></span>
               </div>
             </div>
 
@@ -536,7 +536,7 @@ export class ReportsPageComponent implements OnInit {
 
   getDynamicSummary(session: SessionOut | null): string {
     if (!session) return '';
-    const ira = session.ira_level?.toLowerCase() || 'baixo';
+    const ira = session.iga_level?.toLowerCase() || 'baixo';
     
     if (ira === 'baixo') {
       return 'A análise multimodal indica um cenário positivo e estável. Não foram identificados incidentes de risco. Recomenda-se manter a conduta atual e o acompanhamento contínuo.';
@@ -571,7 +571,7 @@ export class ReportsPageComponent implements OnInit {
 
   getDynamicRecommendations(session: SessionOut | null): string[] {
     if (!session) return [];
-    const ira = session.ira_level?.toLowerCase() || 'baixo';
+    const ira = session.iga_level?.toLowerCase() || 'baixo';
     if (ira === 'baixo') {
       return ['Manter conduta atual', 'Continuar monitoramento contínuo', 'Reforçar orientações de alta se aplicável'];
     } else if (ira === 'moderado') {

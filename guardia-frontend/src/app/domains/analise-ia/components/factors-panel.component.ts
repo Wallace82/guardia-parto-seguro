@@ -72,14 +72,14 @@ import { MatIconModule } from '@angular/material/icon';
         <!-- Recomendação da IA -->
         <div class="flex flex-col h-full">
           <h4 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <mat-icon class="!text-lg !w-5 !h-5 text-primary-400">lightbulb</mat-icon> Recomendação da IA
+            <mat-icon class="!text-lg !w-5 !h-5" [ngClass]="iconColorClass()">lightbulb</mat-icon> Recomendação da IA
           </h4>
-          <div class="flex flex-col items-center justify-center text-center bg-gradient-to-b from-primary-500/10 to-transparent border border-primary-500/30 rounded-xl p-6 h-[320px] relative overflow-hidden group hover:border-primary-500/50 transition-colors">
+          <div class="flex flex-col items-center justify-center text-center bg-gradient-to-b to-transparent border rounded-xl p-6 h-[320px] relative overflow-hidden group transition-colors" [ngClass]="bgGradientClass()">
             <!-- Glow effect -->
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-primary-500/20 rounded-full blur-3xl group-hover:bg-primary-500/30 transition-all"></div>
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-3xl transition-all" [ngClass]="glowClass()"></div>
             
-            <div class="w-16 h-16 rounded-full bg-primary-500/20 border border-primary-500/30 flex items-center justify-center mb-6 relative z-10 shadow-[0_0_15px_rgba(var(--primary-500),0.3)]">
-              <mat-icon class="text-primary-400 !text-4xl">verified_user</mat-icon>
+            <div class="w-16 h-16 rounded-full border flex items-center justify-center mb-6 relative z-10" [ngClass]="iconBgClass()">
+              <mat-icon class="!text-4xl" [ngClass]="iconColorClass()">{{ recIcon() }}</mat-icon>
             </div>
             
             <p class="text-base font-semibold text-white mb-4 relative z-10 leading-relaxed">{{ factors()?.recommendation || 'Sem recomendações no momento.' }}</p>
@@ -112,6 +112,40 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class FactorsPanelComponent {
   factors = input<any>();
+  riskLevel = input<string | null | undefined>();
+
+  isCritical = computed(() => this.riskLevel() === 'critico');
+  isWarning = computed(() => this.riskLevel() === 'moderado');
+
+  iconColorClass = computed(() => {
+    if (this.isCritical()) return 'text-danger-500';
+    if (this.isWarning()) return 'text-warning';
+    return 'text-primary-400';
+  });
+
+  bgGradientClass = computed(() => {
+    if (this.isCritical()) return 'from-danger-500/10 border-danger-500/30 hover:border-danger-500/50';
+    if (this.isWarning()) return 'from-warning/10 border-warning/30 hover:border-warning/50';
+    return 'from-primary-500/10 border-primary-500/30 hover:border-primary-500/50';
+  });
+
+  glowClass = computed(() => {
+    if (this.isCritical()) return 'bg-danger-500/20 group-hover:bg-danger-500/30';
+    if (this.isWarning()) return 'bg-warning/20 group-hover:bg-warning/30';
+    return 'bg-primary-500/20 group-hover:bg-primary-500/30';
+  });
+
+  iconBgClass = computed(() => {
+    if (this.isCritical()) return 'bg-danger-500/20 border-danger-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+    if (this.isWarning()) return 'bg-warning/20 border-warning/30 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
+    return 'bg-primary-500/20 border-primary-500/30 shadow-[0_0_15px_rgba(var(--primary-500),0.3)]';
+  });
+  
+  recIcon = computed(() => {
+    if (this.isCritical()) return 'emergency';
+    if (this.isWarning()) return 'warning';
+    return 'verified_user';
+  });
 
   parseFactor(text: string) {
     if (!text) return { source: null, text: '' };

@@ -138,7 +138,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         for _ in range(120):
                             results_data = await client.get_audio_results(audio_file.id)
                             if results_data.get("status") == "completed":
-                                audio_file.analysis_score = results_data.get("iga_score")
+                                audio_file.analysis_score = results_data.get("iga_score", results_data.get("ira_score"))
                                 audio_file.status = MediaStatus.analyzed
                                 
                                 # Salva na tabela detalhada
@@ -147,7 +147,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                                     arquivo_audio=audio_file.filename,
                                     transcricao=results_data.get("transcription"),
                                     sentiment_score=results_data.get("components", {}).get("sentiment_score"),
-                                    anxiety_score=results_data.get("iga_score"),
+                                    anxiety_score=results_data.get("iga_score", results_data.get("ira_score")),
                                     eventos={"key_findings": results_data.get("key_findings", [])}
                                 )
                                 db.add(a_analysis)

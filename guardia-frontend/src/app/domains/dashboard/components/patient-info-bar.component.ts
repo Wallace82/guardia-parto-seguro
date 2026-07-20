@@ -97,7 +97,7 @@ export class PatientInfoBarComponent {
   });
 
   statusColor = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     switch (level) {
       case 'critico': return '#EF4444';
       case 'moderado': return '#F59E0B';
@@ -106,7 +106,7 @@ export class PatientInfoBarComponent {
   });
 
   statusIcon = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     switch (level) {
       case 'critico': return 'error';
       case 'moderado': return 'warning';
@@ -115,7 +115,7 @@ export class PatientInfoBarComponent {
   });
 
   statusLabel = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     switch (level) {
       case 'critico': return 'Risco Crítico';
       case 'moderado': return 'Risco Moderado';
@@ -124,7 +124,7 @@ export class PatientInfoBarComponent {
   });
 
   statusBgClass = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     switch (level) {
       case 'critico': return 'bg-danger-500/10 border border-danger-500/30';
       case 'moderado': return 'bg-warning/10 border border-warning/30';

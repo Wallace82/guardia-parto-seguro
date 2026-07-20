@@ -44,7 +44,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
         </div>
 
         <div class="flex items-center gap-3">
-          @if (session()?.status === 'completed' || session()?.score_notes !== null || session()?.ira_score !== null) {
+          @if (session()?.status === 'completed' || session()?.score_notes !== null || session()?.iga_score !== null) {
             <a mat-flat-button color="accent" [routerLink]="['/analise/multimodal', session()?.id]">
               <mat-icon>psychology</mat-icon> Ver Análise de IA
             </a>

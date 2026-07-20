@@ -10,7 +10,7 @@ export interface AlertOut {
   severity: AlertSeverity;
   title: string;
   description: string;
-  ira_score: number | null;
+  iga_score: number | null;
   is_acknowledged: boolean;
   acknowledged_by: number | null;
   acknowledged_at: string | null;

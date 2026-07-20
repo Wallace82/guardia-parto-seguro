@@ -59,7 +59,7 @@ interface TimelineEvent {
           <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
             [class]="globalRiskBadgeClass()">
             <mat-icon class="!text-sm !w-3.5 !h-3.5">{{ globalRiskIcon() }}</mat-icon>
-            IGA: {{ session()?.ira_score?.toFixed(1) || 'N/A' }}
+            IGA: {{ session()?.iga_score?.toFixed(1) || 'N/A' }}
           </span>
         </div>
       </div>
@@ -454,14 +454,14 @@ export class VideoAnalysisPageComponent implements OnInit, OnDestroy {
   currentViolenceScore = computed(() => this.getVaScore(this.currentVideoFile()?.videoAnalysis, 'violence_indicator_score'));
 
   globalRiskBadgeClass = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     if (level === 'critico') return 'bg-danger-500/15 text-danger-500';
     if (level === 'moderado') return 'bg-warning/15 text-warning';
     return 'bg-success/15 text-success';
   });
 
   globalRiskIcon = computed(() => {
-    const level = this.session()?.ira_level;
+    const level = this.session()?.iga_level;
     if (level === 'critico') return 'error';
     if (level === 'moderado') return 'warning';
     return 'check_circle';

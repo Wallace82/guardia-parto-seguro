@@ -2,7 +2,7 @@ import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { IraLevel } from '../../sessoes/models/sessions.models';
+import { IgaLevel } from '../../sessoes/models/sessions.models';
 
 @Component({
   selector: 'app-ia-summary',
@@ -39,7 +39,7 @@ import { IraLevel } from '../../sessoes/models/sessions.models';
   `
 })
 export class IaSummaryComponent {
-  iraLevel = input<IraLevel | null>(null);
+  iraLevel = input<IgaLevel | null>(null);
   iraScore = input<number | null>(null);
   sessionId = input<number | null>(null);
 

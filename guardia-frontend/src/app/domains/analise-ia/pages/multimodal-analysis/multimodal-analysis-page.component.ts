@@ -60,13 +60,13 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
                   <span class="flex items-center gap-1.5">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" 
                       [ngClass]="{
-                        'text-danger-500': s.ira_level === 'critico',
-                        'text-warning': s.ira_level === 'moderado',
-                        'text-success': s.ira_level === 'baixo' || !s.ira_level
+                        'text-danger-500': s.iga_level === 'critico',
+                        'text-warning': s.iga_level === 'moderado',
+                        'text-success': s.iga_level === 'baixo' || !s.iga_level
                       }">
-                      {{ s.ira_level === 'critico' ? 'emergency' : s.ira_level === 'moderado' ? 'warning' : 'favorite' }}
+                      {{ s.iga_level === 'critico' ? 'emergency' : s.iga_level === 'moderado' ? 'warning' : 'favorite' }}
                     </mat-icon> 
-                    Risco: {{ s.ira_level === 'critico' ? 'Crítico' : s.ira_level === 'moderado' ? 'Atenção' : 'Baixo' }}
+                    Risco: {{ s.iga_level === 'critico' ? 'Crítico' : s.iga_level === 'moderado' ? 'Atenção' : 'Baixo' }}
                   </span>
                 </div>
               </a>
@@ -187,13 +187,13 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
         <div class="mb-12 animate-fade-in" style="animation-delay: 0.25s">
           <div class="grid grid-cols-1 gap-8">
             <app-fusion-result 
-              [score]="session()?.ira_score || 0"
+              [score]="session()?.iga_score || 0"
               [scoreVideo]="session()?.score_video"
               [scoreAudio]="session()?.score_audio"
               [scoreDocument]="session()?.score_document"
               [scoreNotes]="session()?.score_notes"
             />
-            <app-factors-panel [factors]="analysis()?.factors" />
+            <app-factors-panel [factors]="analysis()?.factors" [riskLevel]="session()?.iga_level" />
           </div>
         </div>
 
@@ -299,7 +299,7 @@ export class MultimodalAnalysisPageComponent implements OnInit, OnDestroy {
           this.stopPolling();
         }
 
-        if (session.status === 'completed' || session.score_notes !== null || session.ira_score !== null) {
+        if (session.status === 'completed' || session.score_notes !== null || session.iga_score !== null) {
           this.loadAnalysis();
         }
       },

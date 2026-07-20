@@ -189,10 +189,14 @@ class VideoProcessor:
             # 4. Agregação e Cálculo de Scores
             emotion_score = 0.0
             if len(emotions_list) > 0:
-                # Calcula a média das emoções negativas e positivas
-                avg_negative = sum((e.get('fear', 0) + e.get('sad', 0) + e.get('angry', 0)) for e in emotions_list) / len(emotions_list)
-                avg_positive = sum((e.get('happy', 0) + e.get('neutral', 0)) for e in emotions_list) / len(emotions_list)
-                emotion_score = round(min(100.0, max(0.0, avg_negative * 0.4 + (100 - avg_positive) * 0.2)), 1)
+                # Calcula o pico de emoções negativas (média dos top 10% piores frames)
+                # para evitar que um vídeo longo dilua o score de um momento de dor ou medo extremo.
+                negative_scores = [(e.get('fear', 0) + e.get('sad', 0) + e.get('angry', 0)) for e in emotions_list]
+                negative_scores.sort(reverse=True)
+                top_n = max(1, len(negative_scores) // 10)
+                peak_negative = sum(negative_scores[:top_n]) / top_n
+                
+                emotion_score = round(min(100.0, max(0.0, peak_negative)), 1)
             else:
                 emotion_score = 30.0
                 

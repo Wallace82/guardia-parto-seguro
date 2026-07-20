@@ -69,9 +69,9 @@ import { SessionEditDialogComponent } from '../../components/session-edit-dialog
               <ng-container matColumnDef="ira">
                 <th mat-header-cell *matHeaderCellDef class="text-text-muted uppercase text-xs"> IGA </th>
                 <td mat-cell *matCellDef="let s" class="border-b border-border/50">
-                  @if (s.ira_score !== null) {
-                    <span class="ira-badge" [ngClass]="'ira-badge--' + s.ira_level">
-                      {{ s.ira_score | number:'1.1-1' }}
+                  @if (s.iga_score !== null) {
+                    <span class="iga-badge" [ngClass]="'iga-badge--' + s.iga_level">
+                      {{ s.iga_score | number:'1.1-1' }}
                     </span>
                   } @else {
                     <span class="text-text-subtle text-sm">-</span>

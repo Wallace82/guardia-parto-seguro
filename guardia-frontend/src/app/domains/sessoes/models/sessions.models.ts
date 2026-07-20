@@ -1,5 +1,5 @@
 export type SessionStatus = 'pending' | 'processing' | 'completed' | 'error';
-export type IraLevel = 'baixo' | 'moderado' | 'critico';
+export type IgaLevel = 'baixo' | 'moderado' | 'critico';
 
 export interface MediaFile {
   id: number;
@@ -18,8 +18,8 @@ export interface SessionOut {
   patient_code: string;
   professional_id: number;
   status: SessionStatus;
-  ira_score: number | null;
-  ira_level: IraLevel | null;
+  iga_score: number | null;
+  iga_level: IgaLevel | null;
   score_video: number | null;
   score_audio: number | null;
   score_document: number | null;
