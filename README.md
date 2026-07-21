@@ -26,6 +26,7 @@ Para um entendimento profundo do sistema auditado, consulte a nossa nova central
 6. [Decisões Arquiteturais (ADRs)](docs/decisions/ADR.md)
 7. [Dívida Técnica e Débitos (Technical Debt)](docs/decisions/TECHNICAL_DEBT.md)
 8. [Roadmap (Curto a Longo Prazo)](docs/roadmap/ROADMAP.md)
+9. [Relatório Técnico (Avaliação Pós-Graduação)](docs/relatorio_tecnico.md)
 
 ---
 

@@ -39,10 +39,23 @@ class VideoProcessor:
         try:
             import mediapipe as mp
             from deepface import DeepFace
+            import ultralytics
+            from ultralytics import YOLO
+            import torch
+            
+            # Corrige erro do PyTorch 2.6 de weights_only=True
+            if hasattr(torch.serialization, 'add_safe_globals'):
+                try:
+                    torch.serialization.add_safe_globals([ultralytics.nn.tasks.DetectionModel])
+                except Exception:
+                    pass
 
             mp_pose = mp.solutions.pose
             pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
             mp_drawing = mp.solutions.drawing_utils
+            
+            # Carregar modelo YOLOv8 Nano
+            yolo_model = YOLO("yolov8n.pt")
 
             total_frames = 0
             fps = 30.0
@@ -138,6 +151,35 @@ class VideoProcessor:
                             except Exception as e:
                                 pass
                                 
+                            # C. YOLOv8 (Objetos Cortantes/Cirúrgicos)
+                            try:
+                                results = yolo_model(frame, verbose=False)
+                                for r in results:
+                                    for box in r.boxes:
+                                        cls = int(box.cls[0])
+                                        class_name = yolo_model.names[cls]
+                                        conf = float(box.conf[0])
+                                        
+                                        # knife ou scissors no COCO dataset
+                                        if class_name in ['knife', 'scissors'] and conf > 0.4:
+                                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 165, 255), 3)
+                                            label = "Bisturi/Instrumento" if class_name == 'knife' else "Tesoura Cirurgica"
+                                            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
+                                            
+                                            # Evita registrar a mesma tesoura a cada 1 segundo (cooldown 10s para objetos)
+                                            has_recent_obj = any(kf["type"] == "object_detection" and (current_second - kf["timestamp_seconds"] < 10) for kf in key_findings)
+                                            if not has_recent_obj:
+                                                key_findings.append({
+                                                    "type": "object_detection",
+                                                    "timestamp_seconds": round(current_second, 1),
+                                                    "description": f"Alerta de Objeto: {label} detectado na cena clínica",
+                                                    "confidence": round(conf, 2)
+                                                })
+                            except Exception as e:
+                                log.error("yolo_error", error=str(e))
+                                pass
+                                
                             analyzed_frames += 1
                             if analyzed_frames >= settings.MAX_FRAMES_PER_ANALYSIS:
                                 log.warning("max_frames_reached", max_frames=settings.MAX_FRAMES_PER_ANALYSIS)
@@ -214,8 +256,13 @@ class VideoProcessor:
             object_risk_score = 0.0
             bleeding_score = 0.0
             
-            # IGA Composto de Vídeo
-            dynamic_iga = round((emotion_score * 0.7) + (pose_score * 0.3), 1)
+            # Calcula object_risk_score com base nas detecções (50 pontos por cada alerta de objeto diferente)
+            num_obj_alerts = sum(1 for kf in key_findings if kf.get("type") == "object_detection")
+            if num_obj_alerts > 0:
+                object_risk_score = min(100.0, num_obj_alerts * 50.0)
+            
+            # IGA Composto de Vídeo (Damos peso extra para presença de instrumentos na tela)
+            dynamic_iga = round((emotion_score * 0.5) + (pose_score * 0.2) + (object_risk_score * 0.3), 1)
             
             result_dict = {
                 "session_id": session_id,
