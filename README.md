@@ -71,7 +71,7 @@ cp .env.example .env
 
 **Principais Variáveis Necessárias no `.env`:**
 - `DATABASE_URL`: String de conexão com o PostgreSQL (ex: `postgresql+asyncpg://postgres:postgres@localhost:5432/core_db`).
-- `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa.
+- `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa. **[Importante]** O sistema utiliza o modelo **GPT-4o-mini**. É um pré-requisito obrigatório que a sua chave de API tenha autorização e créditos (Tier) para acessar especificamente este modelo.
 - `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos e áudio em nuvem).
 - `AWS_REGION`: Região da AWS (ex: `us-east-1`).
 - `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
@@ -147,7 +147,9 @@ Com tudo rodando, você pode acessar:
 
 ## 🧠 Como Funciona o IGA (Índice GuardIA de Atenção)
 
-O sistema aceita upload (Upload File ou Camera Stream - futuro) de:
+O sistema aceita upload (Upload File ou Camera Stream - futuro) de mídias.
+> 💡 **Nota para Testes e Apresentação:** Para facilitar, todos os vídeos, áudios e PDFs de prontuários simulados para demonstração estão disponíveis em uma pasta pública no Google Drive: [Acessar Arquivos de Teste](https://drive.google.com/drive/folders/1hIOawHZPCbYFlK_TyIlMoegLUHNn1qCJ?usp=sharing). Uma cópia de backup também pode ser encontrada na pasta `arquivos_teste/` deste repositório.
+
 1. **Vídeo**: A IA busca picos de tensão facial e imobilidade extrema na paciente.
 2. **Áudio**: A IA rastreia vocábulos de desespero/dor e afere o tom da resposta médica.
 3. **Documentos**: O Textract Lê PDFs de exames; a IA identifica agravantes (como hipertensão prévia).

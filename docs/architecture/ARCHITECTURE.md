@@ -17,26 +17,26 @@ A plataforma é dividida nas seguintes camadas principais:
 ```mermaid
 flowchart TD
     %% Frontend
-    Client[Frontend Angular\nSPA, TailwindCSS]
+    Client["Frontend Angular\nSPA, TailwindCSS"]
 
     %% Gateway & Core
-    Gateway[core-api\nFastAPI / Python\nBFF e Orquestrador]
+    Gateway["core-api\nFastAPI / Python\nBFF e Orquestrador"]
     
     %% Databases
-    DB[(PostgreSQL 16\nDados Clínicos, Sessões)]
-    Storage[Volume Local\n/shared_media]
+    DB[("PostgreSQL 16\nDados Clínicos, Sessões")]
+    Storage["Volume Local\n/shared_media"]
 
     %% AI Workers
     subgraph AI_Domains [Microsserviços de IA - Processamento Multimodal]
-        Video[video-service\nOpenCV, YOLOv8, DeepFace\n(Expressões, Tensão)]
-        Audio[audio-service\nWhisper, NLP\n(Tom de voz, Gritos)]
-        Doc[document-service\nAWS Textract, OpenAI\n(OCR de Prontuários)]
+        Video["video-service\nOpenCV, YOLOv8, DeepFace\n(Expressões, Tensão)"]
+        Audio["audio-service\nWhisper, NLP\n(Tom de voz, Gritos)"]
+        Doc["document-service\nAWS Textract, OpenAI\n(OCR de Prontuários)"]
     end
 
     %% Fusion
-    Risk[risk-service\nMotor de Fusão\nCálculo do IGA]
-    AWS[aws-service\nWrapper Integração AWS]
-    Outros[report-service / security-service\nPDFs e Autenticação]
+    Risk["risk-service\nMotor de Fusão\nCálculo do IGA"]
+    AWS["aws-service\nWrapper Integração AWS"]
+    Outros["report-service / security-service\nPDFs e Autenticação"]
 
     %% Conexões Principais
     Client -- "Upload (MP4, MP3, PDF) / Dashboard" --> Gateway
