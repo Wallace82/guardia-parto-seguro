@@ -12,6 +12,53 @@ A plataforma é dividida nas seguintes camadas principais:
 - **Camada de Dados (Persistence):** PostgreSQL para dados relacionais estruturados (Sessões, Análises, Pacientes).
 - **Armazenamento de Mídia:** Volume local compartilhado (`/shared_media`) que atua como Storage transiente/persistente (simulando um bucket S3 local). O `aws-domain` abstrai as integrações com serviços gerenciados de nuvem.
 
+### Diagrama de Arquitetura e Modelos de IA
+
+```mermaid
+flowchart TD
+    %% Frontend
+    Client[Frontend Angular\nSPA, TailwindCSS]
+
+    %% Gateway & Core
+    Gateway[core-api\nFastAPI / Python\nBFF e Orquestrador]
+    
+    %% Databases
+    DB[(PostgreSQL 16\nDados Clínicos, Sessões)]
+    Storage[Volume Local\n/shared_media]
+
+    %% AI Workers
+    subgraph AI_Domains [Microsserviços de IA - Processamento Multimodal]
+        Video[video-service\nOpenCV, YOLOv8, DeepFace\n(Expressões, Tensão)]
+        Audio[audio-service\nWhisper, NLP\n(Tom de voz, Gritos)]
+        Doc[document-service\nAWS Textract, OpenAI\n(OCR de Prontuários)]
+    end
+
+    %% Fusion
+    Risk[risk-service\nMotor de Fusão\nCálculo do IGA]
+    AWS[aws-service\nWrapper Integração AWS]
+    Outros[report-service / security-service\nPDFs e Autenticação]
+
+    %% Conexões Principais
+    Client -- "Upload (MP4, MP3, PDF) / Dashboard" --> Gateway
+    Gateway -- "Salva Metadados" --> DB
+    Gateway -- "Salva Binário" --> Storage
+    
+    Gateway -- "HTTP REST (Fan-out)" --> Video
+    Gateway -- "HTTP REST (Fan-out)" --> Audio
+    Gateway -- "HTTP REST (Fan-out)" --> Doc
+    
+    Video -- "Lê Mídia" --> Storage
+    Audio -- "Lê Mídia" --> Storage
+    Doc -- "Lê Mídia" --> Storage
+
+    Doc -. "OCR Externo" .-> AWS
+    
+    Gateway -- "HTTP REST (Fan-in)" --> Risk
+    Risk -- "Consolida Notas e Gera Alerta Crítico" --> DB
+    
+    Gateway --> Outros
+```
+
 ## 2. Mapa de Serviços (Docker Compose)
 
 | Serviço | Porta | Tecnologia | Responsabilidade |
@@ -32,7 +79,7 @@ A arquitetura do GuardIA resolve o problema de **Fusão Multimodal (Multimodal S
 
 1. **Ingestão (Upload):** O cliente envia um arquivo (ex: vídeo MP4) para o `core-api`.
 2. **Armazenamento:** O `core-api` salva fisicamente o arquivo no volume `shared_media` e cria um registro `MediaFile` no banco de dados com status `processing`.
-3. **Delegação (Fan-out):** O `core-api` realiza uma chamada HTTP (ou enfileira no Redis) para o respectivo microsserviço (ex: `video-service`), passando o caminho do arquivo (`blob_url`).
+3. **Delegação (Fan-out):** O `core-api` realiza uma chamada HTTP para o respectivo microsserviço (ex: `video-service`), passando o caminho do arquivo (`blob_url`).
 4. **Processamento Inteligente (AI Worker):** 
    - O serviço lê o arquivo do disco compartilhado.
    - Aplica os modelos neurais em batch/stream (DeepFace para emoções, MediaPipe para postura).
