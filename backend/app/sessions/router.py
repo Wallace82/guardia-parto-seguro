@@ -335,6 +335,8 @@ async def get_session_analysis(
     transcription = None
     video_findings = []
     risk_details = None
+    full_text = ""
+    audio_res = None
 
     try:
         audio_res = await client.get_audio_results(session_id)
@@ -343,35 +345,17 @@ async def get_session_analysis(
             key_findings = audio_res.get("key_findings", [])
             segments = []
             
-            for finding in key_findings:
-                desc = finding.get("description", "")
-                role = "paciente" if "dor" in desc.lower() or "paciente" in desc.lower() else "profissional"
-                impact = finding.get("impacto", "")
-                if impact == "POSITIVO":
-                    sentiment = "positive"
-                elif impact == "ATENCAO":
-                    sentiment = "negative"
-                else:
-                    sentiment = "negative" if "dor" in desc.lower() or "não" in desc.lower() else "neutral"
+            # Não injetamos key_findings como transcrição, pois são análises semânticas, não falas
+            # Apenas criamos um segmento genérico para o full_text real transcrito
+            if full_text:
                 segments.append({
-                    "speaker": finding.get("type", "Speaker_1").title(),
-                    "role": role,
-                    "start": finding.get("timestamp_seconds", 0.0),
-                    "end": finding.get("timestamp_seconds", 0.0) + 5.0,
-                    "text": desc,
-                    "sentiment": sentiment,
-                    "sentiment_confidence": finding.get("confidence", 1.0)
-                })
-            
-            if not segments and full_text:
-                segments.append({
-                    "speaker": "Speaker_1",
-                    "role": "paciente",
+                    "speaker": "Gravação de Áudio",
+                    "role": "desconhecido",
                     "start": 0.0,
-                    "end": 10.0,
+                    "end": audio_res.get("duration", 10.0),
                     "text": full_text,
-                    "sentiment": "negative" if "dor" in full_text.lower() or "não" in full_text.lower() else "neutral",
-                    "sentiment_confidence": 0.95
+                    "sentiment": "neutral",
+                    "sentiment_confidence": 1.0
                 })
 
             transcription = {
@@ -391,26 +375,11 @@ async def get_session_analysis(
                 res = await client.get_video_results(f.id)
                 if res and res.get("status") == "completed":
                     video_analyses[str(f.id)] = res
-                    # Mantém video_findings preenchido com a primeira análise de vídeo concluída para compatibilidade
                     if not video_findings:
                         video_findings = res.get("key_findings", [])
             except Exception as e:
                 import structlog
                 structlog.get_logger(__name__).warning("get_session_analysis.video_file_failed", media_id=f.id, error=str(e))
-
-    try:
-        risk_res = await client.correlate_risk(
-            session_id=session_id,
-            patient_code=session.patient_code,
-            video_score=session.score_video,
-            audio_score=session.score_audio,
-            document_score=session.score_document
-        )
-        if risk_res:
-            risk_details = risk_res.get("justifications")
-    except Exception as e:
-        import structlog
-        structlog.get_logger(__name__).warning("get_session_analysis.risk_failed", session_id=session_id, error=str(e))
 
     factors = {
         "positive": [],
@@ -418,7 +387,7 @@ async def get_session_analysis(
         "recommendation": "Sem recomendações geradas. O serviço de risco pode estar indisponível."
     }
 
-    # Gera fatores baseados em achados REAIS (sem mocks hardcoded)
+    # Fatores REAIS de vídeo
     has_video_attention = False
     if video_findings:
         for vf in video_findings:
@@ -426,29 +395,16 @@ async def get_session_analysis(
             if desc:
                 factors["attention"].append(f"Vídeo: {desc}")
                 has_video_attention = True
-                
-    if not has_video_attention and session.score_video is not None:
-        if session.score_video < 50:
-            factors["positive"].append("Vídeo: Expressões faciais neutras/tranquilas")
-        else:
-            factors["attention"].append("Vídeo: Possível tensão ou postura defensiva detectada")
 
-    has_audio_attention = False
-    has_audio_positive = False
-    if transcription and transcription.get("segments"):
-        for seg in transcription["segments"]:
-            if seg.get("sentiment") == "negative":
-                factors["attention"].append(f"Áudio: {seg.get('text')}")
-                has_audio_attention = True
-            elif seg.get("sentiment") == "positive":
-                factors["positive"].append(f"Áudio: {seg.get('text')}")
-                has_audio_positive = True
-                
-    if not has_audio_attention and not has_audio_positive and session.score_audio is not None:
-        if session.score_audio < 50:
-            factors["positive"].append("Áudio: Sem verbalização de dor")
-        else:
-            factors["attention"].append("Áudio: Possível desconforto vocal detectado")
+    # Fatores REAIS de áudio (se houver análise semântica em key_findings do áudio)
+    if audio_res and audio_res.get("key_findings"):
+        for finding in audio_res.get("key_findings"):
+            desc = finding.get("description", "")
+            impact = finding.get("impacto", "")
+            if impact == "POSITIVO":
+                factors["positive"].append(f"Áudio: {desc}")
+            else:
+                factors["attention"].append(f"Áudio: {desc}")
 
     # Fatores reais extraídos de Prontuários (PDF)
     pdf_analysis_res = await db.execute(
@@ -459,9 +415,14 @@ async def get_session_analysis(
     )
     pdf_analysis = pdf_analysis_res.scalars().first()
     
+    doc_text = "Nenhum prontuário processado."
+    doc_rec = "Nenhuma ação requerida"
     if pdf_analysis and pdf_analysis.fatores_identificados and "estruturado" in pdf_analysis.fatores_identificados:
         estruturado_pdf = pdf_analysis.fatores_identificados["estruturado"]
         
+        doc_text = f"Análise de prontuário baseada em dados reais (Score IRA: {pdf_analysis.clinical_risk_score})."
+        if pdf_analysis.clinical_risk_score and pdf_analysis.clinical_risk_score >= 50:
+            doc_rec = "Revisar prontuário detalhadamente devido aos riscos assistenciais identificados."
 
         # Fatores de Risco
         for risk in estruturado_pdf.get("risk_factors", []):
@@ -473,15 +434,21 @@ async def get_session_analysis(
             factors["positive"].append(f"Prontuário: {evidence.get('positive')}")
         for attn in evidence.get("attention_points", []):
             factors["attention"].append(f"Prontuário (Atenção): {attn}")
-    else:
-        # Fallback para o antigo formato
-        if risk_details and "document" in risk_details:
-            doc_indicators = risk_details["document"].get("key_indicators", [])
-            for ind in doc_indicators:
-                if "ausente" in ind or "irregular" in ind:
-                    factors["attention"].append(f"Prontuário PDF: {ind.replace('_', ' ').title()}")
-                else:
-                    factors["positive"].append(f"Prontuário PDF: {ind.replace('_', ' ').title()}")
+
+    risk_details = {
+        "video": {
+            "text": "Não há gravação ou detecção visual para esta sessão." if not video_findings else f"Análise de vídeo extraiu {len(video_findings)} expressões/posturas relevantes.",
+            "recommendation": "Revisar abordagem visual durante procedimentos" if has_video_attention else "Nenhuma ação requerida"
+        },
+        "audio": {
+            "text": "Não há transcrição de áudio para esta sessão." if not full_text else f"Transcrição capturou {len(full_text.split())} palavras para análise semântica.",
+            "recommendation": "Verificar adequação de analgesia ou tom de voz" if audio_res and audio_res.get("key_findings") else "Nenhuma ação requerida"
+        },
+        "document": {
+            "text": doc_text,
+            "recommendation": doc_rec
+        }
+    }
 
     # Adicionar os fatores reais extraídos das Anotações Clínicas
     notes_analysis_res = await db.execute(
