@@ -1,6 +1,6 @@
 # Banco de Dados (GuardIA Parto Seguro)
 
-O projeto utiliza **PostgreSQL 16** como banco de dados transacional e **Redis 7** para *caching* e intermediação de filas assíncronas. O ORM escolhido é o **SQLAlchemy 2.0 (asyncpg)** com o controle de versionamento de esquema feito pelo **Alembic**.
+O projeto utiliza **PostgreSQL 16** como banco de dados transacional. O ORM escolhido é o **SQLAlchemy 2.0 (asyncpg)** com o controle de versionamento de esquema feito pelo **Alembic**.
 
 ## 1. Migrações e Inicialização
 

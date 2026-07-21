@@ -88,26 +88,25 @@ function Reset-Project {
 function Start-Project {
     $buildFlag = if ($Build) { "--build" } else { "" }
 
-    Write-Step "Subindo infraestrutura (PostgreSQL + Redis)..."
-    docker compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d postgres-core redis
+    Write-Step "Subindo infraestrutura (PostgreSQL)..."
+    docker compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d postgres-core
     if ($LASTEXITCODE -ne 0) { Write-Fail "Erro ao subir infraestrutura"; exit 1 }
 
-    Write-Step "Aguardando bancos de dados ficarem saudaveis..."
+    Write-Step "Aguardando banco de dados ficar saudavel..."
     $maxWait = 60
     $waited  = 0
     do {
         Start-Sleep -Seconds 3
         $waited += 3
         $coreOk    = (docker inspect --format='{{.State.Health.Status}}' guardia-postgres-core 2>$null) -eq "healthy"
-        $redisOk   = (docker inspect --format='{{.State.Health.Status}}' guardia-redis 2>$null) -eq "healthy"
         Write-Host "  ... aguardando ($waited s)" -ForegroundColor DarkGray
-    } while ((-not ($coreOk -and $redisOk)) -and $waited -lt $maxWait)
+    } while ((-not $coreOk) -and $waited -lt $maxWait)
 
-    if (-not ($coreOk -and $redisOk)) {
-        Write-Fail "Bancos nao ficaram saudaveis em $maxWait s. Veja: docker compose -f $COMPOSE_FILE logs"
+    if (-not $coreOk) {
+        Write-Fail "Banco nao ficou saudavel em $maxWait s. Veja: docker compose -f $COMPOSE_FILE logs"
         exit 1
     }
-    Write-Success "Bancos de dados saudaveis"
+    Write-Success "Banco de dados saudavel"
 
     Write-Step "Subindo todos os servicos..."
     if ($buildFlag) {

@@ -48,7 +48,7 @@ Para rodar o GuardIA Parto Seguro localmente e contribuir com o projeto, siga o 
 
 Certifique-se de ter as seguintes ferramentas instaladas na sua máquina:
 - **Git**: Para clonar o repositório.
-- **Docker e Docker Compose**: Essencial para rodar o banco de dados (PostgreSQL), Redis e/ou os microsserviços em contêineres.
+- **Docker e Docker Compose**: Essencial para rodar o banco de dados (PostgreSQL) e os microsserviços em contêineres.
 - **Node.js 18+**: Para o desenvolvimento do Frontend.
 - **Angular CLI**: Instalado globalmente (`npm install -g @angular/cli`).
 - **Python 3.12+**: Caso decida rodar o orquestrador ou os workers de IA nativamente fora do Docker.
@@ -71,20 +71,19 @@ cp .env.example .env
 
 **Principais Variáveis Necessárias no `.env`:**
 - `DATABASE_URL`: String de conexão com o PostgreSQL (ex: `postgresql+asyncpg://postgres:postgres@localhost:5432/core_db`).
-- `REDIS_URL`: Conexão com o Redis (ex: `redis://localhost:6379/0`).
 - `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa.
 - `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos e áudio em nuvem).
 - `AWS_REGION`: Região da AWS (ex: `us-east-1`).
 - `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
 
-### 4. Rodando o Banco de Dados e Redis
+### 4. Rodando o Banco de Dados
 
 A maneira mais fácil de subir a infraestrutura de apoio é usando o Docker Compose na raiz do projeto:
 
 ```bash
-docker-compose up -d postgres-core redis
+docker-compose up -d postgres-core
 ```
-*(Isso vai liberar a porta 5432 para o banco de dados e 6379 para o Redis localmente).*
+*(Isso vai liberar a porta 5432 para o banco de dados localmente).*
 
 ### 5. Rodando o Backend (Core API e Workers de IA)
 

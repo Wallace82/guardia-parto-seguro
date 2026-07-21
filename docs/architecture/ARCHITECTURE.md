@@ -9,7 +9,7 @@ A plataforma é dividida nas seguintes camadas principais:
 - **Frontend (Client Layer):** SPA em Angular (Standalone Components) com Server-Side Rendering desativado ou opcional, provendo a interface de telemetria, dashboards e análise multimodal para os profissionais de saúde.
 - **API Gateway / Orquestrador:** O `core-api` (Backend FastAPI) atua como o ponto central de entrada (BFF - Backend For Frontend). Ele gerencia sessões, autenticação e orquestra o roteamento para os serviços de Inteligência Artificial.
 - **Domínios de IA (Workers):** Microsserviços independentes responsáveis pelo processamento pesado (Vídeo, Áudio, Documentos e Fusão de Risco).
-- **Camada de Dados (Persistence):** PostgreSQL para dados relacionais estruturados (Sessões, Análises, Pacientes) e Redis para mensageria/filas (opcional) e cache de resultados.
+- **Camada de Dados (Persistence):** PostgreSQL para dados relacionais estruturados (Sessões, Análises, Pacientes).
 - **Armazenamento de Mídia:** Volume local compartilhado (`/shared_media`) que atua como Storage transiente/persistente (simulando um bucket S3 local). O `aws-domain` abstrai as integrações com serviços gerenciados de nuvem.
 
 ## 2. Mapa de Serviços (Docker Compose)
@@ -17,7 +17,6 @@ A plataforma é dividida nas seguintes camadas principais:
 | Serviço | Porta | Tecnologia | Responsabilidade |
 |---------|-------|------------|------------------|
 | `postgres-core` | 5432 | PostgreSQL 16 | Banco de dados transacional central (`core_db`). |
-| `redis` | 6379 | Redis 7 | Cache e suporte a filas (Message Broker). |
 | `core-api` | 8000 | FastAPI / Python | Orquestrador, CRUD de Sessões, Autenticação, Interface BFF. |
 | `video-service` | 8001 | FastAPI / Python | YOLO, MediaPipe, DeepFace. Extração de bounding boxes e emoções de frames. |
 | `audio-service` | 8002 | FastAPI / Python | Whisper. Transcrição de áudio, detecção de dor e análise de sentimentos. |

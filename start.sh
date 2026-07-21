@@ -85,14 +85,12 @@ wait_healthy() {
 start_project() {
   local build_flag="${1:-}"
 
-  step "Subindo infraestrutura (PostgreSQL + Redis)..."
-  docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d postgres-core postgres-domains redis
+  step "Subindo infraestrutura (PostgreSQL)..."
+  docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d postgres-core
 
-  step "Aguardando bancos de dados..."
+  step "Aguardando banco de dados..."
   wait_healthy "guardia-postgres-core"
-  wait_healthy "guardia-postgres-domains"
-  wait_healthy "guardia-redis"
-  success "Bancos de dados saudáveis"
+  success "Banco de dados saudável"
 
   step "Subindo todos os serviços..."
   if [ -n "$build_flag" ]; then

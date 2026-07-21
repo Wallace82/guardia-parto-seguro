@@ -10,7 +10,6 @@
 # --------------- VOLUMES PERSISTENTES ----------------
 volumes:
   postgres_core_data:
-  redis_data:
   shared_media_data:
 
 # --------------- REDES INTERNAS ----------------------
@@ -49,24 +48,6 @@ services:
 
 
 
-  # --- Redis: cache e filas de sessão ---
-  redis:
-    image: redis:7-alpine
-    container_name: guardia-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-guardia_redis_pass}
-    volumes:
-      - redis_data:/data
-    networks:
-      - guardia_net
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-guardia_redis_pass}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # =====================================================
   # CORE PLATFORM (Wallace Gomes - Dev 1) — backend/
   # =====================================================
@@ -80,7 +61,6 @@ services:
     env_file: ../.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
-      REDIS_URL: redis://:${REDIS_PASSWORD:-guardia_redis_pass}@redis:6379/0
       VIDEO_SERVICE_URL: http://video-service:8001
       AUDIO_SERVICE_URL: http://audio-service:8002
       DOCUMENT_SERVICE_URL: http://document-service:8003
@@ -96,8 +76,6 @@ services:
       - guardia_net
     depends_on:
       postgres-core:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
