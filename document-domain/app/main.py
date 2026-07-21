@@ -95,7 +95,17 @@ async def analyze(data: DocumentAnalyzeRequest):
     except Exception as e:
         log.warning("document.aws_service.failed", error=str(e))
 
-    # Mock do Textract para testes se não houve retorno da AWS
+    # Fallback Local: Se o Textract falhou, tenta ler o arquivo PDF localmente (muito comum em ambiente de dev)
+    if not ocr_text.strip() and os.path.exists(file_path):
+        try:
+            log.info("textract_falhou_tentando_pypdf_local", file_path=file_path)
+            from pypdf import PdfReader
+            reader = PdfReader(file_path)
+            ocr_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+        except Exception as pdf_err:
+            log.warning("pypdf_extraction_failed", error=str(pdf_err))
+
+    # Mock de ultimo recurso se tudo falhar
     if not ocr_text.strip():
         log.info("Usando OCR Mockado (Prontuário Simulado)")
         ocr_text = """
