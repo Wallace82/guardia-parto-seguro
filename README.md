@@ -147,7 +147,9 @@ Com tudo rodando, você pode acessar:
 
 ## 🧠 Como Funciona o IGA (Índice GuardIA de Atenção)
 
-O sistema aceita upload (Upload File ou Camera Stream - futuro) de:
+O sistema aceita upload (Upload File ou Camera Stream - futuro) de mídias.
+> 💡 **Nota para Testes e Apresentação:** Todos os vídeos, áudios e PDFs de prontuários simulados para demonstração e testes estão localizados na pasta `arquivos_teste/` na raiz do repositório.
+
 1. **Vídeo**: A IA busca picos de tensão facial e imobilidade extrema na paciente.
 2. **Áudio**: A IA rastreia vocábulos de desespero/dor e afere o tom da resposta médica.
 3. **Documentos**: O Textract Lê PDFs de exames; a IA identifica agravantes (como hipertensão prévia).
