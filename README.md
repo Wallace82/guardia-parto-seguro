@@ -71,7 +71,7 @@ cp .env.example .env
 
 **Principais Variáveis Necessárias no `.env`:**
 - `DATABASE_URL`: String de conexão com o PostgreSQL (ex: `postgresql+asyncpg://postgres:postgres@localhost:5432/core_db`).
-- `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa.
+- `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa. **[Importante]** O sistema utiliza o modelo **GPT-4o-mini**. É um pré-requisito obrigatório que a sua chave de API tenha autorização e créditos (Tier) para acessar especificamente este modelo.
 - `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos e áudio em nuvem).
 - `AWS_REGION`: Região da AWS (ex: `us-east-1`).
 - `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
