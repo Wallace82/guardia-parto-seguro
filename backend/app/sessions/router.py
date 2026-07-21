@@ -462,21 +462,7 @@ async def get_session_analysis(
     if pdf_analysis and pdf_analysis.fatores_identificados and "estruturado" in pdf_analysis.fatores_identificados:
         estruturado_pdf = pdf_analysis.fatores_identificados["estruturado"]
         
-        # Fatores clínicos
-        clinical = estruturado_pdf.get("clinical_data", {})
-        for cond in clinical.get("conditions", []):
-            factors["attention"].append(f"Prontuário (Clínico): {cond}")
-            
-        # Fatores Emocionais
-        emotional = estruturado_pdf.get("emotional_analysis", {})
-        for emo in emotional.get("indicators", []):
-            factors["attention"].append(f"Prontuário (Emocional): {emo}")
-            
-        # Comunicação
-        comm = estruturado_pdf.get("communication_analysis", {})
-        for c in comm.get("indicators", []):
-            factors["attention"].append(f"Prontuário (Comunicação): {c}")
-            
+
         # Fatores de Risco
         for risk in estruturado_pdf.get("risk_factors", []):
             factors["attention"].append(f"Prontuário (Risco): {risk}")

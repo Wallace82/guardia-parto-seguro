@@ -12,7 +12,7 @@ from app.sessions.analysis_schemas import (
     DocumentAnalysisOut, DocumentAnalysisCreate,
     SessionRiskSummaryOut, RiskSourcesOut
 )
-from app.risk_engine.fusion_service import RiskFusionEngine
+
 
 router = APIRouter(tags=["Analysis"])
 
@@ -102,24 +102,23 @@ async def get_document_analysis(analysis_id: int, db: AsyncSession = Depends(get
 # =======================
 @router.get("/api/v1/session/{session_id}/risk-summary", response_model=SessionRiskSummaryOut)
 async def get_session_risk_summary(session_id: int, db: AsyncSession = Depends(get_db)):
-    # Buscar todas as análises vinculadas à sessão
-    vid_res = await db.execute(select(VideoAnalysis).where(VideoAnalysis.session_id == session_id))
-    videos = vid_res.scalars().all()
+    from app.sessions.models import Session
+    from fastapi import HTTPException
     
-    aud_res = await db.execute(select(AudioAnalysis).where(AudioAnalysis.session_id == session_id))
-    audios = aud_res.scalars().all()
-    
-    doc_res = await db.execute(select(DocumentAnalysis).where(DocumentAnalysis.session_id == session_id))
-    docs = doc_res.scalars().all()
-    
-    # Calcular
-    fusion_result = RiskFusionEngine.calculate_session_risk(videos, audios, docs)
-    
+    session = await db.get(Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        
     return SessionRiskSummaryOut(
         sessionId=session_id,
-        globalScore=fusion_result["globalScore"],
-        riskLevel=fusion_result["riskLevel"],
-        sources=RiskSourcesOut(**fusion_result["sources"])
+        globalScore=session.iga_score or 0.0,
+        riskLevel=session.iga_level or "baixo",
+        sources=RiskSourcesOut(
+            video=session.score_video,
+            audio=session.score_audio,
+            document=session.score_document,
+            notes=session.score_notes
+        )
     )
 
 

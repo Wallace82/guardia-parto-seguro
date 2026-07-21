@@ -170,7 +170,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                     doc_file.status = MediaStatus.error
                     doc_file.error_message = str(doc_res)
                 else:
-                    doc_file.analysis_score = doc_res.get("iga_score")
+                    doc_file.analysis_score = doc_res.get("ira_score")
                     doc_file.status = MediaStatus.analyzed
                     
                     # Salva na tabela detalhada
@@ -180,7 +180,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         tipo_documento=doc_res.get("document_type"),
                         texto_extraido=doc_res.get("ocr_text"),
                         entidades_detectadas=doc_res.get("extracted_fields"),
-                        clinical_risk_score=doc_res.get("iga_score"),
+                        clinical_risk_score=doc_res.get("ira_score"),
                         fatores_identificados={
                             "consistency_checks": doc_res.get("consistency_checks"),
                             "estruturado": doc_res.get("extracted_fields"),
@@ -247,13 +247,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
             
             await db.commit()
             
-            # Recalcula localmente usando a RiskFusionEngine (para aplicar regras avançadas
-            # de Correlação Transmodal e sincronizar os scores retroativos nos MediaFiles)
-            try:
-                from app.sessions.service import SessionService
-                await SessionService(db)._recalculate_session_risk(session_id)
-            except Exception as re_err:
-                log.error("orchestrator_recalculate_failed", session_id=session_id, error=str(re_err))
+
             log.info("orchestration_completed", session_id=session_id, iga_score=iga_score, level=risk_level)
 
             # Disparar Alertas se o risco for moderado ou crítico

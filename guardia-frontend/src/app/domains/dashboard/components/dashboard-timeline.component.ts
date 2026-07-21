@@ -69,7 +69,7 @@ export interface TimelineEvent {
       </div>
 
       <div class="p-4 border-t border-border">
-        <a routerLink="/sessoes" class="text-sm font-medium text-primary-400 hover:text-primary-300 hover:underline transition-colors flex items-center gap-1">
+        <a [routerLink]="['/analise', sessionId()]" class="text-sm font-medium text-primary-400 hover:text-primary-300 hover:underline transition-colors flex items-center gap-1">
           Ver linha do tempo completa
           <mat-icon class="!text-base !w-4 !h-4">arrow_forward</mat-icon>
         </a>

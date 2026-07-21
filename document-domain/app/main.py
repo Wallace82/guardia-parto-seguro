@@ -183,9 +183,18 @@ Avaliar: dificuldade de expressão, hesitação, dúvidas, necessidade de maior 
 Identificar: necessidade de escuta ativa, suporte emocional, autonomia da paciente, consentimento informado.
 
 ---
+CRITÉRIOS DE FILTRAGEM DE RISCO E ALERTAS (EVITAR FALSOS POSITIVOS):
+ATENÇÃO MÁXIMA: Os arrays do JSON (`conditions`, `indicators`, `risk_factors`, `attention_points`) DEVEM conter APENAS anomalias severas, riscos não controlados ou falhas assistenciais genuínas. 
+Se algo estiver normal, leve ou controlado, DEIXE O ARRAY VAZIO [].
+1. Condições Controladas: NUNCA liste condições explícitas como "controlada" (ex: "hipertensão controlada", "diabetes controlada") em `conditions`, `risk_factors` ou `attention_points`. Omita completamente a não ser que haja agravamento atual.
+2. Emoções Esperadas: Ansiedade leve, dúvidas e preocupações comuns ("preocupações sobre o parto") NÃO devem aparecer nas listas de `indicators` (emocionais ou comunicação). Só inclua nessas listas se houver pânico, sofrimento extremo ou negligência da equipe perante a emoção.
+3. Comunicação: "Fala hesitante" ou dúvidas naturais NÃO devem ser listadas em `indicators` de comunicação ou `attention_points`. Só inclua se a equipe falhar gravemente na escuta ou se houver barreira severa de comunicação.
+
+---
 CALCULE O IRA (Índice de Risco Assistencial):
 Pesos: Fatores clínicos (30%), Fatores emocionais (30%), Comunicação (20%), Vulnerabilidade psicossocial (20%)
 Classificação: 0-25 (BAIXO), 26-50 (MODERADO), 51-75 (ELEVADO), 76-100 (CRÍTICO)
+Lembre-se: Prontuários com indicadores apenas "controlados" ou emoções normais devem ter IRA BAIXO (0-25).
 
 ---
 RETORNE SEMPRE UM JSON ESTRITAMENTE NESTE FORMATO:

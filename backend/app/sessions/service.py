@@ -294,53 +294,52 @@ class SessionService:
         await self._recalculate_session_risk(session.id)
 
     async def _recalculate_session_risk(self, session_id: int):
-        from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis
-        from app.risk_engine.fusion_service import RiskFusionEngine
+        from app.sessions.models import MediaFile, MediaStatus
+        from app.orchestrator.domain_client import DomainClient
         
         session = await self.db.get(Session, session_id)
         if not session:
             return
 
-        result = await self.db.execute(select(VideoAnalysis).where(VideoAnalysis.session_id == session_id))
-        video_analyses = result.scalars().all()
-        
-        result = await self.db.execute(select(AudioAnalysis).where(AudioAnalysis.session_id == session_id))
-        audio_analyses = result.scalars().all()
-        
-        result = await self.db.execute(select(DocumentAnalysis).where(DocumentAnalysis.session_id == session_id))
-        doc_analyses = result.scalars().all()
-
-        fusion_result = RiskFusionEngine.calculate_session_risk(
-            list(video_analyses), list(audio_analyses), list(doc_analyses), session.notes
-        )
-        
-        session.iga_score = fusion_result["globalScore"]
-        risk_level = fusion_result["riskLevel"].lower()
-        if risk_level == "medium":
-            session.iga_level = "moderado"
-        elif risk_level == "high":
-            session.iga_level = "critico"
-        elif risk_level == "low":
-            session.iga_level = "baixo"
-        else:
-            session.iga_level = risk_level
-
-        session.score_video = fusion_result["sources"].get("video")
-        session.score_audio = fusion_result["sources"].get("audio")
-        session.score_document = fusion_result["sources"].get("document")
-        session.score_notes = fusion_result["sources"].get("notes")
-        
-        # Sincroniza o Risco Extrapolado (calculado com contexto transmodal) de volta para as mídias
-        from app.sessions.models import MediaFile
         media_files_res = await self.db.execute(select(MediaFile).where(MediaFile.session_id == session_id))
         media_files = media_files_res.scalars().all()
-        for m in media_files:
-            if m.media_type == "video" and session.score_video is not None:
-                m.analysis_score = session.score_video
-            elif m.media_type == "audio" and session.score_audio is not None:
-                m.analysis_score = session.score_audio
-            elif m.media_type == "document" and session.score_document is not None:
-                m.analysis_score = session.score_document
+
+        all_video_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "video" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        video_score = max(all_video_scores) if all_video_scores else None
+
+        all_audio_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "audio" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        audio_score = max(all_audio_scores) if all_audio_scores else None
+
+        all_doc_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "document" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        document_score = max(all_doc_scores) if all_doc_scores else None
+
+        # Call Risk Service via DomainClient
+        client = DomainClient()
+        risk_res = await client.correlate_risk(
+            session_id=session_id,
+            patient_code=session.patient_code,
+            video_score=video_score,
+            audio_score=audio_score,
+            document_score=document_score
+        )
+        
+        session.iga_score = risk_res.get("iga_score", 0.0)
+        session.iga_level = risk_res.get("risk_level", "baixo")
+
+        session.score_video = video_score
+        session.score_audio = audio_score
+        session.score_document = document_score
+        
+        # Syncronizacao destrutiva de media files foi removida para manter a precisao original
 
         await self.db.commit()
 
