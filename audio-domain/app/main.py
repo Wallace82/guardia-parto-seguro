@@ -1,74 +1,24 @@
 """
-GuardIA — Audio Domain Service Mock
+GuardIA — Audio Domain Service
 """
+import structlog
 from fastapi import FastAPI, status
-from pydantic import BaseModel
-from typing import Optional
+from app.api.router import router as api_router
+from app.core.config import settings
 
-app = FastAPI(title="GuardIA — Audio Service", version="1.0.0")
+structlog.configure(
+    processors=[
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ]
+)
 
-class AudioAnalyzeRequest(BaseModel):
-    session_id: str
-    media_id: str
-    blob_url: str
-    language: Optional[str] = "pt-BR"
-    options: Optional[dict] = None
+app = FastAPI(title=settings.PROJECT_NAME, version="1.0.0")
 
-class AudioAnalyzeResponse(BaseModel):
-    job_id: str
-    status: str
+app.include_router(api_router, prefix="/api/v1/audio", tags=["Audio Analysis"])
 
+@app.get("/api/v1/health", status_code=status.HTTP_200_OK)
 @app.get("/api/v1/audio/health", status_code=status.HTTP_200_OK)
 async def health():
     return {"status": "healthy", "domain": "audio"}
-
-@app.post("/api/v1/audio/analyze", status_code=status.HTTP_202_ACCEPTED, response_model=AudioAnalyzeResponse)
-async def analyze(data: AudioAnalyzeRequest):
-    return AudioAnalyzeResponse(
-        job_id="550e8400-e29b-41d4-a716-446655440021",
-        status="queued"
-    )
-
-@app.get("/api/v1/audio/results/{session_id}", status_code=status.HTTP_200_OK)
-async def results(session_id: str):
-    return {
-        "session_id": session_id,
-        "ira_score": 55.2,
-        "transcription": {
-            "full_text": "Médico: Vamos fazer o procedimento agora. Paciente: Tá doendo muito, por favor...",
-            "language": "pt-BR",
-            "duration_seconds": 1823.5,
-            "segments": [
-                {
-                    "speaker": "Speaker_0",
-                    "role": "profissional",
-                    "start": 0.0,
-                    "end": 5.2,
-                    "text": "Vamos fazer o procedimento agora.",
-                    "sentiment": "neutral",
-                    "sentiment_confidence": 0.78
-                },
-                {
-                    "speaker": "Speaker_1",
-                    "role": "paciente",
-                    "start": 5.8,
-                    "end": 10.1,
-                    "text": "Tá doendo muito, por favor.",
-                    "sentiment": "negative",
-                    "sentiment_confidence": 0.94
-                }
-            ]
-        },
-        "risk_keywords": [
-            {
-                "keyword": "tá doendo muito",
-                "category": "dor",
-                "timestamp_seconds": 5.8,
-                "speaker": "Speaker_1",
-                "severity": "high"
-            }
-        ],
-        "clinical_entities": [
-            {"text": "procedimento", "category": "Procedimento", "confidence": 0.88}
-        ]
-    }

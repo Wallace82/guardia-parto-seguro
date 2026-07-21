@@ -12,12 +12,12 @@ from app.database import Base
 
 
 class AlertSeverity(str, enum.Enum):
-    moderate = "moderate"   # IRA 40-69
-    critical = "critical"   # IRA >= 70
+    moderate = "moderate"   # IGA 40-69
+    critical = "critical"   # IGA >= 70
 
 
 class AlertType(str, enum.Enum):
-    ira_threshold = "ira_threshold"         # IRA ultrapassou limiar
+    ira_threshold = "ira_threshold"         # IGA ultrapassou limiar
     video_anomaly = "video_anomaly"         # anomalia detectada no vídeo
     audio_keyword = "audio_keyword"         # keyword de risco detectada
     document_inconsistency = "document_inconsistency"  # inconsistência documental
@@ -39,7 +39,7 @@ class Alert(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    ira_score: Mapped[float | None] = mapped_column(nullable=True)
+    iga_score: Mapped[float | None] = mapped_column(nullable=True)
 
     # Controle de reconhecimento
     is_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -50,12 +50,31 @@ class Alert(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Controle de descarte (ignorar alerta)
+    is_dismissed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    dismissed_by: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    dismissed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     # Controle de notificação por e-mail
     email_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
+
+    session: Mapped["Session"] = relationship("Session")
+
+    @property
+    def patient_code(self) -> str | None:
+        return self.session.patient_code if self.session else None
+
+    @property
+    def session_title(self) -> str | None:
+        return self.session.title if self.session else None
 
     def __repr__(self) -> str:
         return f"<Alert id={self.id} type={self.alert_type} severity={self.severity}>"

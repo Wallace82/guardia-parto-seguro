@@ -24,6 +24,18 @@ class SessionUpdateRequest(BaseModel):
     status: str | None = None
 
 
+class ChartPoint(BaseModel):
+    label: str
+    value: int
+
+
+class DashboardMetricsOut(BaseModel):
+    total_sessions: int
+    critical_alerts: int
+    average_ira: float
+    monthly_distribution: list[ChartPoint]
+
+
 # --------------- Response ---------------
 
 class MediaFileOut(BaseModel):
@@ -45,11 +57,12 @@ class SessionOut(BaseModel):
     patient_code: str
     professional_id: int
     status: str
-    ira_score: float | None
-    ira_level: str | None
+    iga_score: float | None
+    iga_level: str | None
     score_video: float | None
     score_audio: float | None
     score_document: float | None
+    score_notes: float | None
     notes: str | None
     created_at: datetime
     updated_at: datetime

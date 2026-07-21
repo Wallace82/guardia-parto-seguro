@@ -32,15 +32,15 @@ async def test_orchestrate_session_analysis_success(
     
     # Mock das chamadas HTTP
     client_mock.analyze_video.return_value = {"job_id": "video-job", "status": "queued"}
-    client_mock.get_video_results.return_value = {"ira_score": 80.0}
+    client_mock.get_video_results.return_value = {"status": "completed", "iga_score": 80.0}
     
     client_mock.analyze_audio.return_value = {"job_id": "audio-job", "status": "queued"}
-    client_mock.get_audio_results.return_value = {"ira_score": 60.0}
+    client_mock.get_audio_results.return_value = {"status": "completed", "iga_score": 60.0}
     
-    client_mock.analyze_document.return_value = {"ira_score": 40.0}
+    client_mock.analyze_document.return_value = {"iga_score": 40.0}
     
     client_mock.correlate_risk.return_value = {
-        "ira_score": 63.0,
+        "iga_score": 63.0,
         "risk_level": "moderado",
         "justifications": {
             "video": {"text": "Indicador de dor"},
@@ -58,8 +58,8 @@ async def test_orchestrate_session_analysis_success(
     # 4. Asserts
     # Verificação de status e scores atualizados na Sessão
     assert mock_session.status == SessionStatus.completed
-    assert mock_session.ira_score == 63.0
-    assert mock_session.ira_level == "moderado"
+    assert mock_session.iga_score == 63.0
+    assert mock_session.iga_level == "moderado"
     assert mock_session.score_video == 80.0
     assert mock_session.score_audio == 60.0
     assert mock_session.score_document == 40.0

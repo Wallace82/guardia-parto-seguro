@@ -5,13 +5,13 @@
 # Ou usar o script: ./start.sh  |  .\start.ps1
 # =============================================================
 
-version: "3.9"
+# version está obsoleto no Docker Compose V2
 
 # --------------- VOLUMES PERSISTENTES ----------------
 volumes:
   postgres_core_data:
-  postgres_domains_data:
   redis_data:
+  shared_media_data:
 
 # --------------- REDES INTERNAS ----------------------
 networks:
@@ -47,28 +47,7 @@ services:
       retries: 5
       start_period: 20s
 
-  # --- PostgreSQL: bancos de domínio (video, audio, document, risk, report) ---
-  postgres-domains:
-    image: postgres:16-alpine
-    container_name: guardia-postgres-domains
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER:-guardia}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-guardia_dev_pass}
-      POSTGRES_DB: video_db
-    volumes:
-      - postgres_domains_data:/var/lib/postgresql/data
-      - ./postgres/init-domains.sql:/docker-entrypoint-initdb.d/init-domains.sql:ro
-    networks:
-      - guardia_net
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-guardia}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+
 
   # --- Redis: cache e filas de sessão ---
   redis:
@@ -107,8 +86,10 @@ services:
       DOCUMENT_SERVICE_URL: http://document-service:8003
       RISK_SERVICE_URL: http://risk-service:8004
       REPORT_SERVICE_URL: http://report-service:8005
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../backend:/app
+      - shared_media_data:/shared_media
     ports:
       - "8000:8000"
     networks:
@@ -137,19 +118,21 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/video_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8001"
       VIDEO_FRAME_SAMPLE_RATE: ${VIDEO_FRAME_SAMPLE_RATE:-1.0}
       DEEPFACE_BACKEND: ${DEEPFACE_BACKEND:-retinaface}
       YOLO_CONFIDENCE_THRESHOLD: ${YOLO_CONFIDENCE_THRESHOLD:-0.70}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../video-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8001:8001"
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
@@ -170,21 +153,18 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/audio_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8002"
-      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
-      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-brazilsouth}
-      AZURE_SPEECH_LANGUAGE: ${AZURE_SPEECH_LANGUAGE:-pt-BR}
-      AZURE_LANGUAGE_ENDPOINT: ${AZURE_LANGUAGE_ENDPOINT:-}
-      AZURE_LANGUAGE_KEY: ${AZURE_LANGUAGE_KEY:-}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../audio-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8002:8002"
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
@@ -205,21 +185,21 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/document_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8003"
-      AZURE_DOC_INTELLIGENCE_ENDPOINT: ${AZURE_DOC_INTELLIGENCE_ENDPOINT:-}
-      AZURE_DOC_INTELLIGENCE_KEY: ${AZURE_DOC_INTELLIGENCE_KEY:-}
+      SHARED_MEDIA_DIR: /shared_media
     volumes:
       - ../document-domain:/app
+      - shared_media_data:/shared_media
     ports:
       - "8003:8003"
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/documents/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -237,13 +217,13 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/risk_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8004"
-      IRA_WEIGHT_VIDEO: ${IRA_WEIGHT_VIDEO:-0.40}
-      IRA_WEIGHT_AUDIO: ${IRA_WEIGHT_AUDIO:-0.35}
-      IRA_WEIGHT_DOCUMENT: ${IRA_WEIGHT_DOCUMENT:-0.25}
-      IRA_THRESHOLD_MODERATE: ${IRA_THRESHOLD_MODERATE:-40.0}
-      IRA_THRESHOLD_CRITICAL: ${IRA_THRESHOLD_CRITICAL:-70.0}
+      IGA_WEIGHT_VIDEO: ${IGA_WEIGHT_VIDEO:-0.40}
+      IGA_WEIGHT_AUDIO: ${IGA_WEIGHT_AUDIO:-0.35}
+      IGA_WEIGHT_DOCUMENT: ${IGA_WEIGHT_DOCUMENT:-0.25}
+      IGA_THRESHOLD_MODERATE: ${IGA_THRESHOLD_MODERATE:-40.0}
+      IGA_THRESHOLD_CRITICAL: ${IGA_THRESHOLD_CRITICAL:-70.0}
     volumes:
       - ../risk-domain:/app
     ports:
@@ -251,10 +231,10 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8004/api/v1/risk/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -272,10 +252,8 @@ services:
     restart: unless-stopped
     env_file: ../.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-domains:5432/report_db
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
       SERVICE_PORT: "8005"
-      AZURE_BLOB_CONNECTION_STRING: ${AZURE_BLOB_CONNECTION_STRING:-}
-      AZURE_BLOB_CONTAINER_REPORTS: ${AZURE_BLOB_CONTAINER_REPORTS:-guardia-reports}
     volumes:
       - ../report-domain:/app
     ports:
@@ -283,43 +261,71 @@ services:
     networks:
       - guardia_net
     depends_on:
-      postgres-domains:
+      postgres-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/reports/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 30s
 
   # =====================================================
-  # FRONTEND — Streamlit Dashboard (Gustavo Octaviano - Dev 4) — frontend/
+  # AWS DOMAIN (Wallace Gomes - Dev 5) — aws-domain/
   # =====================================================
-  frontend:
+  aws-service:
     build:
-      context: ../frontend
+      context: ../aws-domain
       dockerfile: Dockerfile
       target: development
-    container_name: guardia-frontend
+    container_name: guardia-aws-service
     restart: unless-stopped
     env_file: ../.env
     environment:
-      API_BASE_URL: http://core-api:8000
-      STREAMLIT_SERVER_PORT: "8501"
-      STREAMLIT_SERVER_ADDRESS: "0.0.0.0"
-      STREAMLIT_THEME: ${STREAMLIT_THEME:-dark}
+      SERVICE_PORT: "8007"
+      MEDIA_BUCKET_NAME: ${MEDIA_BUCKET_NAME:-guardia-parto-seguro-media-dev-foton}
+      REPORTS_BUCKET_NAME: ${REPORTS_BUCKET_NAME:-guardia-parto-seguro-reports-dev-foton}
     volumes:
-      - ../frontend:/app
+      - ../aws-domain:/app
     ports:
-      - "8501:8501"
+      - "8007:8007"
     networks:
       - guardia_net
-    depends_on:
-      core-api:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  # =====================================================
+  # SECURITY DOMAIN (Wallace Gomes - Dev 5) — security-domain/
+  # =====================================================
+  security-service:
+    build:
+      context: ../security-domain
+      dockerfile: Dockerfile
+      target: development
+    container_name: guardia-security-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-guardia}:${DB_PASSWORD:-guardia_dev_pass}@postgres-core:5432/core_db
+      SERVICE_PORT: "8006"
+    volumes:
+      - ../security-domain:/app
+    ports:
+      - "8006:8006"
+    networks:
+      - guardia_net
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+

@@ -27,10 +27,11 @@ class Settings(BaseSettings):
     DOCUMENT_SERVICE_URL: str = "http://document-service:8003"
     RISK_SERVICE_URL: str = "http://risk-service:8004"
     REPORT_SERVICE_URL: str = "http://report-service:8005"
+    VIDEO_FRAME_SAMPLE_RATE: float = 1.0
 
-    # Azure
-    AZURE_BLOB_CONNECTION_STRING: str = ""
-    AZURE_BLOB_CONTAINER_MEDIA: str = "guardia-media"
+    # AWS S3
+    AWS_REGION: str = "us-east-1"
+    MEDIA_BUCKET_NAME: str = "guardia-media"
 
     # Notifications
     SMTP_HOST: str = ""
@@ -39,9 +40,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     ALERT_EMAIL_GESTOR: str = ""
 
-    # IRA Thresholds
-    IRA_THRESHOLD_MODERATE: float = 40.0
-    IRA_THRESHOLD_CRITICAL: float = 70.0
+    # IGA Thresholds
+    IGA_THRESHOLD_MODERATE: float = 40.0
+    IGA_THRESHOLD_CRITICAL: float = 70.0
 
     # Upload limits
     MAX_VIDEO_SIZE_MB: int = 2000

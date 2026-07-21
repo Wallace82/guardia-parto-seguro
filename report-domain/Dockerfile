@@ -1,6 +1,6 @@
 # =====================================================
 # GuardIA — Report Domain Service
-# Deps: FastAPI, reportlab (PDF), openpyxl, Azure Blob
+# Deps: FastAPI, reportlab (PDF), openpyxl, AWS S3 (boto3)
 # =====================================================
 
 FROM python:3.11-slim AS builder

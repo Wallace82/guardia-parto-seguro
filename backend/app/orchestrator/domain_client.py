@@ -36,11 +36,11 @@ class DomainClient:
             response.raise_for_status()
             return response.json()
 
-    async def get_video_results(self, session_id: int) -> Dict[str, Any]:
+    async def get_video_results(self, job_id: str | int) -> Dict[str, Any]:
         """Obtém resultados da análise de vídeo."""
-        url = f"{settings.VIDEO_SERVICE_URL}/api/v1/video/results/{session_id}"
+        url = f"{settings.VIDEO_SERVICE_URL}/api/v1/video/results/{job_id}"
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            log.info("video_results_request", url=url, session_id=session_id)
+            log.info("video_results_request", url=url, job_id=job_id)
             response = await client.get(url)
             response.raise_for_status()
             return response.json()
@@ -52,7 +52,6 @@ class DomainClient:
             "session_id": str(session_id),
             "media_id": str(media_id),
             "blob_url": blob_url,
-            "language": settings.AZURE_SPEECH_LANGUAGE,
             "options": {
                 "speaker_diarization": True,
                 "sentiment_analysis": True,
@@ -66,11 +65,11 @@ class DomainClient:
             response.raise_for_status()
             return response.json()
 
-    async def get_audio_results(self, session_id: int) -> Dict[str, Any]:
+    async def get_audio_results(self, job_id: str | int) -> Dict[str, Any]:
         """Obtém resultados da análise de áudio."""
-        url = f"{settings.AUDIO_SERVICE_URL}/api/v1/audio/results/{session_id}"
+        url = f"{settings.AUDIO_SERVICE_URL}/api/v1/audio/results/{job_id}"
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            log.info("audio_results_request", url=url, session_id=session_id)
+            log.info("audio_results_request", url=url, job_id=job_id)
             response = await client.get(url)
             response.raise_for_status()
             return response.json()
@@ -90,6 +89,19 @@ class DomainClient:
             response.raise_for_status()
             return response.json()
 
+    async def analyze_notes(self, session_id: int, notes: str) -> Dict[str, Any]:
+        """Envia as anotações textuais da sessão para análise no document-service."""
+        url = f"{settings.DOCUMENT_SERVICE_URL}/api/v1/documents/analyze-notes"
+        payload = {
+            "session_id": str(session_id),
+            "notes": notes
+        }
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            log.info("document_analyze_notes_request", url=url, session_id=session_id)
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+            return response.json()
+
     async def correlate_risk(
         self,
         session_id: int,
@@ -98,11 +110,11 @@ class DomainClient:
         audio_score: Optional[float] = None,
         document_score: Optional[float] = None
     ) -> Dict[str, Any]:
-        """Calcula o IRA composto no risk-service."""
+        """Calcula o IGA Composto no risk-service."""
         url = f"{settings.RISK_SERVICE_URL}/api/v1/risk/correlate"
         payload = {
             "session_id": str(session_id),
-            "patient_id": patient_code, # patient_code é o ID anonimizado
+            "patient_id": patient_code or "unknown", # patient_code é o ID anonimizado
             "video_score": video_score,
             "audio_score": audio_score,
             "document_score": document_score

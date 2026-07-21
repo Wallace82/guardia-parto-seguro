@@ -12,6 +12,22 @@ from app.alerts.router import router as alerts_router
 from app.auth.router import router as auth_router
 from app.config import settings
 from app.sessions.router import router as sessions_router
+from app.sessions.analysis_router import router as analysis_router
+from app.audit.router import router as audit_router
+from app.settings.router import router as settings_router
+from app.middleware.logging import StructlogMiddleware
+
+# Configura o structlog para gerar JSON
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(20),
+    cache_logger_on_first_use=True,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -51,16 +67,25 @@ Use `POST /api/v1/auth/login` para obter um Bearer token e inclua-o no header:
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501", "http://frontend:8501"],
+    allow_origins=[
+        "http://localhost:4200",   # Angular dev server
+        "http://localhost:4300",   # Angular alternativo
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Observabilidade e Logs
+app.add_middleware(StructlogMiddleware)
+
 # Routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(sessions_router, prefix="/api/v1/sessions", tags=["Sessions"])
+app.include_router(analysis_router)
 app.include_router(alerts_router, prefix="/api/v1/alerts", tags=["Alerts"])
+app.include_router(audit_router, prefix="/api/v1/audit", tags=["Audit"])
+app.include_router(settings_router, prefix="/api/v1/settings", tags=["Settings"])
 
 
 @app.get("/api/v1/health", tags=["Health"])

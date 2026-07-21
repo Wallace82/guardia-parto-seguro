@@ -13,7 +13,7 @@ class AlertCreateRequest(BaseModel):
     severity: str
     title: str = Field(max_length=255)
     description: str
-    ira_score: float | None = None
+    iga_score: float | None = None
 
 
 class AlertAcknowledgeRequest(BaseModel):
@@ -23,14 +23,19 @@ class AlertAcknowledgeRequest(BaseModel):
 class AlertOut(BaseModel):
     id: int
     session_id: int
+    patient_code: str | None = None
+    session_title: str | None = None
     alert_type: str
     severity: str
     title: str
     description: str
-    ira_score: float | None
+    iga_score: float | None
     is_acknowledged: bool
     acknowledged_by: int | None
     acknowledged_at: datetime | None
+    is_dismissed: bool
+    dismissed_by: int | None
+    dismissed_at: datetime | None
     email_sent: bool
     created_at: datetime
 

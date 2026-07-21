@@ -1,0 +1,23 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { SessionAnalysisOut, SessionRiskSummaryOut } from '../models/analysis.models';
+
+@Injectable({ providedIn: 'root' })
+export class AnalysisService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/sessions`;
+
+  getAnalysis(sessionId: number): Observable<SessionAnalysisOut> {
+    return this.http.get<SessionAnalysisOut>(`${this.baseUrl}/${sessionId}/analysis`);
+  }
+
+  getRiskSummary(sessionId: number): Observable<SessionRiskSummaryOut> {
+    return this.http.get<SessionRiskSummaryOut>(`${environment.apiUrl}/session/${sessionId}/risk-summary`);
+  }
+
+  analyzeNotesText(sessionId: number): Observable<{ analysis: string }> {
+    return this.http.get<{ analysis: string }>(`${environment.apiUrl}/session/${sessionId}/analyze-notes`);
+  }
+}

@@ -166,6 +166,11 @@ class AuthService:
         await self.db.flush()  # gera o id antes do commit
         return user
 
+    async def list_users(self) -> list[User]:
+        """Retorna todos os usuários (apenas para Admin/Gestor)."""
+        result = await self.db.execute(select(User).order_by(User.created_at.desc()))
+        return list(result.scalars().all())
+
     async def change_password(
         self, user: User, current_password: str, new_password: str
     ) -> None:

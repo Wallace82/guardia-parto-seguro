@@ -12,6 +12,7 @@ import structlog
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.alerts.models import Alert, AlertSeverity
 from app.alerts.schemas import AlertCreateRequest
@@ -37,7 +38,7 @@ class AlertService:
             severity=data.severity,
             title=data.title,
             description=data.description,
-            ira_score=data.ira_score,
+            iga_score=data.iga_score,
         )
         self.db.add(alert)
         await self.db.flush()
@@ -65,13 +66,14 @@ class AlertService:
         if severity:
             query = query.where(Alert.severity == severity)
         if unacknowledged_only:
-            query = query.where(Alert.is_acknowledged.is_(False))
+            query = query.where(Alert.is_acknowledged.is_(False), Alert.is_dismissed.is_(False))
 
         query = query.order_by(Alert.created_at.desc())
 
         count_query = select(func.count()).select_from(query.subquery())
         total = await self.db.scalar(count_query) or 0
 
+        query = query.options(joinedload(Alert.session))
         result = await self.db.execute(query.offset(skip).limit(limit))
         items = list(result.scalars().all())
 
@@ -79,7 +81,9 @@ class AlertService:
 
     async def acknowledge(self, alert_id: int, acknowledged_by_id: int) -> Alert:
         """Marca alerta como reconhecido pelo profissional/gestor."""
-        result = await self.db.execute(select(Alert).where(Alert.id == alert_id))
+        result = await self.db.execute(
+            select(Alert).where(Alert.id == alert_id).options(joinedload(Alert.session))
+        )
         alert = result.scalar_one_or_none()
 
         if not alert:
@@ -87,15 +91,38 @@ class AlertService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Alerta não encontrado",
             )
-        if alert.is_acknowledged:
+        if alert.is_acknowledged or alert.is_dismissed:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Alerta já foi reconhecido",
+                detail="Alerta já foi reconhecido ou ignorado",
             )
 
         alert.is_acknowledged = True
         alert.acknowledged_by = acknowledged_by_id
         alert.acknowledged_at = datetime.now(timezone.utc)
+        return alert
+
+    async def dismiss(self, alert_id: int, dismissed_by_id: int) -> Alert:
+        """Marca alerta como ignorado (falso positivo ou não relevante)."""
+        result = await self.db.execute(
+            select(Alert).where(Alert.id == alert_id).options(joinedload(Alert.session))
+        )
+        alert = result.scalar_one_or_none()
+
+        if not alert:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Alerta não encontrado",
+            )
+        if alert.is_acknowledged or alert.is_dismissed:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Alerta já foi reconhecido ou ignorado",
+            )
+
+        alert.is_dismissed = True
+        alert.dismissed_by = dismissed_by_id
+        alert.dismissed_at = datetime.now(timezone.utc)
         return alert
 
     async def _send_critical_email(self, alert: Alert) -> None:
@@ -120,7 +147,7 @@ class AlertService:
             <p><strong>Tipo:</strong> {alert.alert_type}</p>
             <p><strong>Título:</strong> {alert.title}</p>
             <p><strong>Descrição:</strong> {alert.description}</p>
-            <p><strong>Score IRA:</strong> {alert.ira_score or "N/A"}</p>
+            <p><strong>Score IGA:</strong> {alert.iga_score or "N/A"}</p>
             <p><strong>Data/Hora:</strong> {alert.created_at}</p>
             <hr>
             <p style="color:#6b7280;font-size:12px;">

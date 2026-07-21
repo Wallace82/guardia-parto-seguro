@@ -1,0 +1,139 @@
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.sessions.models import Session
+from app.sessions.analysis_models import VideoAnalysis, AudioAnalysis, DocumentAnalysis, RiskHistory
+from app.sessions.analysis_schemas import (
+    VideoAnalysisOut, VideoAnalysisCreate,
+    AudioAnalysisOut, AudioAnalysisCreate,
+    DocumentAnalysisOut, DocumentAnalysisCreate,
+    SessionRiskSummaryOut, RiskSourcesOut
+)
+
+
+router = APIRouter(tags=["Analysis"])
+
+# =======================
+# VIDEO ANALYSIS
+# =======================
+@router.post("/api/video-analysis", response_model=VideoAnalysisOut, status_code=status.HTTP_201_CREATED)
+async def create_video_analysis(
+    session_id: int,
+    data: VideoAnalysisCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    session = await db.get(Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    analysis = VideoAnalysis(session_id=session_id, **data.model_dump())
+    db.add(analysis)
+    await db.commit()
+    await db.refresh(analysis)
+    return analysis
+
+@router.get("/api/video-analysis/{analysis_id}", response_model=VideoAnalysisOut)
+async def get_video_analysis(analysis_id: int, db: AsyncSession = Depends(get_db)):
+    analysis = await db.get(VideoAnalysis, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return analysis
+
+
+# =======================
+# AUDIO ANALYSIS
+# =======================
+@router.post("/api/audio-analysis", response_model=AudioAnalysisOut, status_code=status.HTTP_201_CREATED)
+async def create_audio_analysis(
+    session_id: int,
+    data: AudioAnalysisCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    session = await db.get(Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    analysis = AudioAnalysis(session_id=session_id, **data.model_dump())
+    db.add(analysis)
+    await db.commit()
+    await db.refresh(analysis)
+    return analysis
+
+@router.get("/api/audio-analysis/{analysis_id}", response_model=AudioAnalysisOut)
+async def get_audio_analysis(analysis_id: int, db: AsyncSession = Depends(get_db)):
+    analysis = await db.get(AudioAnalysis, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return analysis
+
+
+# =======================
+# DOCUMENT ANALYSIS
+# =======================
+@router.post("/api/document-analysis", response_model=DocumentAnalysisOut, status_code=status.HTTP_201_CREATED)
+async def create_document_analysis(
+    session_id: int,
+    data: DocumentAnalysisCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    session = await db.get(Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    analysis = DocumentAnalysis(session_id=session_id, **data.model_dump())
+    db.add(analysis)
+    await db.commit()
+    await db.refresh(analysis)
+    return analysis
+
+@router.get("/api/document-analysis/{analysis_id}", response_model=DocumentAnalysisOut)
+async def get_document_analysis(analysis_id: int, db: AsyncSession = Depends(get_db)):
+    analysis = await db.get(DocumentAnalysis, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return analysis
+
+
+# =======================
+# SESSION CONSOLIDATED
+# =======================
+@router.get("/api/v1/session/{session_id}/risk-summary", response_model=SessionRiskSummaryOut)
+async def get_session_risk_summary(session_id: int, db: AsyncSession = Depends(get_db)):
+    from app.sessions.models import Session
+    from fastapi import HTTPException
+    
+    session = await db.get(Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        
+    return SessionRiskSummaryOut(
+        sessionId=session_id,
+        globalScore=session.iga_score or 0.0,
+        riskLevel=session.iga_level or "baixo",
+        sources=RiskSourcesOut(
+            video=session.score_video,
+            audio=session.score_audio,
+            document=session.score_document,
+            notes=session.score_notes
+        )
+    )
+
+
+# =======================
+# NOTES ANALYSIS (OPENAI)
+# =======================
+@router.get("/api/v1/session/{session_id}/analyze-notes")
+async def analyze_session_notes(session_id: int, db: AsyncSession = Depends(get_db)):
+    session = await db.get(Session, session_id)
+    if not session or not session.notes:
+        raise HTTPException(status_code=404, detail="Notas não encontradas")
+        
+    try:
+        from app.sessions.service import process_notes_background
+        analysis_text = await process_notes_background(session_id, session.notes)
+        return {"analysis": analysis_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao analisar notas: {str(e)}")

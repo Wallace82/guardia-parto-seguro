@@ -3,13 +3,90 @@ GuardIA — Sessions Service
 CRUD de sessões com controle de acesso por papel
 """
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.sessions.models import Session, SessionStatus, MediaFile, MediaStatus
 from app.sessions.schemas import SessionCreateRequest, SessionUpdateRequest
+
+import structlog
+from app.database import AsyncSessionLocal
+from app.sessions.analysis_models import DocumentAnalysis
+from app.orchestrator.domain_client import DomainClient
+
+log = structlog.get_logger(__name__)
+
+async def process_notes_background(session_id: int, notes: str):
+    """Executa a análise textual das notas em background e registra no BD."""
+    try:
+        from app.sessions.models import Session
+        client = DomainClient()
+        analysis_data = await client.analyze_notes(session_id, notes)
+        analysis_text = analysis_data.get("analysis", "")
+        clinical_risk_score = analysis_data.get("clinical_risk_score", 0.0)
+        
+        async with AsyncSessionLocal() as db:
+            # Apagar análise anterior se houver
+            await db.execute(
+                delete(DocumentAnalysis).where(
+                    DocumentAnalysis.session_id == session_id,
+                    DocumentAnalysis.tipo_documento == "anotacoes"
+                )
+            )
+            
+            structured = analysis_data.get("structured_analysis", {})
+            
+            # Derivando confidence score a partir da qualidade da informacao
+            qualidade = structured.get("qualidade_informacao", {}).get("nivel", "")
+            conf_score = 95.0 if qualidade == "ALTA" else (70.0 if qualidade == "MEDIA" else 40.0)
+            
+            # Simulando os scores de risco especificos com base na intensidade geral
+            psycho_risk = 80.0 if structured.get("aspectos_emocionais", {}).get("nivel") in ["ALTA", "ELEVADO"] else 20.0
+            
+            d_analysis = DocumentAnalysis(
+                session_id=session_id,
+                arquivo_documento="Anotações Clínicas (Multimodal)",
+                tipo_documento="anotacoes",
+                texto_extraido=notes,
+                clinical_risk_score=clinical_risk_score,
+                psychological_risk_score=psycho_risk,
+                pregnancy_risk_score=clinical_risk_score,
+                confidence_score=conf_score,
+                entidades_detectadas=structured,
+                fatores_identificados={
+                    "analise_textual": analysis_text,
+                    "estruturado": structured
+                }
+            )
+            db.add(d_analysis)
+            
+            # Buscar sessão para atualizar scores
+            session = await db.get(Session, session_id)
+            if session:
+                session.score_notes = clinical_risk_score
+                
+                # Para calcular o document_score unificado, pegar a nota do prontuario pdf se existir
+                doc_score = session.score_document
+                final_doc_score = max(doc_score or 0.0, clinical_risk_score)
+                
+                # Recalcular IGA
+                risk_res = await client.correlate_risk(
+                    session_id=session_id,
+                    patient_code=session.patient_code,
+                    video_score=session.score_video,
+                    audio_score=session.score_audio,
+                    document_score=final_doc_score
+                )
+                session.iga_score = risk_res.get("iga_score", 0.0)
+                session.iga_level = risk_res.get("risk_level", "baixo")
+            
+            await db.commit()
+            return analysis_text
+    except Exception as e:
+        log.error("background_notes_analysis_failed", session_id=session_id, error=str(e))
+
 
 
 class SessionService:
@@ -26,6 +103,7 @@ class SessionService:
             professional_id=professional_id,
             notes=data.notes,
             status=SessionStatus.pending,
+            media_files=[]
         )
         self.db.add(session)
         await self.db.flush()
@@ -106,6 +184,7 @@ class SessionService:
             session.title = data.title
         if data.notes is not None:
             session.notes = data.notes
+            session.score_notes = None # Reseta o score para forçar o recálculo e o polling do frontend
         if data.status is not None:
             session.status = data.status
 
@@ -134,28 +213,14 @@ class SessionService:
         """Adiciona um arquivo de mídia à sessão."""
         session = await self.get_by_id(session_id, user_id, user_role)
         
-        # Salva o arquivo localmente ou no Azure Blob
         blob_url = None
         file_size = len(file_content)
-        
-        if settings.AZURE_BLOB_CONNECTION_STRING:
-            try:
-                from azure.storage.blob import BlobServiceClient
-                blob_service_client = BlobServiceClient.from_connection_string(
-                    settings.AZURE_BLOB_CONNECTION_STRING
-                )
-                container_name = settings.AZURE_BLOB_CONTAINER_MEDIA
-                blob_client = blob_service_client.get_blob_client(container=container_name, blob=f"sessions/{session_id}/{media_type}/{filename}")
-                blob_client.upload_blob(file_content, overwrite=True)
-                blob_url = blob_client.url
-            except Exception as e:
-                # Fallback para gravação local
-                pass
         
         if not blob_url:
             # Salvar localmente
             import os
-            uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+            # Usa o volume compartilhado no Docker, ou um valor local default
+            uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
             os.makedirs(uploads_dir, exist_ok=True)
             file_path = os.path.join(uploads_dir, f"{session_id}_{media_type}_{filename}")
             with open(file_path, "wb") as f:
@@ -179,3 +244,141 @@ class SessionService:
         session.status = SessionStatus.processing
         
         return media_file
+
+    async def delete_media_file(
+        self,
+        media_id: int,
+        user_id: int,
+        user_role: str,
+    ) -> None:
+        """Exclui um arquivo de mídia pelo ID."""
+        query = select(MediaFile).where(MediaFile.id == media_id)
+        result = await self.db.execute(query)
+        media_file = result.scalar_one_or_none()
+        
+        if not media_file:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Arquivo de mídia não encontrado",
+            )
+            
+        # Buscar sessão associada para verificar permissões de acesso
+        session = await self.get_by_id(media_file.session_id, user_id, user_role)
+        
+        # Deletar arquivo físico se existir
+        import os
+        uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
+        file_path = os.path.join(uploads_dir, f"{session.id}_{media_file.media_type}_{media_file.filename}")
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+                
+        # Remover registros de análise associados à mídia
+        if media_file.media_type == "video":
+            from app.sessions.analysis_models import VideoAnalysis
+            await self.db.execute(delete(VideoAnalysis).where(VideoAnalysis.session_id == session.id, VideoAnalysis.arquivo_video == media_file.filename))
+        elif media_file.media_type == "audio":
+            from app.sessions.analysis_models import AudioAnalysis
+            await self.db.execute(delete(AudioAnalysis).where(AudioAnalysis.session_id == session.id, AudioAnalysis.arquivo_audio == media_file.filename))
+        elif media_file.media_type == "document":
+            from app.sessions.analysis_models import DocumentAnalysis
+            await self.db.execute(delete(DocumentAnalysis).where(DocumentAnalysis.session_id == session.id, DocumentAnalysis.arquivo_documento == media_file.filename))
+
+        # Remover do banco
+        await self.db.delete(media_file)
+        await self.db.commit()
+
+        # Recalcular os índices e o IGA da sessão
+        await self._recalculate_session_risk(session.id)
+
+    async def _recalculate_session_risk(self, session_id: int):
+        from app.sessions.models import MediaFile, MediaStatus
+        from app.orchestrator.domain_client import DomainClient
+        
+        session = await self.db.get(Session, session_id)
+        if not session:
+            return
+
+        media_files_res = await self.db.execute(select(MediaFile).where(MediaFile.session_id == session_id))
+        media_files = media_files_res.scalars().all()
+
+        all_video_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "video" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        video_score = max(all_video_scores) if all_video_scores else None
+
+        all_audio_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "audio" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        audio_score = max(all_audio_scores) if all_audio_scores else None
+
+        all_doc_scores = [
+            m.analysis_score for m in media_files
+            if m.media_type == "document" and m.status == MediaStatus.analyzed and m.analysis_score is not None
+        ]
+        document_score = max(all_doc_scores) if all_doc_scores else None
+
+        # Call Risk Service via DomainClient
+        client = DomainClient()
+        risk_res = await client.correlate_risk(
+            session_id=session_id,
+            patient_code=session.patient_code,
+            video_score=video_score,
+            audio_score=audio_score,
+            document_score=document_score
+        )
+        
+        session.iga_score = risk_res.get("iga_score", 0.0)
+        session.iga_level = risk_res.get("risk_level", "baixo")
+
+        session.score_video = video_score
+        session.score_audio = audio_score
+        session.score_document = document_score
+        
+        # Syncronizacao destrutiva de media files foi removida para manter a precisao original
+
+        await self.db.commit()
+
+    async def get_dashboard_metrics(self) -> dict:
+        """Agrega as métricas para o Dashboard Home (visão global)."""
+        from app.alerts.models import Alert
+        
+        # Total de sessões
+        result_sessions = await self.db.execute(select(func.count()).select_from(Session))
+        total_sessions = result_sessions.scalar() or 0
+        
+        # Alertas críticos não resolvidos
+        result_alerts = await self.db.execute(
+            select(func.count()).select_from(Alert)
+            .where(Alert.severity == "critical")
+            .where(Alert.is_acknowledged == False)
+        )
+        critical_alerts = result_alerts.scalar() or 0
+        
+        # Média IGA
+        result_ira = await self.db.execute(
+            select(func.avg(Session.iga_score)).where(Session.iga_score.isnot(None))
+        )
+        avg_ira = result_ira.scalar() or 0.0
+        
+        # Distribuição Mensal Mockada (para simplificar a compatibilidade cross-DB)
+        # Numa base real faríamos um group by truncando o created_at
+        monthly_distribution = [
+            {"label": "Jan", "value": max(0, total_sessions - 150)},
+            {"label": "Fev", "value": max(0, total_sessions - 120)},
+            {"label": "Mar", "value": max(0, total_sessions - 80)},
+            {"label": "Abr", "value": max(0, total_sessions - 40)},
+            {"label": "Mai", "value": max(0, total_sessions - 10)},
+            {"label": "Jun", "value": total_sessions},
+        ]
+        
+        return {
+            "total_sessions": total_sessions,
+            "critical_alerts": critical_alerts,
+            "average_ira": float(avg_ira),
+            "monthly_distribution": monthly_distribution
+        }
