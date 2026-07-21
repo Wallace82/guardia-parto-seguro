@@ -226,6 +226,25 @@ interface TimelineEvent {
               }
             </div>
           </div>
+
+          <!-- Objetos na cena -->
+          <div class="glass-card p-5 hover:!transform-none">
+            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <mat-icon class="text-primary-400 !text-lg">category</mat-icon>
+              Objetos na cena
+            </h3>
+            <div class="flex flex-col divide-y divide-border max-h-52 overflow-y-auto pr-2">
+              @for (obj of objectsInScene(); track obj) {
+                <div class="py-2 flex items-center justify-between">
+                  <span class="text-sm font-medium text-white capitalize">{{ obj }}</span>
+                  <mat-icon class="text-warning !text-sm">gpp_maybe</mat-icon>
+                </div>
+              }
+              @if (objectsInScene().length === 0) {
+                <p class="text-sm text-text-muted p-2">Nenhum objeto de risco detectado.</p>
+              }
+            </div>
+          </div>
         </div>
       </div>
 
@@ -438,6 +457,23 @@ export class VideoAnalysisPageComponent implements OnInit, OnDestroy {
     { name: 'Paciente (Anônima)', role: 'paciente' },
     { name: 'Profissional de Saúde', role: 'medico' },
   ];
+
+  objectsInScene = computed(() => {
+    const events = this.timelineEvents().filter(e => e.type === 'object');
+    const objects = new Set<string>();
+    
+    events.forEach(e => {
+      // Regex to extract the object name from "Alerta de Objeto: [NOME] detectado na cena clínica"
+      const match = e.description.match(/Alerta de Objeto: (.*?) detectado/i);
+      if (match && match[1]) {
+        objects.add(match[1].trim());
+      } else {
+        // Fallback se a string do YOLO mudar
+        objects.add(e.description.replace('Alerta de Objeto:', '').replace('detectado na cena clínica', '').trim() || 'Objeto Suspeito');
+      }
+    });
+    return Array.from(objects);
+  });
 
   currentVideoFile = computed<VideoFileData | null>(() => {
     const files = this.videoFiles();

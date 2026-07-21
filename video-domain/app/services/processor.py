@@ -54,8 +54,8 @@ class VideoProcessor:
             pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
             mp_drawing = mp.solutions.drawing_utils
             
-            # Carregar modelo YOLOv8 Nano
-            yolo_model = YOLO("yolov8n.pt")
+            # Carregar modelo YOLOv8 Extra Large (maior precisão)
+            yolo_model = YOLO("yolov8x.pt")
 
             total_frames = 0
             fps = 30.0
@@ -151,27 +151,113 @@ class VideoProcessor:
                             except Exception as e:
                                 pass
                                 
+                             # Detecção de Sangramento (OpenCV HSV)
+                            try:
+                                import numpy as np
+                                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                                # Tons de vermelho (sangue)
+                                mask1 = cv2.inRange(hsv, np.array([0, 100, 50]), np.array([10, 255, 255]))
+                                mask2 = cv2.inRange(hsv, np.array([170, 100, 50]), np.array([180, 255, 255]))
+                                red_mask = mask1 + mask2
+                                red_ratio = cv2.countNonZero(red_mask) / (frame.shape[0] * frame.shape[1])
+                                
+                                if red_ratio > 0.02: # 2% da tela coberta por vermelho forte
+                                    has_recent_blood = any(kf["type"] == "bleeding" and (current_second - kf["timestamp_seconds"] < 10) for kf in key_findings)
+                                    if not has_recent_blood:
+                                        key_findings.append({
+                                            "type": "bleeding",
+                                            "timestamp_seconds": round(current_second, 1),
+                                            "description": "Alerta: Sangramento anômalo ou fluidos detectados",
+                                            "confidence": min(0.99, red_ratio * 20)
+                                        })
+                            except Exception:
+                                pass
+
                             # C. YOLOv8 (Objetos Cortantes/Cirúrgicos)
                             try:
                                 results = yolo_model(frame, verbose=False)
+                                
+                                medical_mapping = {
+                                    # Equipamentos
+                                    "tv": "Monitor Médico",
+                                    "laptop": "Monitor Médico",
+                                    "computer": "Monitor Médico",
+                                    "keyboard": "Monitor de Sinais",
+                                    "mouse": "Mouse Médico",
+                                    "remote": "Monitor Cardíaco",
+                                    "cell phone": "Monitor Portátil",
+                                
+                                    # Instrumentos
+                                    "knife": "Bisturi",
+                                    "scissors": "Tesoura Cirúrgica",
+                                    "fork": "Pinça Cirúrgica",
+                                    "spoon": "Afastador",
+                                    "toothbrush": "Seringa",
+                                    "pen": "Caneta Cirúrgica",
+                                
+                                    # Materiais
+                                    "bottle": "Frasco de Soro",
+                                    "cup": "Copo Estéril",
+                                    "wine glass": "Coletor",
+                                    "bowl": "Cuba Rim",
+                                    "vase": "Recipiente Hospitalar",
+                                
+                                    # Proteção
+                                    "tie": "Estetoscópio",
+                                    "backpack": "Bolsa Médica",
+                                    "handbag": "Maleta Médica",
+                                    "suitcase": "Maleta Médica",
+                                
+                                    # Mobiliário
+                                    "bed": "Maca Hospitalar",
+                                    "chair": "Cadeira",
+                                    "couch": "Leito",
+                                    "dining table": "Mesa Cirúrgica",
+                                
+                                    # Pessoas
+                                    "person": "Profissional / Paciente",
+                                
+                                    # Objetos diversos
+                                    "book": "Prontuário",
+                                    "clock": "Relógio",
+                                    "teddy bear": "Boneco de Treinamento",
+                                    "sports ball": "Cabeça do Bebê",
+                                    "orange": "Placenta (Teste)",
+                                    "banana": "Cordão Umbilical (Teste)",
+                                    "apple": "Órgão (Teste)",
+                                    "broccoli": "Tecido (Teste)",
+                                    "carrot": "Cateter (Teste)",
+                                
+                                    # Equipamentos de apoio
+                                    "microwave": "Incubadora",
+                                    "oven": "Autoclave",
+                                    "refrigerator": "Geladeira de Medicamentos",
+                                    "sink": "Pia Clínica",
+                                
+                                    # Animais (apenas para teste)
+                                    "dog": "Paciente (Teste)",
+                                    "cat": "Recém-nascido (Teste)"
+                                }
+
                                 for r in results:
                                     for box in r.boxes:
                                         cls = int(box.cls[0])
                                         class_name = yolo_model.names[cls]
                                         conf = float(box.conf[0])
                                         
-                                        # knife ou scissors no COCO dataset
-                                        if class_name in ['knife', 'scissors'] and conf > 0.4:
+                                        if class_name in medical_mapping and conf > 0.05:
                                             x1, y1, x2, y2 = map(int, box.xyxy[0])
                                             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 165, 255), 3)
-                                            label = "Bisturi/Instrumento" if class_name == 'knife' else "Tesoura Cirurgica"
+                                            label = medical_mapping[class_name]
                                             cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
                                             
-                                            # Evita registrar a mesma tesoura a cada 1 segundo (cooldown 10s para objetos)
-                                            has_recent_obj = any(kf["type"] == "object_detection" and (current_second - kf["timestamp_seconds"] < 10) for kf in key_findings)
+                                            log.info("yolo_object_detected", original_class=class_name, mapped_label=label, conf=conf, second=current_second)
+
+                                            # Evita registrar o MESMO objeto a cada 1 segundo (cooldown 10s por label)
+                                            has_recent_obj = any(kf["type"] == "object" and label in kf["description"] and (current_second - kf["timestamp_seconds"] < 10) for kf in key_findings)
                                             if not has_recent_obj:
                                                 key_findings.append({
-                                                    "type": "object_detection",
+                                                    "type": "object",
                                                     "timestamp_seconds": round(current_second, 1),
                                                     "description": f"Alerta de Objeto: {label} detectado na cena clínica",
                                                     "confidence": round(conf, 2)

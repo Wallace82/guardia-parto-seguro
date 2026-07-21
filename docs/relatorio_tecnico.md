@@ -22,7 +22,7 @@ O fluxo ocorre nas seguintes etapas:
 A solução emprega um conjunto de modelos state-of-the-art adaptados para o contexto clínico de saúde da mulher:
 
 ### A. Domínio de Vídeo (Visão Computacional)
-* **YOLOv8 Nano (Ultralytics):** Treinado/mapeado no dataset COCO para detecção de objetos de risco. É utilizado na triagem de automutilação ou exposição inadequada de instrumentos, identificando cirúrgicos (tesouras, bisturis).
+* **YOLOv8 Extra Large - YOLOv8x (Ultralytics):** Empregado o modelo de máxima precisão arquitetural (68M de parâmetros), mapeado no dataset COCO com limiares de confiança adaptados para detecção de objetos de risco. É utilizado na triagem robusta de automutilação ou exposição inadequada de instrumentos em campo operatório, identificando cirúrgicos metálicos (tesouras, pinças e bisturis).
 * **DeepFace (RetinaFace):** Análise de microexpressões faciais quadro a quadro. Consegue inferir estados de tensão, medo, tristeza e picos de dor (mapeados a partir da classe "angry" em contexto obstétrico).
 * **MediaPipe Pose (Google):** Estimação de marcos corporais (Landmarks) para avaliar a postura da paciente. Identifica movimentos bruscos ou a perda de enquadramento da paciente por longos períodos.
 
