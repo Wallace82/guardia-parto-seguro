@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import CurrentUser
+from app.audit.service import AuditService
 from app.sessions.schemas import (
     SessionCreateRequest,
     SessionCreatedResponse,
@@ -16,6 +17,7 @@ from app.sessions.schemas import (
     SessionOut,
     SessionUpdateRequest,
     MediaFileOut,
+    DashboardMetricsOut,
 )
 from app.sessions.service import SessionService
 
@@ -32,6 +34,7 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 )
 async def create_session(
     data: SessionCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: DB,
 ):
@@ -40,6 +43,12 @@ async def create_session(
     O `patient_code` deve ser um identificador anonimizado — nunca o nome real (LGPD).
     """
     session = await SessionService(db).create(data, current_user.id)
+    await AuditService.log_action(db, action="create_session", resource=f"session_{session.id}", user_id=current_user.id)
+    
+    if session.notes:
+        from app.sessions.service import process_notes_background
+        background_tasks.add_task(process_notes_background, session.id, session.notes)
+        
     return SessionCreatedResponse(session=SessionOut.model_validate(session))
 
 
@@ -83,6 +92,7 @@ async def get_session(
     session = await SessionService(db).get_by_id(
         session_id, current_user.id, current_user.role
     )
+    await AuditService.log_action(db, action="view_session", resource=f"session_{session.id}", user_id=current_user.id)
     return SessionOut.model_validate(session)
 
 
@@ -94,6 +104,7 @@ async def get_session(
 async def update_session(
     session_id: int,
     data: SessionUpdateRequest,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: DB,
 ):
@@ -101,6 +112,12 @@ async def update_session(
     session = await SessionService(db).update(
         session_id, data, current_user.id, current_user.role
     )
+    await AuditService.log_action(db, action="update_session", resource=f"session_{session.id}", user_id=current_user.id)
+    
+    if data.notes is not None:
+        from app.sessions.service import process_notes_background
+        background_tasks.add_task(process_notes_background, session.id, session.notes)
+        
     return SessionOut.model_validate(session)
 
 
@@ -114,8 +131,91 @@ async def delete_session(
     current_user: CurrentUser,
     db: DB,
 ):
-    """Remove a sessão e todos os seus arquivos de mídia associados."""
     await SessionService(db).delete(session_id, current_user.id, current_user.role)
+    await AuditService.log_action(db, action="delete_session", resource=f"session_{session_id}", user_id=current_user.id)
+
+
+@router.delete(
+    "/media/{media_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir arquivo de mídia de uma sessão",
+)
+async def delete_media_file(
+    media_id: int,
+    current_user: CurrentUser,
+    db: DB,
+):
+    await SessionService(db).delete_media_file(media_id, current_user.id, current_user.role)
+    await AuditService.log_action(db, action="delete_media_file", resource=f"media_{media_id}", user_id=current_user.id)
+
+
+@router.get(
+    "/{session_id}/media/{media_id}/download",
+    summary="Baixar/streamar um arquivo de mídia",
+)
+async def download_media_file(
+    session_id: int,
+    media_id: int,
+    db: DB,
+    token: str = Query(None),
+):
+    """
+    Retorna o arquivo de mídia para reprodução no frontend.
+    Suporta streaming de vídeo/áudio.
+    """
+    from fastapi.responses import FileResponse
+    from sqlalchemy import select
+    from app.sessions.models import MediaFile
+    from jose import JWTError, jwt
+    from app.config import settings
+    from fastapi import HTTPException
+    import os
+
+    # Validate token from query param (video elements don't send Authorization header)
+    if not token:
+        raise HTTPException(status_code=401, detail="Token ausente")
+    try:
+        jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    result = await db.execute(
+        select(MediaFile).where(MediaFile.id == media_id, MediaFile.session_id == session_id)
+    )
+    media_file = result.scalar_one_or_none()
+    if not media_file:
+        raise HTTPException(status_code=404, detail="Arquivo de mídia não encontrado")
+
+    # Extract the physical path from the blob_url
+    blob_url = media_file.blob_url or ""
+    if blob_url.startswith("file:////"):
+        file_path = "/" + blob_url[len("file:////"):]
+    elif blob_url.startswith("file:///"):
+        file_path = blob_url[len("file:///"):]
+    elif blob_url.startswith("file://"):
+        file_path = blob_url[len("file://"):]
+    else:
+        file_path = blob_url
+
+    # Check for annotated version first
+    annotated_path = file_path.replace(".mp4", "_annotated.mp4")
+    if os.path.exists(annotated_path):
+        file_path = annotated_path
+    elif not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado no storage: {media_file.filename}")
+
+    # Determine content type
+    content_type = media_file.content_type or "application/octet-stream"
+    if media_file.media_type == "video" and "video" not in content_type:
+        content_type = "video/mp4"
+    elif media_file.media_type == "audio" and "audio" not in content_type:
+        content_type = "audio/mpeg"
+
+    return FileResponse(
+        path=file_path,
+        media_type=content_type,
+        filename=media_file.filename,
+    )
 
 
 @router.post(
@@ -154,8 +254,370 @@ async def upload_media(
         user_role=current_user.role,
     )
 
+    if media_type == "video":
+        import tempfile
+        import os
+        import subprocess
+        
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
+                tmp_vid.write(file_content)
+                tmp_vid_path = tmp_vid.name
+                
+            tmp_aud_path = tmp_vid_path.replace(".mp4", ".mp3")
+            
+            subprocess.run([
+                "ffmpeg", "-i", tmp_vid_path, 
+                "-vn", "-acodec", "libmp3lame", "-q:a", "2", 
+                tmp_aud_path, "-y"
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            if os.path.exists(tmp_aud_path):
+                with open(tmp_aud_path, "rb") as f_aud:
+                    audio_bytes = f_aud.read()
+                    
+                await SessionService(db).add_media_file(
+                    session_id=session_id,
+                    filename=file.filename.rsplit('.', 1)[0] + ".mp3",
+                    content_type="audio/mpeg",
+                    media_type="audio",
+                    file_content=audio_bytes,
+                    user_id=current_user.id,
+                    user_role=current_user.role,
+                )
+                os.remove(tmp_aud_path)
+            os.remove(tmp_vid_path)
+        except Exception as e:
+            import structlog
+            structlog.get_logger(__name__).warning("audio_extraction_failed", error=str(e))
+
     # Dispara o orquestrador em background
     from app.orchestrator.orchestrator import orchestrate_session_analysis
     background_tasks.add_task(orchestrate_session_analysis, session_id)
 
     return media_file
+
+
+@router.get(
+    "/{session_id}/analysis",
+    summary="Obter análise detalhada da sessão (transcrição, sentimentos, justificativas)",
+)
+async def get_session_analysis(
+    session_id: int,
+    current_user: CurrentUser,
+    db: DB,
+):
+    """
+    Retorna os dados detalhados de análise da sessão:
+    - Transcrição e sentimentos (audio-service)
+    - Ocorrências de vídeo (video-service)
+    - Justificativas e recomendações de risco (risk-service)
+    """
+    session = await SessionService(db).get_by_id(
+        session_id, current_user.id, current_user.role
+    )
+    
+    if session.status != "completed" and session.iga_score is None:
+        return {
+            "session_id": session_id,
+            "status": session.status,
+            "transcription": None,
+            "video_findings": [],
+            "risk_details": None,
+            "factors": None
+        }
+
+    from app.orchestrator.domain_client import DomainClient
+    from sqlalchemy import select
+    from app.sessions.analysis_models import DocumentAnalysis
+    client = DomainClient()
+    
+    transcription = None
+    video_findings = []
+    risk_details = None
+    full_text = ""
+    audio_res = None
+
+    try:
+        audio_res = await client.get_audio_results(session_id)
+        if audio_res and audio_res.get("status") == "completed":
+            full_text = audio_res.get("transcription", "")
+            key_findings = audio_res.get("key_findings", [])
+            segments = []
+            
+            # Não injetamos key_findings como transcrição, pois são análises semânticas, não falas
+            # Apenas criamos um segmento genérico para o full_text real transcrito
+            if full_text:
+                segments.append({
+                    "speaker": "Gravação de Áudio",
+                    "role": "desconhecido",
+                    "start": 0.0,
+                    "end": audio_res.get("duration", 10.0),
+                    "text": full_text,
+                    "sentiment": "neutral",
+                    "sentiment_confidence": 1.0
+                })
+
+            transcription = {
+                "full_text": full_text,
+                "segments": segments
+            }
+    except Exception as e:
+        import structlog
+        structlog.get_logger(__name__).warning("get_session_analysis.audio_failed", session_id=session_id, error=str(e))
+
+    video_analyses = {}
+    video_findings = []
+    
+    for f in session.media_files:
+        if f.media_type == "video":
+            try:
+                res = await client.get_video_results(f.id)
+                if res and res.get("status") == "completed":
+                    video_analyses[str(f.id)] = res
+                    if not video_findings:
+                        video_findings = res.get("key_findings", [])
+            except Exception as e:
+                import structlog
+                structlog.get_logger(__name__).warning("get_session_analysis.video_file_failed", media_id=f.id, error=str(e))
+
+    factors = {
+        "positive": [],
+        "attention": [],
+        "recommendation": "Sem recomendações geradas. O serviço de risco pode estar indisponível."
+    }
+
+    # Fatores REAIS de vídeo
+    has_video_attention = False
+    if video_findings:
+        for vf in video_findings:
+            desc = vf.get("description", "")
+            if desc:
+                factors["attention"].append(f"Vídeo: {desc}")
+                has_video_attention = True
+
+    # Fatores REAIS de áudio (se houver análise semântica em key_findings do áudio)
+    if audio_res and audio_res.get("key_findings"):
+        for finding in audio_res.get("key_findings"):
+            desc = finding.get("description", "")
+            impact = finding.get("impacto", "")
+            if impact == "POSITIVO":
+                factors["positive"].append(f"Áudio: {desc}")
+            else:
+                factors["attention"].append(f"Áudio: {desc}")
+
+    # Fatores reais extraídos de Prontuários (PDF)
+    pdf_analysis_res = await db.execute(
+        select(DocumentAnalysis).where(
+            DocumentAnalysis.session_id == session_id,
+            DocumentAnalysis.tipo_documento != "anotacoes"
+        ).order_by(DocumentAnalysis.id.desc())
+    )
+    pdf_analysis = pdf_analysis_res.scalars().first()
+    
+    doc_text = "Nenhum prontuário processado."
+    doc_rec = "Nenhuma ação requerida"
+    if pdf_analysis and pdf_analysis.fatores_identificados and "estruturado" in pdf_analysis.fatores_identificados:
+        estruturado_pdf = pdf_analysis.fatores_identificados["estruturado"]
+        
+        doc_text = f"Análise de prontuário baseada em dados reais (Score IRA: {pdf_analysis.clinical_risk_score})."
+        if pdf_analysis.clinical_risk_score and pdf_analysis.clinical_risk_score >= 50:
+            doc_rec = "Revisar prontuário detalhadamente devido aos riscos assistenciais identificados."
+
+        # Fatores de Risco
+        for risk in estruturado_pdf.get("risk_factors", []):
+            factors["attention"].append(f"Prontuário (Risco): {risk}")
+            
+        # Evidências
+        evidence = estruturado_pdf.get("evidence", {})
+        if evidence.get("positive"):
+            factors["positive"].append(f"Prontuário: {evidence.get('positive')}")
+        for attn in evidence.get("attention_points", []):
+            factors["attention"].append(f"Prontuário (Atenção): {attn}")
+
+    risk_details = {
+        "video": {
+            "text": "Não há gravação ou detecção visual para esta sessão." if not video_findings else f"Análise de vídeo extraiu {len(video_findings)} expressões/posturas relevantes.",
+            "recommendation": "Revisar abordagem visual durante procedimentos" if has_video_attention else "Nenhuma ação requerida"
+        },
+        "audio": {
+            "text": "Não há transcrição de áudio para esta sessão." if not full_text else f"Transcrição capturou {len(full_text.split())} palavras para análise semântica.",
+            "recommendation": "Verificar adequação de analgesia ou tom de voz" if audio_res and audio_res.get("key_findings") else "Nenhuma ação requerida"
+        },
+        "document": {
+            "text": doc_text,
+            "recommendation": doc_rec
+        }
+    }
+
+    # Adicionar os fatores reais extraídos das Anotações Clínicas
+    notes_analysis_res = await db.execute(
+        select(DocumentAnalysis).where(
+            DocumentAnalysis.session_id == session_id,
+            DocumentAnalysis.tipo_documento == "anotacoes"
+        )
+    )
+    notes_analysis = notes_analysis_res.scalars().first()
+    
+    notes_text = None
+    if notes_analysis and notes_analysis.fatores_identificados:
+        notes_text = notes_analysis.fatores_identificados.get("analise_textual")
+        if "estruturado" in notes_analysis.fatores_identificados:
+            estruturado = notes_analysis.fatores_identificados["estruturado"]
+            
+            # Indicadores identificados (Anotações)
+            for ind in estruturado.get("indicadores_identificados", []):
+                desc = ind.get("descricao", "")
+                impacto = ind.get("impacto", "ATENCAO").upper()
+                if desc:
+                    if impacto == "POSITIVO":
+                        factors["positive"].append(f"Anotações: {desc}")
+                    else:
+                        factors["attention"].append(f"Anotações: {desc}")
+                        
+            # Fatores de risco (Anotações)
+            for risk in estruturado.get("fatores_risco", []):
+                factors["attention"].append(f"Risco (Anotações): {risk}")
+                
+            # Qualidade de informação
+            qualidade = estruturado.get("qualidade_informacao", {})
+            if qualidade.get("nivel") == "BAIXA":
+                factors["attention"].append(f"Qualidade das Anotações: {qualidade.get('observacao')}")
+
+    # A recomendação principal pode vir do maior score ou da analise geral
+    if session.iga_score and session.iga_score >= 70:
+        factors["recommendation"] = "Risco alto identificado. Intervenção imediata recomendada."
+    elif session.iga_score and session.iga_score >= 40:
+        factors["recommendation"] = "Risco moderado. Aumentar vigilância e revisar analgesia."
+    elif session.iga_score is not None:
+        factors["recommendation"] = "Baixo risco. Manter monitoramento regular."
+    else:
+        factors["recommendation"] = "Recomendação não disponível (cálculo pendente)."
+
+    return {
+        "session_id": session_id,
+        "status": session.status,
+        "transcription": transcription,
+        "video_findings": video_findings,
+        "video_analyses": video_analyses,
+        "risk_details": risk_details,
+        "factors": factors,
+        "notes_analysis_text": notes_text
+    }
+
+@router.get(
+    "/metrics/dashboard",
+    response_model=DashboardMetricsOut,
+    summary="Obter métricas agregadas para o painel principal",
+)
+async def get_dashboard_metrics(
+    current_user: CurrentUser,
+    db: DB,
+):
+    """
+    Retorna total de sessões, alertas críticos pendentes, média de IGA 
+    e um breakdown mensal básico para montar o gráfico.
+    """
+    metrics = await SessionService(db).get_dashboard_metrics()
+    return metrics
+
+@router.get(
+    "/{session_id}/report/pdf",
+    summary="Baixar relatório executivo da sessão em PDF binário",
+)
+async def get_session_report_pdf(
+    session_id: int,
+    current_user: CurrentUser,
+    db: DB,
+):
+    """
+    Retorna um arquivo PDF binário contendo o sumário da sessão.
+    Geração minimalista (simulada via stream binária direta) para evitar dependências pesadas em homologação.
+    """
+    from fastapi.responses import Response
+    from fpdf import FPDF
+    
+    # Confirma que a sessão existe e que o usuário tem acesso
+    session = await SessionService(db).get_by_id(session_id, current_user.id, current_user.role)
+    await AuditService.log_action(db, action="download_report", resource=f"session_{session_id}", user_id=current_user.id)
+    
+    class PDF(FPDF):
+        def header(self):
+            self.set_font("helvetica", "B", 16)
+            self.cell(0, 10, "Relatorio Executivo - GuardIA", border=False, align="C", new_x="LMARGIN", new_y="NEXT")
+            self.ln(5)
+            
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("helvetica", "I", 8)
+            self.cell(0, 10, f"Pagina {self.page_no()}/{{nb}}", align="C")
+
+    pdf = PDF()
+    pdf.add_page()
+    
+    # Informações Básicas
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, "Informacoes da Sessao", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    
+    pdf.cell(0, 8, f"Sessao ID: {session.id}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Paciente: {session.patient_code}", new_x="LMARGIN", new_y="NEXT")
+    if session.title:
+        pdf.cell(0, 8, f"Titulo: {session.title}", new_x="LMARGIN", new_y="NEXT")
+    if session.created_at:
+        pdf.cell(0, 8, f"Data/Hora: {session.created_at.strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+        
+    pdf.ln(5)
+    
+    # Classificação de Risco
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Classificacao de Risco (IGA)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Arial", "", 12)
+    
+    iga_score = f"{session.iga_score:.1f}%" if session.iga_score is not None else "N/A"
+    iga_level = session.iga_level.upper() if session.iga_level else "N/A"
+    
+    pdf.cell(0, 8, f"Nivel de Risco: {iga_level}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Score IGA: {iga_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Detalhes de Score
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, "Scores por Fonte Analisada", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    
+    v_score = f"{session.score_video:.1f}" if session.score_video is not None else "N/A"
+    a_score = f"{session.score_audio:.1f}" if session.score_audio is not None else "N/A"
+    d_score = f"{session.score_document:.1f}" if session.score_document is not None else "N/A"
+    n_score = f"{session.score_notes:.1f}" if session.score_notes is not None else "N/A"
+    
+    pdf.cell(0, 8, f"Video: {v_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Audio: {a_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Documentos: {d_score}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, f"Anotacoes: {n_score}", new_x="LMARGIN", new_y="NEXT")
+    
+    pdf.ln(5)
+    
+    # Anotações Médicas
+    if session.notes:
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "Anotacoes", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "", 12)
+        
+        # Filtrar caracteres especiais que a FPDF1/latin-1 pode reclamar caso use encoding antigo, 
+        # porém fpdf2 suporta unicode nativamente (UTF-8).
+        pdf.multi_cell(0, 8, session.notes, new_x="LMARGIN", new_y="NEXT")
+
+    # Autenticidade
+    pdf.ln(10)
+    pdf.set_font("helvetica", "I", 10)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 6, "Documento gerado eletronicamente pelo sistema GuardIA.", new_x="LMARGIN", new_y="NEXT")
+    
+    pdf_content = bytes(pdf.output())
+    
+    return Response(
+        content=pdf_content, 
+        media_type="application/pdf", 
+        headers={"Content-Disposition": f'attachment; filename="Prontuario_GuardIA_Sessao_{session_id}.pdf"'}
+    )

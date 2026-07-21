@@ -4,7 +4,7 @@ GuardIA — Risk Correlation Domain Service
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from app.calculators.ira_calculator import calculate_ira, IRAInput, RiskLevel
+from app.calculators.iga_calculator import calculate_iga, IGAInput, RiskLevel
 
 app = FastAPI(title="GuardIA — Risk Service", version="1.0.0")
 
@@ -23,14 +23,14 @@ async def health():
 async def correlate(data: RiskCorrelateRequest):
     try:
         # Converter para o modelo de domínio do calculador
-        domain_input = IRAInput(
+        domain_input = IGAInput(
             session_id=data.session_id,
             patient_id=data.patient_id,
             video_score=data.video_score,
             audio_score=data.audio_score,
             document_score=data.document_score
         )
-        result = calculate_ira(domain_input)
+        result = calculate_iga(domain_input)
         
         # Gerar recomendações/indicadores para compatibilidade com API_SPEC.md
         video_indicators = []
@@ -56,7 +56,7 @@ async def correlate(data: RiskCorrelateRequest):
 
         return {
             "session_id": result.session_id,
-            "ira_score": result.ira_score,
+            "iga_score": result.iga_score,
             "risk_level": result.risk_level.value,
             "calculation": {
                 "video_contribution": result.video_contribution,

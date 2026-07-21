@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "GuardIA Parto Seguro - AWS Domain",
+    "description": "Testes para o S3 (Pre-signed URLs) e Amazon Textract",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. S3: Gerar URL de Upload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"file_name\": \"prontuario_teste.pdf\",\n  \"bucket_type\": \"media\",\n  \"expiration_seconds\": 3600,\n  \"content_type\": \"application/pdf\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8007/api/v1/s3/upload-url",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8007",
+          "path": [
+            "api",
+            "v1",
+            "s3",
+            "upload-url"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. S3: Fazer Upload do PDF",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/pdf"
+          }
+        ],
+        "body": {
+          "mode": "file",
+          "file": {}
+        },
+        "url": {
+          "raw": "<COLE_AQUI_A_URL_GERADA_NO_PASSO_1>",
+          "host": [
+            "<COLE_AQUI_A_URL_GERADA_NO_PASSO_1>"
+          ]
+        },
+        "description": "Selecione a aba 'Body' -> 'binary' e escolha um PDF do seu computador."
+      }
+    },
+    {
+      "name": "3. Textract: Iniciar Análise OCR",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"file_name\": \"prontuario_teste.pdf\",\n  \"bucket_type\": \"media\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8007/api/v1/textract/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8007",
+          "path": [
+            "api",
+            "v1",
+            "textract",
+            "analyze"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Textract: Obter Resultados",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8007/api/v1/textract/results/<COLE_O_JOB_ID_AQUI>",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8007",
+          "path": [
+            "api",
+            "v1",
+            "textract",
+            "results",
+            "<COLE_O_JOB_ID_AQUI>"
+          ]
+        }
+      }
+    }
+  ]
+}

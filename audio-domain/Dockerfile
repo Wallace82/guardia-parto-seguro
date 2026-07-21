@@ -1,6 +1,6 @@
 # =====================================================
 # GuardIA — Audio Domain Service
-# Deps: Azure Speech SDK, Azure AI Language
+# Deps: AWS Transcribe SDK (boto3)
 # =====================================================
 
 FROM python:3.11-slim AS builder

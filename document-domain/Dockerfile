@@ -1,6 +1,6 @@
 # =====================================================
 # GuardIA — Document Domain Service
-# Deps: Azure Document Intelligence, pypdf, pillow
+# Deps: AWS Textract SDK (boto3), pypdf, pillow
 # =====================================================
 
 FROM python:3.11-slim AS builder
