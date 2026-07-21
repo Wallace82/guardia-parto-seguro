@@ -40,42 +40,109 @@ Para um entendimento profundo do sistema auditado, consulte a nossa nova central
 
 ---
 
-## 🚀 Instalação e Execução (Ambiente de Desenvolvimento)
+## 🚀 Guia Completo de Instalação e Execução (Ambiente de Desenvolvimento)
 
-### Pré-requisitos
-- **Docker** e **Docker Compose**
-- Python 3.12+ (caso rode algum serviço nativamente)
-- Node.js 18+ e Angular CLI
-- Variáveis de ambiente configuradas no arquivo `.env` (Copie de `.env.example` e certifique-se de preencher `OPENAI_API_KEY`).
+Para rodar o GuardIA Parto Seguro localmente e contribuir com o projeto, siga o passo a passo abaixo.
 
-### Start Rápido (Docker)
+### 1. Pré-requisitos
 
-Todo o orquestramento de Containers está centralizado nos scripts de start da raiz:
+Certifique-se de ter as seguintes ferramentas instaladas na sua máquina:
+- **Git**: Para clonar o repositório.
+- **Docker e Docker Compose**: Essencial para rodar o banco de dados (PostgreSQL), Redis e/ou os microsserviços em contêineres.
+- **Node.js 18+**: Para o desenvolvimento do Frontend.
+- **Angular CLI**: Instalado globalmente (`npm install -g @angular/cli`).
+- **Python 3.12+**: Caso decida rodar o orquestrador ou os workers de IA nativamente fora do Docker.
+- **FFmpeg**: Necessário na máquina host se rodar o `video-service` localmente sem Docker (para processamento de vídeo).
 
-**Windows (PowerShell)**:
+### 2. Clonando o Repositório
+
+```bash
+git clone https://github.com/seu-usuario/guardia-parto-seguro.git
+cd guardia-parto-seguro
+```
+
+### 3. Configurando as Variáveis de Ambiente (.env)
+
+O sistema depende de chaves externas de IA e configurações de banco de dados. Na raiz do projeto, crie um arquivo `.env` baseado no arquivo de exemplo:
+
+```bash
+cp .env.example .env
+```
+
+**Principais Variáveis Necessárias no `.env`:**
+- `DATABASE_URL`: String de conexão com o PostgreSQL (ex: `postgresql+asyncpg://postgres:postgres@localhost:5432/core_db`).
+- `REDIS_URL`: Conexão com o Redis (ex: `redis://localhost:6379/0`).
+- `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa.
+- `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos e áudio em nuvem).
+- `AWS_REGION`: Região da AWS (ex: `us-east-1`).
+- `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
+
+### 4. Rodando o Banco de Dados e Redis
+
+A maneira mais fácil de subir a infraestrutura de apoio é usando o Docker Compose na raiz do projeto:
+
+```bash
+docker-compose up -d postgres-core redis
+```
+*(Isso vai liberar a porta 5432 para o banco de dados e 6379 para o Redis localmente).*
+
+### 5. Rodando o Backend (Core API e Workers de IA)
+
+Você pode optar por rodar todos os serviços via Docker ou rodar nativamente para debugar.
+
+#### Opção A: Tudo via Docker (Recomendado para Start Rápido)
+Use os scripts na raiz para subir todos os 7 microsserviços simultaneamente.
+**Windows (PowerShell):**
 ```powershell
 .\start.ps1
 ```
-
-**Linux / Mac**:
+**Linux / Mac:**
 ```bash
 chmod +x start.sh
 ./start.sh
 ```
 
-Isso subirá:
-1. Banco de Dados e Redis.
-2. Todas as 7 APIs de microsserviços.
-3. O Frontend (na porta do seu localhost configurado ou requerendo `ng serve`).
-
-*Para rodar o frontend localmente fora do docker (recomendado para desenvolvimento)*:
+#### Opção B: Desenvolvimento Nativo (Python)
+Ideal para debugar o código do backend (`core-api`, por exemplo) ou algum worker de IA.
 ```bash
+# Entre na pasta do backend core (ou de qualquer outro serviço)
+cd backend 
+
+# Crie e ative um ambiente virtual
+python -m venv venv
+# No Linux/Mac: source venv/bin/activate
+# No Windows: venv\Scripts\activate
+
+# Instale as dependências
+pip install -r requirements.txt
+
+# (Apenas no core-api) Rode as migrações do banco de dados
+alembic upgrade head
+
+# Inicie o servidor
+uvicorn app.main:app --reload --port 8000
+```
+
+### 6. Rodando o Frontend (Angular)
+
+Para desenvolvimento de interface, recomendamos rodar o frontend fora do Docker para aproveitar o recarregamento instantâneo (*Hot Reload*).
+
+```bash
+# Abra um novo terminal e navegue para a pasta do frontend
 cd guardia-frontend
+
+# Instale as dependências do Node
 npm install
+
+# Inicie o servidor de desenvolvimento do Angular
 ng serve
 ```
 
-Acesse em: `http://localhost:4200`
+### 7. Acessando a Plataforma
+
+Com tudo rodando, você pode acessar:
+- **Painel Frontend (SPA)**: [http://localhost:4200](http://localhost:4200)
+- **Documentação da API Backend (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
