@@ -7,10 +7,10 @@ Este documento centraliza as evoluções estratégicas do produto e refinamentos
 ## 1. Curto Prazo (Próxima Sprint - 1 a 2 Meses)
 *Foco em Estabilidade, Finalização de Refatoração e Segurança de Dados*
 
-- [ ] **Migração do DTO de IGA:** Finalizar a remoção completa dos campos legados (`score_video`, `iga_score`) estáticos da entidade principal de `Session`, assegurando que 100% da leitura seja feita através das tabelas filhas dinâmicas (`VideoAnalysis`, `AudioAnalysis`).
-- [ ] **Substituição de Fallbacks Inseguros:** Remover o mock de "Prontuário Simulado" estático no `document-service`, substituindo-o por tratativas adequadas de indisponibilidade da AWS (re-tentativas automáticas).
-- [ ] **Aprimoramento de Exceções Baseado em Logger:** Converter todo e qualquer "silent try/catch pass" (`except Exception: pass`) em chamadas controladas ao `structlog` com níveis de Warning, para facilitar o debug de IA nos frames de vídeo.
-- [ ] **Implementação Rigorosa de Testes (Unitários e E2E):** Elevar a cobertura de código dos Domains Python para mais de 80% usando PyTest, garantindo contratos íntegros de comunicação HTTP.
+- [x] **Migração do DTO de IGA:** Finalizar a remoção completa dos campos legados (`score_video`, `iga_score`) estáticos da entidade principal de `Session`, assegurando que 100% da leitura seja feita através das tabelas filhas dinâmicas (`VideoAnalysis`, `AudioAnalysis`).
+- [x] **Substituição de Fallbacks Inseguros:** Remover o mock de "Prontuário Simulado" estático no `document-service`, substituindo-o por tratativas adequadas de indisponibilidade da AWS (re-tentativas automáticas).
+- [x] **Aprimoramento de Exceções Baseado em Logger:** Converter todo e qualquer "silent try/catch pass" (`except Exception: pass`) em chamadas controladas ao `structlog` com níveis de Warning, para facilitar o debug de IA nos frames de vídeo.
+- [x] **Implementação Rigorosa de Testes (Unitários e E2E):** Elevar a cobertura de código dos Domains Python para mais de 80% usando PyTest, garantindo contratos íntegros de comunicação HTTP.
 
 ---
 
@@ -18,9 +18,9 @@ Este documento centraliza as evoluções estratégicas do produto e refinamentos
 *Foco em Performance Assíncrona e Ampliação do Core de IA*
 
 - [ ] **Mensageria Assíncrona Nativa (Kafka / RabbitMQ):** Substituir as invocações REST Síncronas (HTTP via Domain Client) do orquestrador por um padrão orientado a eventos (Event-Driven). A análise de vídeos de 2h exigirá processamento fragmentado via Workers, insustentável no formato de polling HTTP atual.
-- [ ] **Integração Real do Modelo YOLO (Object Detection):** Ativar o Ultralytics YOLOv8 no fluxo de processamento de vídeo para identificar fisicamente a presença de sangue severo ou retenção inadequada de ferramentas cirúrgicas próximas à paciente.
-- [ ] **Adoção do Whisper On-Premise:** Substituir a dependência externa (Google Speech Recognition) do módulo de áudio por um modelo **Whisper** rodando localmente (CPU/GPU-bound), fundamental para certificar conformidade com a LGPD impedindo a saída de dados médicos via nuvens públicas não certificadas.
-- [ ] **Streaming Progressivo do Frontend:** Suportar streaming real-time de alertas para o dashboard Angular via WebSockets/Server-Sent Events (SSE), em vez de exigir refresh automático.
+- [x] **Integração Real do Modelo YOLO (Object Detection):** Ativar o Ultralytics YOLOv8 no fluxo de processamento de vídeo para identificar fisicamente a presença de sangue severo ou retenção inadequada de ferramentas cirúrgicas próximas à paciente.
+- [x] **Adoção do Whisper On-Premise:** Substituir a dependência externa (Google Speech Recognition) do módulo de áudio por um modelo **Whisper** rodando localmente (CPU/GPU-bound), fundamental para certificar conformidade com a LGPD impedindo a saída de dados médicos via nuvens públicas não certificadas.
+- [x] **Streaming Progressivo do Frontend:** Suportar streaming real-time de alertas para o dashboard Angular via WebSockets/Server-Sent Events (SSE), em vez de exigir refresh automático.
 
 ---
 
