@@ -27,7 +27,7 @@ A solução emprega um conjunto de modelos state-of-the-art adaptados para o con
 * **MediaPipe Pose (Google):** Estimação de marcos corporais (Landmarks) para avaliar a postura da paciente. Identifica movimentos bruscos ou a perda de enquadramento da paciente por longos períodos.
 
 ### B. Domínio de Áudio (Análise Semântica)
-* **LLM (OpenAI GPT-4o-mini / Whisper):** Realiza a avaliação semântica aprofundada da transcrição do diálogo. O modelo atua como um juiz técnico, identificando tom de voz agressivo, queixas de dor ignoradas e inadequação na analgesia por meio de *prompt engineering* focado em violência obstétrica.
+* **SpeechRecognition (Google API) e LLM (OpenAI GPT-4o-mini):** Realiza a avaliação semântica aprofundada da transcrição do diálogo. O áudio é transcrito localmente e sem custos via API do Google. O texto resultante é processado pelo LLM, que atua como um juiz técnico, identificando tom de voz agressivo, queixas de dor ignoradas e inadequação na analgesia por meio de *prompt engineering* focado em violência obstétrica.
 
 ### C. Domínio de Prontuários e Documentos (NLP)
 * **AWS Textract (OCR):** Extração de texto bruto de PDFs clínicos, termos e receitas. O PyPDF atua como fallback em ambientes offline ou caso o Textract apresente falhas.

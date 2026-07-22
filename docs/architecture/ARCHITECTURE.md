@@ -29,7 +29,7 @@ flowchart TD
     %% AI Workers
     subgraph AI_Domains [Microsserviços de IA - Processamento Multimodal]
         Video["video-service\nOpenCV, YOLOv8, DeepFace\n(Expressões, Tensão)"]
-        Audio["audio-service\nWhisper, NLP\n(Tom de voz, Gritos)"]
+        Audio["audio-service\nSpeechRecognition (Google API), OpenAI\n(Transcrição e NLP de Voz)"]
         Doc["document-service\nAWS Textract, AWS Comprehend, OpenAI\n(OCR e NLP Híbrido)"]
     end
 
@@ -66,7 +66,7 @@ flowchart TD
 | `postgres-core` | 5432 | PostgreSQL 16 | Banco de dados transacional central (`core_db`). |
 | `core-api` | 8000 | FastAPI / Python | Orquestrador, CRUD de Sessões, Autenticação, Interface BFF. |
 | `video-service` | 8001 | FastAPI / Python | YOLO, MediaPipe, DeepFace. Extração de bounding boxes e emoções de frames. |
-| `audio-service` | 8002 | FastAPI / Python | Whisper. Transcrição de áudio, detecção de dor e análise de sentimentos. |
+| `audio-service` | 8002 | FastAPI / Python | SpeechRecognition (Google API) e OpenAI. Transcrição de áudio, detecção de dor e análise semântica. |
 | `document-service` | 8003 | FastAPI / Python | Integração AWS (Textract e Comprehend) para OCR e NLP factual, e motor de risco cognitivo via OpenAI. |
 | `risk-service` | 8004 | FastAPI / Python | Motor de Fusão. Calcula o IGA (Índice GuardIA de Atenção). |
 | `report-service` | 8005 | FastAPI / Python | Geração de PDFs e relatórios formatados da sessão. |
