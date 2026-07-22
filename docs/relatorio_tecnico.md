@@ -30,8 +30,8 @@ A solução emprega um conjunto de modelos state-of-the-art adaptados para o con
 * **LLM (OpenAI GPT-4o-mini / Whisper):** Realiza a avaliação semântica aprofundada da transcrição do diálogo. O modelo atua como um juiz técnico, identificando tom de voz agressivo, queixas de dor ignoradas e inadequação na analgesia por meio de *prompt engineering* focado em violência obstétrica.
 
 ### C. Domínio de Prontuários e Documentos (NLP)
-* **PyPDF & OCR fallback:** Extração de texto bruto de PDFs clínicos.
-* **LLM (OpenAI GPT-4o-mini):** Processamento do texto livre do prontuário pré-natal para extrair **Fatores Clínicos** (ex: DHEG, diabetes), **Fatores Emocionais** (ex: ansiedade) e **Fatores de Atenção**. Ele pondera o risco pré-existente da paciente, injetando esse peso no IGA inicial antes mesmo do procedimento começar.
+* **AWS Textract (OCR):** Extração de texto bruto de PDFs clínicos, termos e receitas. O PyPDF atua como fallback em ambientes offline ou caso o Textract apresente falhas.
+* **Pipeline Híbrido (AWS Comprehend Medical + OpenAI GPT-4o-mini):** O processamento semântico foi redesenhado para uma arquitetura híbrida de alta precisão. Primeiramente, o **AWS Comprehend** e o **Comprehend Medical** leem o texto extraído para identificar, de forma determinística, o sentimento geral e as **Entidades Médicas** (condições de saúde, anatomia, medicamentos). Em seguida, essas entidades são injetadas no prompt como "Fatos Validados" para a **OpenAI (GPT-4o-mini)**. O LLM atua, então, gerando a avaliação de risco (Fatores Clínicos e Emocionais), sem a chance de "alucinar" dados importantes, o que garante um IGA com forte ancoragem factual.
 
 ---
 

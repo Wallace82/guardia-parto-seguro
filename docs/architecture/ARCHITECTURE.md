@@ -30,12 +30,12 @@ flowchart TD
     subgraph AI_Domains [Microsserviços de IA - Processamento Multimodal]
         Video["video-service\nOpenCV, YOLOv8, DeepFace\n(Expressões, Tensão)"]
         Audio["audio-service\nWhisper, NLP\n(Tom de voz, Gritos)"]
-        Doc["document-service\nAWS Textract, OpenAI\n(OCR de Prontuários)"]
+        Doc["document-service\nAWS Textract, AWS Comprehend, OpenAI\n(OCR e NLP Híbrido)"]
     end
 
     %% Fusion
     Risk["risk-service\nMotor de Fusão\nCálculo do IGA"]
-    AWS["aws-service\nWrapper Integração AWS"]
+    AWS["aws-service\nWrapper Integração AWS\n(S3, Textract, Comprehend)"]
     Outros["report-service / security-service\nPDFs e Autenticação"]
 
     %% Conexões Principais
@@ -51,7 +51,7 @@ flowchart TD
     Audio -- "Lê Mídia" --> Storage
     Doc -- "Lê Mídia" --> Storage
 
-    Doc -. "OCR Externo" .-> AWS
+    Doc -. "OCR e Medical NLP" .-> AWS
     
     Gateway -- "HTTP REST (Fan-in)" --> Risk
     Risk -- "Consolida Notas e Gera Alerta Crítico" --> DB
@@ -67,11 +67,11 @@ flowchart TD
 | `core-api` | 8000 | FastAPI / Python | Orquestrador, CRUD de Sessões, Autenticação, Interface BFF. |
 | `video-service` | 8001 | FastAPI / Python | YOLO, MediaPipe, DeepFace. Extração de bounding boxes e emoções de frames. |
 | `audio-service` | 8002 | FastAPI / Python | Whisper. Transcrição de áudio, detecção de dor e análise de sentimentos. |
-| `document-service` | 8003 | FastAPI / Python | Integração OCR/Textract e extração de dados vitais via NLP (Comprehend/OpenAI). |
+| `document-service` | 8003 | FastAPI / Python | Integração AWS (Textract e Comprehend) para OCR e NLP factual, e motor de risco cognitivo via OpenAI. |
 | `risk-service` | 8004 | FastAPI / Python | Motor de Fusão. Calcula o IGA (Índice GuardIA de Atenção). |
 | `report-service` | 8005 | FastAPI / Python | Geração de PDFs e relatórios formatados da sessão. |
 | `security-service` | 8006 | FastAPI / Python | Tratamento de chaves e autorizações. |
-| `aws-service` | 8007 | FastAPI / Python | Wrappers para serviços gerenciados (S3, Textract). |
+| `aws-service` | 8007 | FastAPI / Python | Wrappers para serviços gerenciados da AWS (S3, Textract, Comprehend). |
 
 ## 3. Fluxo de Processamento Multimodal
 
