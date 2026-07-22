@@ -291,7 +291,7 @@ export class MultimodalAnalysisPageComponent implements OnInit, OnDestroy {
         const needsPolling = 
           session.status === 'processing' || 
           session.media_files?.some(f => f.status === 'processing') || 
-          (!!session.notes && session.score_notes === null);
+          (!!session.notes && session.score_notes === null && session.status !== 'error');
           
         if (needsPolling) {
           this.startPolling();
@@ -322,6 +322,11 @@ export class MultimodalAnalysisPageComponent implements OnInit, OnDestroy {
   }
 
   openNotesAnalysis() {
+    if (this.session()?.status === 'error' || this.session()?.score_notes === -1) {
+      this.snackBar.open('Falha na análise. Verifique as configurações de ambiente (ex: OPENAI_API_KEY).', 'Entendi', { duration: 6000 });
+      return;
+    }
+
     if (!this.analysis()?.notes_analysis_text) {
       this.snackBar.open('Análise textual ainda não está disponível ou está sendo processada.', 'Fechar', { duration: 3000 });
       return;

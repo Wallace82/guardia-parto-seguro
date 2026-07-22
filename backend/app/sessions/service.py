@@ -86,6 +86,14 @@ async def process_notes_background(session_id: int, notes: str):
             return analysis_text
     except Exception as e:
         log.error("background_notes_analysis_failed", session_id=session_id, error=str(e))
+        from app.sessions.models import SessionStatus
+        # Session already imported above
+        async with AsyncSessionLocal() as db:
+            session = await db.get(Session, session_id)
+            if session:
+                session.status = SessionStatus.error
+                session.score_notes = -1.0
+                await db.commit()
 
 
 
@@ -185,6 +193,9 @@ class SessionService:
         if data.notes is not None:
             session.notes = data.notes
             session.score_notes = None # Reseta o score para forçar o recálculo e o polling do frontend
+            from app.sessions.models import SessionStatus
+            if session.status == SessionStatus.error:
+                session.status = SessionStatus.pending
         if data.status is not None:
             session.status = data.status
 
