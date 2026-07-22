@@ -62,8 +62,9 @@
 *   **Na Tela:** Retorne ao Dashboard. A tela deve mostrar os resultados parciais chegando e, de repente, o "IGA" subindo de nível e ficando **Vermelho (CRÍTICO)**.
 *   **Sua Fala:** 
     > "Aqui vemos o resultado da fusão de dados. Notem que o nosso sistema de risco percebeu uma anomalia!
-    > O áudio acusou que a paciente relatou uma dor intensa que não foi acolhida, e a análise de vídeo confirmou uma forte tensão facial.
-    > Imediatamente, o motor de risco calcula essas penalidades e o nosso **IGA (Índice GuardIA de Atenção)** ultrapassa a barreira dos 70%. 
+    > O áudio acusou que a paciente relatou uma dor intensa que não foi acolhida, ou a análise textual identificou vulnerabilidade severa. 
+    > Para evitar que uma média matemática simples esconda esse perigo, nosso algoritmo entra em ação com uma **Regra de Agravamento Contextual**: se qualquer um dos domínios isoladamente atingir um alerta extremo (score acima de 75%), o peso daquele fator é ampliado drasticamente, impedindo a diluição do risco.
+    > Imediatamente, o motor calcula essas penalidades e o nosso **IGA (Índice GuardIA de Atenção)** dá um salto e ultrapassa a barreira dos 70%. 
     > 
     > Como resultado final, vemos este **Alerta Visual e Sonoro Crítico**. No mundo real, isso pisca na central de enfermagem e manda um alerta para o plantonista sênior, garantindo uma intervenção rápida para proteger a gestante de negligência."
 
