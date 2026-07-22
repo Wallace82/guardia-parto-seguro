@@ -113,7 +113,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
               </button>
             </div>
 
-            <div class="glass-card p-5">
+            <div class="glass-card p-5 max-h-[200px] overflow-y-auto">
               <p class="text-sm text-text-muted whitespace-pre-line leading-relaxed">{{ session()?.notes }}</p>
             </div>
           </div>

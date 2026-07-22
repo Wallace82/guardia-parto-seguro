@@ -35,15 +35,16 @@
 *   **Na Tela:** Slide ou diagrama da Arquitetura (Frontend Angular -> Backend FastAPI -> Serviços de IA e AWS).
 *   **Sua Fala:** 
     > "Nossa arquitetura foi construída orientada a microsserviços. Temos um Frontend rico em Angular, e um orquestrador em Python/FastAPI. Mas o verdadeiro coração do sistema são nossos *Workers* de Inteligência Artificial.
-    > Eles operam de forma isolada para processar vídeo, áudio e documentos. Para elevar o nível do projeto e garantir robustez, integramos fortemente os serviços da **AWS** *(Nota: cite os serviços específicos da AWS que você usou, como AWS Textract para documentos ou AWS Transcribe para áudio)*."
+    > Eles operam de forma isolada para processar vídeo, áudio e documentos. Para elevar o nível do projeto e garantir escalabilidade, integramos fortemente os serviços da **AWS**, especificamente o **AWS S3** para armazenamento seguro, o **Amazon Textract** e o **Amazon Comprehend Medical** para processamento inteligente de registros."
 
 ### 3. Mão na Massa - Ingestão (4:00 - 6:00)
 
 *   **Na Tela:** Sistema aberto no navegador (Dashboard do Frontend). Mostre a tela de criação de uma sessão ou paciente.
 *   **Sua Fala:** 
     > "Vamos para a prática. Aqui temos o painel da UTI ou da sala de cirurgia. Vou simular o início de um monitoramento.
-    > Para essa demonstração de **processamento multimodal**, vou enviar arquivos que representam o ambiente da paciente: um trecho de **vídeo** (monitorando o rosto/expressões), um **áudio** captado do ambiente, e um **prontuário médico** (ex: atestando hipertensão)."
-*   **Ação:** Faça o upload dos arquivos no sistema e clique para iniciar a análise.
+    > Para essa demonstração de **processamento multimodal**, vou enviar arquivos que representam o ambiente da paciente: um trecho de **vídeo**, um **áudio** captado do ambiente, e um **prontuário médico**.
+    > Ao realizar o upload, todos esses arquivos são instantaneamente transferidos de forma segura e criptografada para o nosso bucket no **AWS S3**, de onde as Inteligências Artificiais consumirão os dados."
+*   **Ação:** Faça o upload dos arquivos no sistema e mostre que eles são salvos na nuvem. Em seguida, clique para iniciar a análise.
 
 ### 4. Processamento Multimodal e AWS (6:00 - 11:00)
 
@@ -55,7 +56,7 @@
     > 
     > **2. Análise de Áudio (Reconhecimento de Voz):** Nosso áudio é processado usando a biblioteca **SpeechRecognition** conectada à API do **Google** para realizar a transcrição local rápida (Speech-to-Text). Esse texto transcrito é imediatamente enviado para a OpenAI identificar desespero, gritos ou respostas bruscas da equipe médica.
     > 
-    > **3. Análise de Documentos (O Pipeline Híbrido):** O prontuário e as anotações que subimos passam por uma via expressa de inteligência. Primeiro, lemos o PDF com **AWS Textract**. Depois, enviamos esse texto para o **AWS Comprehend Medical**, que extrai de forma exata todas as doenças, medicamentos e alertas factuais. Só então, com esses fatos na mão, nós acionamos a **OpenAI** para concluir o diagnóstico de risco sem perigo de alucinação (invenção de dados)."
+    > **3. Análise de Documentos (O Pipeline Híbrido):** O prontuário, que agora está armazenado no **AWS S3**, passa por uma via expressa de inteligência na nuvem. Primeiro, usamos o **Amazon Textract** para extrair o texto de qualquer PDF clínico. Depois, enviamos esse texto bruto para o **Amazon Comprehend Medical**, que é treinado especificamente para a área da saúde, extraindo de forma exata doenças, medicamentos e alertas factuais. Só então acionamos a OpenAI, que usa essa fundação sólida para gerar recomendações sem risco de alucinação."
 
 ### 5. Anomalias e o Fluxo do Alerta Final (11:00 - 14:00)
 

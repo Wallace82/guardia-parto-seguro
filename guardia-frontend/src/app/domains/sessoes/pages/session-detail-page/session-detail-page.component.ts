@@ -64,7 +64,9 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
             <h3 class="font-bold text-white flex items-center gap-2 mb-2">
               <mat-icon class="text-primary-400">notes</mat-icon> Notas Clínicas Iniciais
             </h3>
-            <p class="text-text-muted text-sm leading-relaxed whitespace-pre-line">{{ session()?.notes }}</p>
+            <div class="max-h-[150px] overflow-y-auto pr-2">
+              <p class="text-text-muted text-sm leading-relaxed whitespace-pre-line m-0">{{ session()?.notes }}</p>
+            </div>
           </div>
         }
 
