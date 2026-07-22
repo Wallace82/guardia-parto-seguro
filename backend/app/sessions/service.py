@@ -45,6 +45,8 @@ async def process_notes_background(session_id: int, notes: str):
             # Simulando os scores de risco especificos com base na intensidade geral
             psycho_risk = 80.0 if structured.get("aspectos_emocionais", {}).get("nivel") in ["ALTA", "ELEVADO"] else 20.0
             
+            comprehend_data = structured.pop("comprehend_data", None)
+            
             d_analysis = DocumentAnalysis(
                 session_id=session_id,
                 arquivo_documento="Anotações Clínicas (Multimodal)",
@@ -55,6 +57,7 @@ async def process_notes_background(session_id: int, notes: str):
                 pregnancy_risk_score=clinical_risk_score,
                 confidence_score=conf_score,
                 entidades_detectadas=structured,
+                analise_comprehend=comprehend_data,
                 fatores_identificados={
                     "analise_textual": analysis_text,
                     "estruturado": structured
@@ -228,7 +231,7 @@ class SessionService:
         file_size = len(file_content)
         
         if not blob_url:
-            # Salvar localmente
+            # Salvar localmente para uso dos microsserviços (video, audio, document)
             import os
             # Usa o volume compartilhado no Docker, ou um valor local default
             uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
@@ -236,8 +239,30 @@ class SessionService:
             file_path = os.path.join(uploads_dir, f"{session_id}_{media_type}_{filename}")
             with open(file_path, "wb") as f:
                 f.write(file_content)
-            # URL local mockada
+            # URL local mockada para os microsserviços
             blob_url = f"file:///{file_path.replace(os.sep, '/')}"
+
+            # Upload real para a AWS S3 (background process seria ideal, mas faremos aqui)
+            from app.config import get_settings
+            settings = get_settings()
+            import boto3
+            import io
+            import structlog
+            log = structlog.get_logger(__name__)
+            
+            try:
+                s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
+                s3_key = f"sessions/{session_id}/{media_type}/{filename}"
+                log.info("uploading_to_s3", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+                s3_client.upload_fileobj(
+                    io.BytesIO(file_content),
+                    settings.MEDIA_BUCKET_NAME,
+                    s3_key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                log.info("upload_to_s3_success", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+            except Exception as e:
+                log.error("s3_upload_failed", error=str(e), bucket=settings.MEDIA_BUCKET_NAME)
 
         media_file = MediaFile(
             session_id=session.id,

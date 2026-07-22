@@ -86,6 +86,8 @@ class DocumentAnalysis(Base):
     psychological_risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     pregnancy_risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     
+    analise_comprehend: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    
     fatores_identificados: Mapped[dict | None] = mapped_column(JSONB, nullable=True) # List of strings
     confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     

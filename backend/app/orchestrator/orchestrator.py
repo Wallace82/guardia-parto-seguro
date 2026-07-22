@@ -181,6 +181,7 @@ async def orchestrate_session_analysis(session_id: int) -> None:
                         texto_extraido=doc_res.get("ocr_text"),
                         entidades_detectadas=doc_res.get("extracted_fields"),
                         clinical_risk_score=doc_res.get("ira_score"),
+                        analise_comprehend=doc_res.get("comprehend_data"),
                         fatores_identificados={
                             "consistency_checks": doc_res.get("consistency_checks"),
                             "estruturado": doc_res.get("extracted_fields"),
