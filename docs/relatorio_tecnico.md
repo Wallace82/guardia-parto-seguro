@@ -1,4 +1,10 @@
-# Relatório Técnico: Plataforma GuardIA Parto Seguro
+# Relatório Técnico: Plataforma GuardIA Parto Seguro
+
+**Integrantes do Grupo:**
+* Wallace Gomes da Silva
+* Evandro Rosa Sampaio
+* Paulo Roberto Goncalves
+* Gustavo Brasil Pires Octaviano
 
 Este relatório descreve a arquitetura de processamento, os modelos de Inteligência Artificial empregados e os resultados obtidos na plataforma GuardIA Parto Seguro, em cumprimento aos requisitos do desafio técnico da pós-graduação.
 
