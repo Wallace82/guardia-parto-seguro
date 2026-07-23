@@ -74,6 +74,7 @@ cp .env.example .env
 - `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa. **[Importante]** O sistema utiliza o modelo **GPT-4o-mini**. É um pré-requisito obrigatório que a sua chave de API tenha autorização e créditos (Tier) para acessar especificamente este modelo.
 - `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos, extração de entidades médicas e áudio em nuvem).
 - `AWS_REGION`: Região da AWS (ex: `us-east-1`).
+- `AWS_BUCKET_NAME` (ou variável correspondente): Nome do bucket S3 utilizado. O nome do bucket padrão é `guardia-parto-seguro-media-dev-foton`. **[Nota]** Caso você não possua acesso a este bucket, você deverá criar um novo bucket na sua própria conta AWS e substituir este valor com o nome do seu novo bucket.
 - `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
 
 ### 4. Rodando o Banco de Dados
