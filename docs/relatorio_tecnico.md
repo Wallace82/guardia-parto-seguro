@@ -72,3 +72,10 @@ Durante a validação e integração do fluxo multimodal, o sistema conseguiu id
 
 ### Conclusão
 A integração dos modelos provou a viabilidade técnica da orquestração multimodal. A plataforma consegue isolar eventos (áudio, vídeo e texto), mas os unifica em um único painel holístico de risco, cumprindo com excelência a proposta de auditoria para prevenção de abusos e garantia do parto seguro.
+
+---
+
+## 5. Links Úteis
+
+* **Repositório Público (GitHub):** [https://github.com/Wallace82/guardia-parto-seguro](https://github.com/Wallace82/guardia-parto-seguro)
+* **Vídeo de Demonstração (YouTube):** [https://youtu.be/TV2DQj6NJPk](https://youtu.be/TV2DQj6NJPk)
