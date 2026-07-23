@@ -34,7 +34,7 @@ Para um entendimento profundo do sistema auditado, consulte a nossa nova central
 
 - **Backend / Workers**: Python 3.12, FastAPI, SQLAlchemy (asyncpg), Alembic, Pydantic.
 - **Frontend**: Angular 17+ (Standalone), TypeScript, Tailwind CSS, Angular Material.
-- **Inteligência Artificial**: OpenCV, DeepFace, MediaPipe, SpeechRecognition (Google), OpenAI GPT-4o-mini, AWS Textract (Wrapper).
+- **Inteligência Artificial**: OpenCV, DeepFace, MediaPipe, Whisper (OpenAI/Google), OpenAI GPT-4o-mini, AWS Textract e AWS Comprehend Medical.
 - **Persistência**: PostgreSQL 16 (Dados Clínicos) e Redis 7 (Filas/Cache).
 - **Infraestrutura**: Docker e Docker Compose, FFmpeg.
 
@@ -72,8 +72,9 @@ cp .env.example .env
 **Principais Variáveis Necessárias no `.env`:**
 - `DATABASE_URL`: String de conexão com o PostgreSQL (ex: `postgresql+asyncpg://postgres:postgres@localhost:5432/core_db`).
 - `OPENAI_API_KEY`: Chave da OpenAI para as funções de LLM/Generativa. **[Importante]** O sistema utiliza o modelo **GPT-4o-mini**. É um pré-requisito obrigatório que a sua chave de API tenha autorização e créditos (Tier) para acessar especificamente este modelo.
-- `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos e áudio em nuvem).
+- `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`: Credenciais da AWS (necessárias para análise de documentos, extração de entidades médicas e áudio em nuvem).
 - `AWS_REGION`: Região da AWS (ex: `us-east-1`).
+- `AWS_BUCKET_NAME` (ou variável correspondente): Nome do bucket S3 utilizado. O nome do bucket padrão é `guardia-parto-seguro-media-dev-foton`. **[Nota]** Caso você não possua acesso a este bucket, você deverá criar um novo bucket na sua própria conta AWS e substituir este valor com o nome do seu novo bucket.
 - `SECRET_KEY`: Chave secreta do FastAPI para geração de tokens JWT de autenticação.
 
 ### 4. Rodando o Banco de Dados
@@ -150,9 +151,9 @@ Com tudo rodando, você pode acessar:
 O sistema aceita upload (Upload File ou Camera Stream - futuro) de mídias.
 > 💡 **Nota para Testes e Apresentação:** Para facilitar, todos os vídeos, áudios e PDFs de prontuários simulados para demonstração estão disponíveis em uma pasta pública no Google Drive: [Acessar Arquivos de Teste](https://drive.google.com/drive/folders/1hIOawHZPCbYFlK_TyIlMoegLUHNn1qCJ?usp=sharing). Uma cópia de backup também pode ser encontrada na pasta `arquivos_teste/` deste repositório.
 
-1. **Vídeo**: A IA busca picos de tensão facial e imobilidade extrema na paciente.
-2. **Áudio**: A IA rastreia vocábulos de desespero/dor e afere o tom da resposta médica.
-3. **Documentos**: O Textract Lê PDFs de exames; a IA identifica agravantes (como hipertensão prévia).
+1. **Vídeo**: A IA (YOLO + DeepFace) busca picos de tensão facial e imobilidade extrema na paciente.
+2. **Áudio**: A IA rastreia vocábulos de desespero/dor e afere o tom da resposta médica (Whisper + AWS Comprehend).
+3. **Documentos**: Uma arquitetura Híbrida. O Textract lê PDFs de exames; o **AWS Comprehend Medical** extrai fatos médicos precisos; e a OpenAI analisa o contexto completo para identificar agravantes (como hipertensão prévia).
 
 Os serviços reportam o risco (0 a 100) para o orquestrador (`risk-domain`), que agrupa em um score final balanceado. Acima de 70%, o painel da UTI pisca em vermelho (**Crítico**), gerando um Alerta Ativo de intervenção no banco de dados.
 

@@ -44,11 +44,11 @@ class VideoProcessor:
             import torch
             
             # Corrige erro do PyTorch 2.6 de weights_only=True
-            if hasattr(torch.serialization, 'add_safe_globals'):
-                try:
-                    torch.serialization.add_safe_globals([ultralytics.nn.tasks.DetectionModel])
-                except Exception:
-                    pass
+            original_torch_load = torch.load
+            def safe_torch_load(*args, **kwargs):
+                kwargs['weights_only'] = False
+                return original_torch_load(*args, **kwargs)
+            torch.load = safe_torch_load
 
             mp_pose = mp.solutions.pose
             pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)

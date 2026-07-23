@@ -45,6 +45,8 @@ async def process_notes_background(session_id: int, notes: str):
             # Simulando os scores de risco especificos com base na intensidade geral
             psycho_risk = 80.0 if structured.get("aspectos_emocionais", {}).get("nivel") in ["ALTA", "ELEVADO"] else 20.0
             
+            comprehend_data = structured.pop("comprehend_data", None)
+            
             d_analysis = DocumentAnalysis(
                 session_id=session_id,
                 arquivo_documento="Anotações Clínicas (Multimodal)",
@@ -55,6 +57,7 @@ async def process_notes_background(session_id: int, notes: str):
                 pregnancy_risk_score=clinical_risk_score,
                 confidence_score=conf_score,
                 entidades_detectadas=structured,
+                analise_comprehend=comprehend_data,
                 fatores_identificados={
                     "analise_textual": analysis_text,
                     "estruturado": structured
@@ -86,6 +89,14 @@ async def process_notes_background(session_id: int, notes: str):
             return analysis_text
     except Exception as e:
         log.error("background_notes_analysis_failed", session_id=session_id, error=str(e))
+        from app.sessions.models import SessionStatus
+        # Session already imported above
+        async with AsyncSessionLocal() as db:
+            session = await db.get(Session, session_id)
+            if session:
+                session.status = SessionStatus.error
+                session.score_notes = -1.0
+                await db.commit()
 
 
 
@@ -185,6 +196,9 @@ class SessionService:
         if data.notes is not None:
             session.notes = data.notes
             session.score_notes = None # Reseta o score para forçar o recálculo e o polling do frontend
+            from app.sessions.models import SessionStatus
+            if session.status == SessionStatus.error:
+                session.status = SessionStatus.pending
         if data.status is not None:
             session.status = data.status
 
@@ -217,7 +231,7 @@ class SessionService:
         file_size = len(file_content)
         
         if not blob_url:
-            # Salvar localmente
+            # Salvar localmente para uso dos microsserviços (video, audio, document)
             import os
             # Usa o volume compartilhado no Docker, ou um valor local default
             uploads_dir = os.environ.get("SHARED_MEDIA_DIR", "/shared_media")
@@ -225,8 +239,30 @@ class SessionService:
             file_path = os.path.join(uploads_dir, f"{session_id}_{media_type}_{filename}")
             with open(file_path, "wb") as f:
                 f.write(file_content)
-            # URL local mockada
+            # URL local mockada para os microsserviços
             blob_url = f"file:///{file_path.replace(os.sep, '/')}"
+
+            # Upload real para a AWS S3 (background process seria ideal, mas faremos aqui)
+            from app.config import get_settings
+            settings = get_settings()
+            import boto3
+            import io
+            import structlog
+            log = structlog.get_logger(__name__)
+            
+            try:
+                s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
+                s3_key = f"sessions/{session_id}/{media_type}/{filename}"
+                log.info("uploading_to_s3", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+                s3_client.upload_fileobj(
+                    io.BytesIO(file_content),
+                    settings.MEDIA_BUCKET_NAME,
+                    s3_key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                log.info("upload_to_s3_success", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+            except Exception as e:
+                log.error("s3_upload_failed", error=str(e), bucket=settings.MEDIA_BUCKET_NAME)
 
         media_file = MediaFile(
             session_id=session.id,
@@ -275,6 +311,32 @@ class SessionService:
             except Exception:
                 pass
                 
+        annotated_path = file_path.replace(".mp4", "_annotated.mp4")
+        if os.path.exists(annotated_path):
+            try:
+                os.remove(annotated_path)
+            except Exception:
+                pass
+
+        # Exclusão no AWS S3
+        from app.config import get_settings
+        settings = get_settings()
+        import boto3
+        import structlog
+        log = structlog.get_logger(__name__)
+        
+        try:
+            s3_client = boto3.client('s3', region_name=settings.AWS_REGION)
+            s3_key = f"sessions/{session.id}/{media_file.media_type}/{media_file.filename}"
+            log.info("deleting_from_s3", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+            s3_client.delete_object(
+                Bucket=settings.MEDIA_BUCKET_NAME,
+                Key=s3_key
+            )
+            log.info("delete_from_s3_success", bucket=settings.MEDIA_BUCKET_NAME, key=s3_key)
+        except Exception as e:
+            log.error("s3_delete_failed", error=str(e), bucket=settings.MEDIA_BUCKET_NAME)
+
         # Remover registros de análise associados à mídia
         if media_file.media_type == "video":
             from app.sessions.analysis_models import VideoAnalysis
@@ -321,6 +383,15 @@ class SessionService:
             if m.media_type == "document" and m.status == MediaStatus.analyzed and m.analysis_score is not None
         ]
         document_score = max(all_doc_scores) if all_doc_scores else None
+
+        if video_score is None and audio_score is None and document_score is None:
+            session.iga_score = 0.0
+            session.iga_level = "baixo"
+            session.score_video = None
+            session.score_audio = None
+            session.score_document = None
+            await self.db.commit()
+            return
 
         # Call Risk Service via DomainClient
         client = DomainClient()

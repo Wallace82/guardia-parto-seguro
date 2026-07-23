@@ -83,6 +83,14 @@ def calculate_iga(data: IGAInput) -> IGAResult:
         current_weights["audio"] = 0.55
         context_note = " Peso de vídeo atenuado devido à comunicação verbal positiva (Audio Score baixo)."
 
+    # Regra de Agravamento Contextual (Prioridade Alta):
+    # Se algum score atingir um nível de alerta grave (>= 70.0),
+    # aumentamos drasticamente o peso desse domínio para dominar a média.
+    highest_domain = max(available, key=available.get)
+    if available[highest_domain] >= 70.0:
+        current_weights[highest_domain] += 2.0
+        context_note += f" Peso do domínio '{highest_domain}' ampliado agressivamente para garantir reflexo do risco crítico."
+
     # Calcular pesos normalizados para os componentes disponíveis
     total_base_weight = sum(current_weights[k] for k in available.keys())
     normalized_weights = {k: current_weights[k] / total_base_weight for k in available.keys()}

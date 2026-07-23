@@ -38,6 +38,7 @@ class DocumentAnalyzeResponse(BaseModel):
     consistency_checks: list
     ocr_text: Optional[str] = None
     raw_ai_analysis: Optional[dict] = None
+    comprehend_data: Optional[dict] = None
 
 class NotesAnalyzeRequest(BaseModel):
     session_id: str
@@ -146,8 +147,32 @@ parto e suporte emocional.
         completeness_score = 40.0
         consistency_checks = []
     else:
+        comprehend_data = None
         try:
-            import openai
+            import httpx
+            comprehend_data = {}
+            try:
+                aws_service_url = os.environ.get("AWS_SERVICE_URL", "http://aws-service:8007")
+                async with httpx.AsyncClient(timeout=10.0) as http_client:
+                    resp_med = await http_client.post(f"{aws_service_url}/api/v1/comprehend/medical", json={"text": ocr_text})
+                    if resp_med.status_code == 200:
+                        comprehend_data["medical_entities"] = resp_med.json().get("entities", [])
+                    
+                    resp_sent = await http_client.post(f"{aws_service_url}/api/v1/comprehend/sentiment", json={"text": ocr_text, "language_code": "pt"})
+                    if resp_sent.status_code == 200:
+                        comprehend_data["sentiment"] = resp_sent.json().get("sentiment", "NEUTRAL")
+            except Exception as aws_err:
+                log.warning("comprehend_integration_failed", error=str(aws_err))
+                comprehend_data = {"error": "Falha ao integrar com Comprehend"}
+                
+            fatos_extras = ""
+            if comprehend_data and "medical_entities" in comprehend_data and comprehend_data["medical_entities"]:
+                fatos_extras += "\nENTIDADES MÉDICAS EXTRAÍDAS PELO AWS COMPREHEND MEDICAL (Base factual para sua análise):\n"
+                for ent in comprehend_data["medical_entities"]:
+                    fatos_extras += f"- Categoria: {ent.get('Category', '')} | Tipo: {ent.get('Type', '')} | Texto: {ent.get('Text', '')}\n"
+            if comprehend_data and "sentiment" in comprehend_data:
+                fatos_extras += f"\nSENTIMENTO GERAL DETECTADO PELA AWS: {comprehend_data['sentiment']}\n"
+
             client = openai.OpenAI(api_key=api_key)
             if data.document_type in ["prontuario", "termo_consentimento", "prescricao"]:
                 prompt = f"""
@@ -199,6 +224,8 @@ Se algo estiver normal, leve ou controlado, DEIXE O ARRAY VAZIO [].
 1. Condições Controladas: NUNCA liste condições explícitas como "controlada" (ex: "hipertensão controlada", "diabetes controlada") em `conditions`, `risk_factors` ou `attention_points`. Omita completamente a não ser que haja agravamento atual.
 2. Emoções Esperadas: Ansiedade leve, dúvidas e preocupações comuns ("preocupações sobre o parto") NÃO devem aparecer nas listas de `indicators` (emocionais ou comunicação). Só inclua nessas listas se houver pânico, sofrimento extremo ou negligência da equipe perante a emoção.
 3. Comunicação: "Fala hesitante" ou dúvidas naturais NÃO devem ser listadas em `indicators` de comunicação ou `attention_points`. Só inclua se a equipe falhar gravemente na escuta ou se houver barreira severa de comunicação.
+
+{fatos_extras}
 
 ---
 CALCULE O IRA (Índice de Risco Assistencial):
@@ -264,7 +291,8 @@ Texto OCR do Documento:
         completeness_score=completeness_score,
         consistency_checks=consistency_checks,
         ocr_text=ocr_text,
-        raw_ai_analysis=raw_ai_analysis
+        raw_ai_analysis=raw_ai_analysis,
+        comprehend_data=comprehend_data
     )
 
 @app.post("/api/v1/documents/analyze-notes", status_code=status.HTTP_200_OK)
@@ -275,6 +303,31 @@ async def analyze_notes(data: NotesAnalyzeRequest):
         raise HTTPException(status_code=500, detail="OpenAI API Key não configurada no document-domain")
         
     try:
+        import httpx
+        import json
+        comprehend_data = {}
+        try:
+            aws_service_url = os.environ.get("AWS_SERVICE_URL", "http://aws-service:8007")
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                resp_med = await http_client.post(f"{aws_service_url}/api/v1/comprehend/medical", json={"text": data.notes})
+                if resp_med.status_code == 200:
+                    comprehend_data["medical_entities"] = resp_med.json().get("entities", [])
+                
+                resp_sent = await http_client.post(f"{aws_service_url}/api/v1/comprehend/sentiment", json={"text": data.notes, "language_code": "pt"})
+                if resp_sent.status_code == 200:
+                    comprehend_data["sentiment"] = resp_sent.json().get("sentiment", "NEUTRAL")
+        except Exception as aws_err:
+            log.warning("comprehend_integration_failed", error=str(aws_err))
+            comprehend_data = {"error": "Falha ao integrar com Comprehend"}
+            
+        fatos_extras = ""
+        if "medical_entities" in comprehend_data and comprehend_data["medical_entities"]:
+            fatos_extras += "\nENTIDADES MÉDICAS EXTRAÍDAS PELO AWS COMPREHEND MEDICAL (Base factual para sua análise):\n"
+            for ent in comprehend_data["medical_entities"]:
+                fatos_extras += f"- Categoria: {ent.get('Category', '')} | Tipo: {ent.get('Type', '')} | Texto: {ent.get('Text', '')}\n"
+        if "sentiment" in comprehend_data:
+            fatos_extras += f"\nSENTIMENTO GERAL DETECTADO PELA AWS: {comprehend_data['sentiment']}\n"
+
         client = openai.OpenAI(api_key=api_key)
         prompt = f"""
 Você é o módulo de Inteligência Artificial Clínica do sistema GuardIA Parto Seguro.
@@ -297,6 +350,10 @@ Analise sempre considerando:
 IMPORTANTE:
 Antes de analisar o conteúdo clínico, avalie a qualidade da informação recebida.
 Caso o texto seja muito curto, genérico ou sem informações relevantes, NÃO invente informações.
+
+{fatos_extras}
+
+---
 
 Exemplos de textos insuficientes:
 "Paciente gestante em acompanhamento pré-natal."
@@ -405,6 +462,8 @@ Anotações Clínicas: "{data.notes}"
             for rec in result.get("recomendacoes", []):
                 analysis_text += f"- {rec}\n"
                 
+        result["comprehend_data"] = comprehend_data
+
         return {
             "analysis": analysis_text,
             "clinical_risk_score": float(result.get("ira_score", 0.0)),
